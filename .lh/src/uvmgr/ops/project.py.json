@@ -1,0 +1,18 @@
+{
+    "sourceFile": "src/uvmgr/ops/project.py",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1748234668815,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1748234668815,
+            "name": "Commit-0",
+            "content": "from __future__ import annotations\n\nimport logging\nfrom pathlib import Path\n\nfrom uvmgr.core.shell import timed\nfrom uvmgr.runtime import project as _rt\n\n_log = logging.getLogger(\"uvmgr.ops.project\")\n\n\n@timed\ndef new(name: str, *, fastapi: bool = False, typer_cli: bool = True) -> dict:\n    dest = Path(name).resolve()\n    if dest.exists():\n        raise FileExistsError(dest)\n    _rt.scaffold(dest, fastapi=fastapi, typer_cli=typer_cli)\n    _log.info(\"Project scaffolded at %s\", dest)\n    return {\"path\": str(dest)}\n"
+        }
+    ]
+}

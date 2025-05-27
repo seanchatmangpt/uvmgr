@@ -1,0 +1,22 @@
+{
+    "sourceFile": "src/uvmgr/commands/dev.py",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 1,
+            "patches": [
+                {
+                    "date": 1748236472037,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1748239789457,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -0,0 +1,38 @@\n+\"\"\"\n+DX shortcuts: lint / test / serve\n+\"\"\"\n+\n+from __future__ import annotations\n+\n+import typer\n+from typing import List\n+\n+from .. import main as cli_root\n+from uvmgr.ops import devtasks as ops\n+\n+dev_app = typer.Typer(help=\"Developer tasks: lint, test, serve\")\n+cli_root.app.add_typer(dev_app)\n+\n+\n+@dev_app.command()\n+def lint():\n+    \"\"\"Run Ruff + MyPy + Pre-commit.\"\"\"\n+    ops.lint()\n+\n+\n+@dev_app.command()\n+def test(\n+    extra: List[str] = typer.Argument(None, help=\"Extra pytest args\", show_default=False)\n+):\n+    \"\"\"Run coverage + pytest.\"\"\"\n+    ops.test(extra)\n+\n+\n+@dev_app.command()\n+def serve(\n+    dev: bool = typer.Option(False, \"--dev\", help=\"Reload mode\"),\n+    host: str = typer.Option(\"0.0.0.0\", \"--host\"),\n+    port: str = typer.Option(\"8000\", \"--port\"),\n+):\n+    \"\"\"Start FastAPI dev server (template projects only).\"\"\"\n+    ops.serve(dev, host, port)\n"
+                }
+            ],
+            "date": 1748236472037,
+            "name": "Commit-0",
+            "content": "\"\"\"\nDX shortcuts: lint / test / serve\n\"\"\"\n\nfrom __future__ import annotations\n\nimport typer\nfrom typing import List\n\nfrom ... import main as cli_root\nfrom uvmgr.ops import devtasks as ops\n\ndev_app = typer.Typer(help=\"Developer tasks: lint, test, serve\")\ncli_root.app.add_typer(dev_app)\n\n\n@dev_app.command()\ndef lint():\n    \"\"\"Run Ruff + MyPy + Pre-commit.\"\"\"\n    ops.lint()\n\n\n@dev_app.command()\ndef test(\n    extra: List[str] = typer.Argument(None, help=\"Extra pytest args\", show_default=False)\n):\n    \"\"\"Run coverage + pytest.\"\"\"\n    ops.test(extra)\n\n\n@dev_app.command()\ndef serve(\n    dev: bool = typer.Option(False, \"--dev\", help=\"Reload mode\"),\n    host: str = typer.Option(\"0.0.0.0\", \"--host\"),\n    port: str = typer.Option(\"8000\", \"--port\"),\n):\n    \"\"\"Start FastAPI dev server (template projects only).\"\"\"\n    ops.serve(dev, host, port)\n"
+        }
+    ]
+}

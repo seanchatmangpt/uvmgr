@@ -1,0 +1,5 @@
+nautilus-trader>=2.0.0
+pandas>=2.0.0
+pyarrow>=14.0.1  # Required for Parquet support
+pytz>=2024.1
+python-dateutil>=2.8.2 

@@ -1,0 +1,18 @@
+{
+    "sourceFile": "src/uvmgr/core/cache.py",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1748231345538,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1748231345538,
+            "name": "Commit-0",
+            "content": "\"\"\"\nuvmgr.core.cache – SHA1 command-result cache.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport json\nimport time\nfrom pathlib import Path\n\nfrom .fs import hash_str\nfrom .paths import CACHE_DIR\n\n_RUNS = CACHE_DIR / \"runs.jsonl\"\n_RUNS.touch(exist_ok=True)\n\n__all__ = [\"hash_cmd\", \"cache_hit\", \"store_result\"]\n\n\ndef hash_cmd(cmd: str) -> str:\n    return hash_str(cmd)\n\n\ndef cache_hit(cmd: str) -> bool:\n    h = hash_cmd(cmd)\n    return any(h in line for line in _RUNS.read_text().splitlines())\n\n\ndef store_result(cmd: str) -> None:\n    _RUNS.write_text(json.dumps({\"k\": hash_cmd(cmd), \"ts\": time.time()}) + \"\\n\", append=True)  # type: ignore[arg-type]\n"
+        }
+    ]
+}

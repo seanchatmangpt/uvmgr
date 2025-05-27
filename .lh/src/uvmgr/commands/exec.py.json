@@ -1,0 +1,22 @@
+{
+    "sourceFile": "src/uvmgr/commands/exec.py",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 1,
+            "patches": [
+                {
+                    "date": 1748236494723,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1748239789457,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -0,0 +1,24 @@\n+\"\"\"\n+uvmgr exec script …\n+\"\"\"\n+\n+from __future__ import annotations\n+\n+import pathlib\n+from typing import List\n+\n+import typer\n+\n+from .. import main as cli_root\n+from uvmgr.ops import exec as exec_ops\n+\n+exec_app = typer.Typer(help=\"Execute Python script inside project env\")\n+cli_root.app.add_typer(exec_app, name=\"exec\")\n+\n+\n+@exec_app.command(\"script\")\n+def script(\n+    path: pathlib.Path = typer.Argument(..., exists=True, readable=True),\n+    argv: List[str] = typer.Argument(None, help=\"Args forwarded to script\"),\n+):\n+    exec_ops.script(path, argv)\n"
+                }
+            ],
+            "date": 1748236494723,
+            "name": "Commit-0",
+            "content": "\"\"\"\nuvmgr exec script …\n\"\"\"\n\nfrom __future__ import annotations\n\nimport pathlib\nfrom typing import List\n\nimport typer\n\nfrom ... import main as cli_root\nfrom uvmgr.ops import exec as exec_ops\n\nexec_app = typer.Typer(help=\"Execute Python script inside project env\")\ncli_root.app.add_typer(exec_app, name=\"exec\")\n\n\n@exec_app.command(\"script\")\ndef script(\n    path: pathlib.Path = typer.Argument(..., exists=True, readable=True),\n    argv: List[str] = typer.Argument(None, help=\"Args forwarded to script\"),\n):\n    exec_ops.script(path, argv)\n"
+        }
+    ]
+}

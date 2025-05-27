@@ -1,0 +1,18 @@
+{
+    "sourceFile": "src/uvmgr/core/venv.py",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1748231214437,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1748231214437,
+            "name": "Commit-0",
+            "content": "\"\"\"\nuvmgr.core.venv – venv inspection & smart cmd rewrite.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport os\nimport re\nimport shlex\nimport sys\nfrom pathlib import Path\nfrom typing import Iterable\n\nfrom .paths import bin_dir\n\n__all__ = [\n    \"is_venv\",\n    \"is_python_exec\",\n    \"is_py_file\",\n    \"prepend_env_path\",\n    \"adapt_cmd\",\n]\n\n_PY = re.compile(r\"python(\\d(\\.\\d+)?)?$\")\n\n\ndef is_venv() -> bool:\n    return sys.prefix != sys.base_prefix\n\n\ndef is_python_exec(tok: str) -> bool:\n    return bool(_PY.fullmatch(tok))\n\n\ndef is_py_file(tok: str) -> bool:\n    return tok.endswith(\".py\")\n\n\ndef prepend_env_path(cmd: str) -> str:\n    return f\"env PATH={bin_dir()}:{os.getenv('PATH','')} {cmd}\"\n\n\ndef adapt_cmd(cmd: str | Iterable[str]) -> str:\n    if isinstance(cmd, (list, tuple)):\n        cmd = \" \".join(cmd)\n    toks = shlex.split(cmd)\n    head = toks[0]\n    if head in {\"uv\", \"uvx\", \"uvmgr\"}:\n        return cmd\n    if is_python_exec(head):\n        return f\"uv run -- {cmd}\"\n    if is_py_file(head):\n        return f\"uv run -- python {cmd}\"\n    if (bin_dir() / head).exists():\n        return prepend_env_path(cmd)\n    return cmd\n"
+        }
+    ]
+}

@@ -1,0 +1,18 @@
+{
+    "sourceFile": "src/uvmgr/core/lint.py",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1748231363307,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1748231363307,
+            "name": "Commit-0",
+            "content": "\"\"\"\nuvmgr.core.lint – local quality gate helpers.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport subprocess\nimport sys\nfrom typing import Mapping, Type\n\n__all__ = [\"enforce_ruff\", \"map_exception\"]\n\n_EXIT: Mapping[Type[BaseException], int] = {\n    FileNotFoundError: 3,\n    KeyError: 4,\n    ValueError: 5,\n}\n\n\ndef enforce_ruff(path: str | None = \".\") -> None:\n    if subprocess.run([\"ruff\", \"check\", \"--quiet\", str(path)]).returncode:\n        sys.exit(\"❌ Ruff violations.\")\n\n\ndef map_exception(exc: BaseException) -> int:\n    for et, code in _EXIT.items():\n        if isinstance(exc, et):\n            return code\n    return 1\n"
+        }
+    ]
+}

@@ -1,0 +1,18 @@
+{
+    "sourceFile": "src/uvmgr/runtime/agent/__init__.py",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1748241559618,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1748241559618,
+            "name": "Commit-0",
+            "content": "\"\"\"\nuvmgr.runtime.agent\n===================\n\nBPMN workflow execution package.\n\nThis package contains the implementation of BPMN workflow execution,\nwith the main implementation in the spiff module.\n\"\"\"\n\nfrom __future__ import annotations\n\n__all__ = [\"spiff\"] "
+        }
+    ]
+}

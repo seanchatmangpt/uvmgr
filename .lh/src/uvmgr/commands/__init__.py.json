@@ -1,0 +1,18 @@
+{
+    "sourceFile": "src/uvmgr/commands/__init__.py",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1748236273805,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1748236273805,
+            "name": "Commit-0",
+            "content": "\"\"\"\nuvmgr.cli.commands\n==================\n\nPackage marker + lazy loader for every Typer sub-app.\n\nNothing here is imported by end-users directly; the root CLI (`uvmgr.cli`)\nresolves sub-modules via ``importlib.import_module`` on demand.  This file:\n\n1. Documents which command modules exist.\n2. Provides *auto-completion* / IDE discovery through ``__all__``.\n3. Implements a `__getattr__` lazy loader so\n   ``from uvmgr.cli.commands import deps`` Just-Works™ without importing\n   heavy optional dependencies at start-up.\n\nAdd new verb modules to **__all__** when you create them.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport importlib\nimport sys\nfrom types import ModuleType\nfrom typing import Final, List\n\n__all__: Final[List[str]] = [\n    # core\n    \"deps\",\n    \"dev\",           # lint / test / serve\n    \"project\",       # new\n    \"build\",\n    \"release\",\n    \"tool\",\n    \"cache\",\n    \"index\",\n    \"exec\",\n    \"shell\",\n    # advanced / optional\n    \"ai\",\n    \"remote\",\n    \"agent\",\n    \"ap_scheduler\",\n]\n\n_PACKAGE_PREFIX = __name__ + \".\"\n\n\ndef __getattr__(name: str) -> ModuleType:\n    \"\"\"\n    Lazy-import sub-modules so we don’t pay the cost (or trigger missing\n    extras) unless the command group is actually used.\n    \"\"\"\n    if name not in __all__:\n        raise AttributeError(name)\n    module = importlib.import_module(_PACKAGE_PREFIX + name)\n    setattr(sys.modules[__name__], name, module)\n    return module\n"
+        }
+    ]
+}

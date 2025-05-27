@@ -1,0 +1,22 @@
+{
+    "sourceFile": "src/uvmgr/commands/cache.py",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 1,
+            "patches": [
+                {
+                    "date": 1748234837179,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1748239789458,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -0,0 +1,20 @@\n+import typer\n+\n+from uvmgr.core.shell import colour\n+from uvmgr.ops import cache as cache_ops\n+\n+from .. import main as cli_root\n+\n+cache_app = typer.Typer(help=\"Manage uv cache\")\n+cli_root.app.add_typer(cache_app, name=\"cache\")\n+\n+\n+@cache_app.command(\"dir\")\n+def _dir():\n+    colour(cache_ops.dir(), \"cyan\")\n+\n+\n+@cache_app.command(\"prune\")\n+def _prune():\n+    cache_ops.prune()\n+    colour(\"✔ cache pruned\", \"green\")\n"
+                }
+            ],
+            "date": 1748234837179,
+            "name": "Commit-0",
+            "content": "import typer\nfrom ... import main as cli_root\nfrom uvmgr.core.shell import colour\nfrom uvmgr.ops import cache as cache_ops\n\ncache_app = typer.Typer(help=\"Manage uv cache\")\ncli_root.app.add_typer(cache_app, name=\"cache\")\n\n\n@cache_app.command(\"dir\")\ndef _dir():\n    colour(cache_ops.dir(), \"cyan\")\n\n\n@cache_app.command(\"prune\")\ndef _prune():\n    cache_ops.prune()\n    colour(\"✔ cache pruned\", \"green\")\n"
+        }
+    ]
+}

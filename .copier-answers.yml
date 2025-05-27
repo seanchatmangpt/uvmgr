@@ -1,0 +1,13 @@
+_commit: v1.5.1
+_src_path: gh:superlinear-ai/substrate
+author_email: info@chatmangpt.com
+author_name: Sean Chatman
+project_description: A DX wrapper around the uv package and project manager.
+project_name: uvmgr
+project_type: app
+project_url: https://github.com/seanchatmangpt/uvmgr
+python_version: '3.12'
+typing: optional
+with_conventional_commits: true
+with_fastapi_api: false
+with_typer_cli: true

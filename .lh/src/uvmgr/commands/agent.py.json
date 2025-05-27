@@ -1,0 +1,22 @@
+{
+    "sourceFile": "src/uvmgr/commands/agent.py",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 1,
+            "patches": [
+                {
+                    "date": 1748241059572,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1748241432949,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,14 +1,32 @@\n-import typer\n+\"\"\"\n+uvmgr.commands.agent\n+====================\n+\n+CLI wrapper around the agent orchestration layer.\n+\"\"\"\n+\n+from __future__ import annotations\n+\n from pathlib import Path\n \n-from .. import main as cli_root\n+import typer\n+\n+from .. import main as cli_root          # exported root Typer app\n from uvmgr.ops import agent as agent_ops\n \n-agent_app = typer.Typer(help=\"Run a BPMN file with SpiffWorkflow\")\n+agent_app = typer.Typer(help=\"Execute BPMN workflows\")\n cli_root.app.add_typer(agent_app, name=\"agent\")\n \n \n @agent_app.command(\"run\")\n-def agent_run(file: Path = typer.Argument(..., exists=True, readable=True)):\n-    \"\"\"Execute *file* until the workflow finishes.\"\"\"\n+def run_bpmn(\n+    file: Path = typer.Argument(\n+        ...,\n+        exists=True,\n+        readable=True,\n+        dir_okay=False,\n+        help=\"Path to a BPMN XML file\",\n+    )\n+):\n+    \"\"\"Run *file* until the workflow completes.\"\"\"\n     agent_ops.run(file)\n"
+                }
+            ],
+            "date": 1748241059572,
+            "name": "Commit-0",
+            "content": "import typer\nfrom pathlib import Path\n\nfrom .. import main as cli_root\nfrom uvmgr.ops import agent as agent_ops\n\nagent_app = typer.Typer(help=\"Run a BPMN file with SpiffWorkflow\")\ncli_root.app.add_typer(agent_app, name=\"agent\")\n\n\n@agent_app.command(\"run\")\ndef agent_run(file: Path = typer.Argument(..., exists=True, readable=True)):\n    \"\"\"Execute *file* until the workflow finishes.\"\"\"\n    agent_ops.run(file)\n"
+        }
+    ]
+}

@@ -1,0 +1,18 @@
+{
+    "sourceFile": "src/uvmgr/ops/indexes.py",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1748236433770,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1748236433770,
+            "name": "Commit-0",
+            "content": "\"\"\"\nuvmgr.ops.indexes\n-----------------\nPersist extra index URLs in ~/.config/uvmgr/indexes.txt\n\"\"\"\n\nfrom __future__ import annotations\n\nfrom pathlib import Path\n\nfrom uvmgr.core.paths import CONFIG_DIR\nfrom uvmgr.core.shell import timed\nfrom uvmgr.core.telemetry import span\n\n_FILE: Path = CONFIG_DIR / \"indexes.txt\"\n\n\n@timed\ndef add(url: str) -> None:\n    with span(\"index.add\", url=url):\n        lines = {_FILE.read_text().splitlines(), url} if _FILE.exists() else {url}\n        _FILE.write_text(\"\\n\".join(sorted(lines)) + \"\\n\")\n\n\ndef list_indexes() -> list[str]:\n    return _FILE.read_text().splitlines() if _FILE.exists() else []\n"
+        }
+    ]
+}

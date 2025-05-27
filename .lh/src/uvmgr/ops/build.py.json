@@ -1,0 +1,18 @@
+{
+    "sourceFile": "src/uvmgr/ops/build.py",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1748234720119,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1748234720119,
+            "name": "Commit-0",
+            "content": "from __future__ import annotations\n\nfrom pathlib import Path\n\nfrom uvmgr.core.shell import timed\nfrom uvmgr.runtime import build as _rt\n\n\n@timed\ndef dist(outdir: Path | None = None) -> dict:\n    _rt.dist(outdir)\n    return {\"built\": str(outdir or \"dist/\")}\n\n\n@timed\ndef upload(dist_dir: Path = Path(\"dist\")) -> dict:\n    _rt.upload(dist_dir)\n    return {\"uploaded\": str(dist_dir)}\n"
+        }
+    ]
+}

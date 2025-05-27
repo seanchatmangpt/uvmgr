@@ -1,0 +1,18 @@
+{
+    "sourceFile": "src/uvmgr/runtime/exec.py",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1748234208816,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1748234208816,
+            "name": "Commit-0",
+            "content": "from __future__ import annotations\n\nfrom pathlib import Path\n\nfrom uvmgr.core.process import run_logged\nfrom uvmgr.core.telemetry import span\n\n\ndef script(path: Path, *argv: str) -> None:\n    with span(\"exec.script\", file=str(path)):\n        run_logged([\"python\", str(path), *argv])\n"
+        }
+    ]
+}

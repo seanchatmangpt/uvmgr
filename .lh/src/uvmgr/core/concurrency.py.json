@@ -1,0 +1,18 @@
+{
+    "sourceFile": "src/uvmgr/core/concurrency.py",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1748231311419,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1748231311419,
+            "name": "Commit-0",
+            "content": "\"\"\"\nuvmgr.core.concurrency – thread fan-out + async helper.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport asyncio\nfrom concurrent.futures import ThreadPoolExecutor\nfrom typing import Callable, Iterable, List, TypeVar\n\nfrom .shell import progress_bar\n\nT = TypeVar(\"T\")\n\n\ndef run_wave(funcs: Iterable[Callable[[], T]]) -> List[T]:\n    funcs = list(funcs)\n    with ThreadPoolExecutor() as pool, progress_bar(len(funcs)) as tick:\n        futures = [pool.submit(f) for f in funcs]\n        results = []\n        for fut in futures:\n            results.append(fut.result())\n            tick()\n    return results\n\n\ndef aio_run(coro):\n    try:\n        return asyncio.run(coro)\n    except RuntimeError:\n        try:\n            import nest_asyncio\n\n            nest_asyncio.apply()\n        except ImportError as e:\n            raise RuntimeError(\"loop running; install nest_asyncio\") from e\n        loop = asyncio.get_event_loop()\n        return loop.run_until_complete(coro)\n"
+        }
+    ]
+}

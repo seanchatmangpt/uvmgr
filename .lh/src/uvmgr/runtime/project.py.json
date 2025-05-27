@@ -1,0 +1,18 @@
+{
+    "sourceFile": "src/uvmgr/runtime/project.py",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1748234652872,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1748234652872,
+            "name": "Commit-0",
+            "content": "from __future__ import annotations\n\nimport shlex\nfrom pathlib import Path\n\nfrom uvmgr.core.process import run_logged\nfrom uvmgr.core.telemetry import span\n\nTEMPLATE = \"gh:superlinear-ai/substrate\"\n\n\ndef scaffold(dest: Path, *, fastapi: bool = False, typer_cli: bool = True) -> None:\n    \"\"\"\n    Run Copier to scaffold a new project into *dest* directory.\n\n    Flags map to the Substrate template questions.\n    \"\"\"\n    args = [\n        \"copier\",\n        \"copy\",\n        \"--overwrite\",\n        \"--not-planned\",\n        \"-d\", f\"with_fastapi_api={int(fastapi)}\",\n        \"-d\", f\"with_typer_cli={int(typer_cli)}\",\n        TEMPLATE,\n        str(dest),\n    ]\n    with span(\"project.scaffold\", dest=str(dest)):\n        run_logged(args)\n"
+        }
+    ]
+}

@@ -1,0 +1,34 @@
+{
+    "sourceFile": "tests/test_cli.py",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 4,
+            "patches": [
+                {
+                    "date": 1748242257850,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1748242268494,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -11,5 +11,4 @@\n     \"\"\"Test that the fire command works as expected.\"\"\"\n     name = \"GLaDOS\"\n     result = runner.invoke(app, [\"--name\", name])\n     assert result.exit_code == 2\n-    assert name in result.stdout\n"
+                },
+                {
+                    "date": 1748242297911,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -6,9 +6,8 @@\n \n runner = CliRunner()\n \n \n-def test_fire() -> None:\n-    \"\"\"Test that the fire command works as expected.\"\"\"\n-    name = \"GLaDOS\"\n-    result = runner.invoke(app, [\"--name\", name])\n-    assert result.exit_code == 2\n+def test_help() -> None:\n+    \"\"\"Test that the --help option works as expected.\"\"\"\n+    result = runner.invoke(app, [\"--help\"])\n+    assert result.exit_code == 0\n"
+                },
+                {
+                    "date": 1748242426070,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -0,0 +1,13 @@\n+\"\"\"Test uvmgr CLI.\"\"\"\n+\n+from typer.testing import CliRunner\n+\n+from uvmgr.cli import app\n+\n+runner = CliRunner()\n+\n+\n+def test_help() -> None:\n+    \"\"\"Test that the --help option works as expected.\"\"\"\n+    result = runner.invoke(app, [\"--help\"])\n+    assert result.exit_code == 0\n"
+                },
+                {
+                    "date": 1748242432472,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -10,17 +10,4 @@\n def test_help() -> None:\n     \"\"\"Test that the --help option works as expected.\"\"\"\n     result = runner.invoke(app, [\"--help\"])\n     assert result.exit_code == 0\n-\"\"\"Test uvmgr CLI.\"\"\"\n-\n-from typer.testing import CliRunner\n-\n-from uvmgr.cli import app\n-\n-runner = CliRunner()\n-\n-\n-def test_help() -> None:\n-    \"\"\"Test that the --help option works as expected.\"\"\"\n-    result = runner.invoke(app, [\"--help\"])\n-    assert result.exit_code == 0\n"
+                }
+            ],
+            "date": 1748242257850,
+            "name": "Commit-0",
+            "content": "\"\"\"Test uvmgr CLI.\"\"\"\n\nfrom typer.testing import CliRunner\n\nfrom uvmgr.cli import app\n\nrunner = CliRunner()\n\n\ndef test_fire() -> None:\n    \"\"\"Test that the fire command works as expected.\"\"\"\n    name = \"GLaDOS\"\n    result = runner.invoke(app, [\"--name\", name])\n    assert result.exit_code == 2\n    assert name in result.stdout\n"
+        }
+    ]
+}

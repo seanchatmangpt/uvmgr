@@ -1,0 +1,22 @@
+{
+    "sourceFile": "src/uvmgr/commands/ap_scheduler.py",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 1,
+            "patches": [
+                {
+                    "date": 1748241625955,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1748241637564,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,6 +1,6 @@\n import typer, json\n-from ... import main as cli_root\n+from .. import main as cli_root\n from uvmgr.core.shell import dump_json, colour\n from uvmgr.ops import aps as ops_aps\n \n app_aps = typer.Typer(help=\"Minimal APScheduler wrapper\")\n"
+                }
+            ],
+            "date": 1748241625955,
+            "name": "Commit-0",
+            "content": "import typer, json\nfrom ... import main as cli_root\nfrom uvmgr.core.shell import dump_json, colour\nfrom uvmgr.ops import aps as ops_aps\n\napp_aps = typer.Typer(help=\"Minimal APScheduler wrapper\")\ncli_root.app.add_typer(app_aps, name=\"ap-scheduler\")\n\n\n@app_aps.command(\"add\")\ndef add(\n    job_id: str,\n    cron: str = typer.Option(None, \"--cron\", help=\"crontab expression\"),\n    every: int = typer.Option(None, \"--every\", help=\"seconds\"),\n    cmd: str = typer.Argument(..., help=\"Command string to run\"),\n):\n    if cron:\n        ops_aps.add_cron(job_id, cron, cmd)\n    elif every:\n        ops_aps.add_interval(job_id, every, cmd)\n    else:\n        raise typer.BadParameter(\"Either --cron or --every required\")\n\n\n@app_aps.command(\"remove\")\ndef remove(job_id: str):\n    ops_aps.remove(job_id)\n    colour(f\"❎ removed {job_id}\", \"yellow\")\n\n\n@app_aps.command(\"list\")\ndef list_(json_: bool = typer.Option(False, \"--json\")):\n    jobs = ops_aps.list_jobs()\n    dump_json(jobs) if json_ else [colour(j, \"cyan\") for j in jobs]\n\n\n@app_aps.command(\"run\")\ndef run():\n    ops_aps.run()\n"
+        }
+    ]
+}

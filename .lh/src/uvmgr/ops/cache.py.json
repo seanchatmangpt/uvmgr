@@ -1,0 +1,18 @@
+{
+    "sourceFile": "src/uvmgr/ops/cache.py",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1748236380471,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1748236380471,
+            "name": "Commit-0",
+            "content": "\"\"\"\nuvmgr.ops.cache\n---------------\nUser-facing wrapper around `uv cache` commands.\n\"\"\"\n\nfrom __future__ import annotations\n\nfrom uvmgr.runtime.uv import call as uv_call\nfrom uvmgr.core.shell import timed\nfrom uvmgr.core.telemetry import span\n\n\n@timed\ndef dir() -> str:\n    with span(\"cache.dir\"):\n        return uv_call(\"cache dir\", capture=True) or \"\"\n\n\n@timed\ndef prune() -> None:\n    with span(\"cache.prune\"):\n        uv_call(\"cache prune\")\n"
+        }
+    ]
+}
