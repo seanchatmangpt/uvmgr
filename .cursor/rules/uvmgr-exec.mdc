@@ -1,0 +1,170 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# uvmgr exec Command Guide
+
+## Overview
+
+The `uvmgr exec` command provides a convenient way to run Python scripts using uv's dependency management. It automatically handles virtual environments and dependencies, making script execution seamless.
+
+## Basic Usage
+
+### Running Scripts
+
+```bash
+# Run a simple script
+uvmgr exec script.py
+
+# Run with arguments
+uvmgr exec script.py arg1 arg2
+
+# Run from stdin
+echo 'print("hello")' | uvmgr exec -
+```
+
+### Dependency Management
+
+The command supports two ways to manage dependencies:
+
+1. Using the `--with` flag:
+```bash
+# Install and use a single dependency
+uvmgr exec --with rich script.py
+
+# Install and use multiple dependencies
+uvmgr exec --with rich --with requests script.py
+```
+
+2. Using inline script metadata:
+```python
+# /// script
+# dependencies = [
+#   "rich",
+#   "requests<3",
+# ]
+# ///
+
+import rich
+import requests
+```
+
+### Project Integration
+
+By default, `uvmgr exec` will install the current project's dependencies. To skip this:
+
+```bash
+# Run without installing current project
+uvmgr exec --no-project script.py
+
+# Run with dependencies but no project
+uvmgr exec --no-project --with rich script.py
+```
+
+## Example Scripts
+
+### Basic Script
+[test_script.py](mdc:test_script.py) demonstrates using rich for output formatting.
+
+### Dependency Example
+[test_script3.py](mdc:test_script3.py) shows how to use external dependencies (pyfiglet).
+
+## Best Practices
+
+1. **Dependency Declaration**
+   - Use inline metadata for scripts that are part of your project
+   - Use `--with` for one-off scripts or quick testing
+   - Always specify version constraints for production scripts
+
+2. **Project Integration**
+   - Use `--no-project` when running scripts that don't need project dependencies
+   - This speeds up execution and prevents unnecessary installations
+
+3. **Error Handling**
+   - Scripts should handle their own errors gracefully
+   - Use proper exit codes for script success/failure
+   - Consider using rich for better error presentation
+
+4. **Performance**
+   - Dependencies are installed on-demand
+   - Subsequent runs use cached dependencies
+   - Use `--no-project` when possible to speed up execution
+
+## Implementation Details
+
+The command is implemented across three layers:
+
+1. **CLI Layer** ([src/uvmgr/commands/exec.py](mdc:src/uvmgr/commands/exec.py))
+   - Handles command-line interface
+   - Processes arguments and options
+   - Provides help text and examples
+
+2. **Ops Layer** ([src/uvmgr/ops/exec.py](mdc:src/uvmgr/ops/exec.py))
+   - Orchestrates script execution
+   - Manages telemetry and timing
+   - Delegates to runtime layer
+
+3. **Runtime Layer** ([src/uvmgr/runtime/exec.py](mdc:src/uvmgr/runtime/exec.py))
+   - Executes scripts using uv run
+   - Handles dependency installation
+   - Manages process execution
+
+## Common Patterns
+
+### Development Scripts
+```python
+# /// script
+# dependencies = [
+#   "rich",
+#   "pytest",
+#   "black",
+# ]
+# ///
+
+# Development utility script
+```
+
+### Data Processing
+```python
+# /// script
+# dependencies = [
+#   "pandas",
+#   "numpy",
+#   "matplotlib",
+# ]
+# ///
+
+# Data analysis script
+```
+
+### API Testing
+```python
+# /// script
+# dependencies = [
+#   "requests",
+#   "rich",
+#   "pydantic",
+# ]
+# ///
+
+# API testing script
+```
+
+## Troubleshooting
+
+1. **Missing Dependencies**
+   - Error: `ModuleNotFoundError: No module named 'X'`
+   - Solution: Add the dependency using `--with` or inline metadata
+
+2. **Project Installation Issues**
+   - Error: Project dependencies fail to install
+   - Solution: Use `--no-project` if project dependencies aren't needed
+
+3. **Permission Issues**
+   - Error: Cannot install packages
+   - Solution: Ensure proper permissions for uv cache directory
+
+4. **Version Conflicts**
+   - Error: Dependency version conflicts
+   - Solution: Specify version constraints in inline metadata

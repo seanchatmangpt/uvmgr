@@ -1,0 +1,82 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# uvmgr Command Development Guide
+
+## Command Structure
+
+Commands in uvmgr are implemented as Typer sub-applications in the `uvmgr.commands` package:
+
+```
+uvmgr/
+  commands/
+    __init__.py
+    deps.py      # Dependency management
+    test.py      # Testing commands
+    lint.py      # Linting commands
+    build.py     # Build commands
+    release.py   # Release management
+```
+
+## Adding New Commands
+
+1. Create a new module in `uvmgr.commands/`
+2. Define a Typer app instance
+3. Add command functions with appropriate decorators
+4. Export the app in `__init__.py`
+
+Example command structure:
+```python
+import typer
+
+app = typer.Typer(help="Command description")
+
+@app.command()
+def subcommand(
+    param: str = typer.Option(..., help="Parameter description")
+):
+    """Command implementation"""
+    pass
+```
+
+## Command Best Practices
+
+1. Use descriptive command and parameter names
+2. Provide clear help text for all commands and options
+3. Follow consistent error handling patterns
+4. Use type hints for all parameters
+5. Support the global --json flag
+6. Include appropriate logging
+7. Add tests for all commands
+8. For exec commands:
+   - Support both inline metadata and --with flags for dependencies
+   - Handle stdin execution when appropriate
+   - Provide clear error messages for missing dependencies
+   - Support --no-project for faster execution
+
+## Command Categories
+
+### Development Commands
+- `uvmgr deps` - Dependency management
+- `uvmgr lint` - Code quality checks
+- `uvmgr test` - Running tests
+- `uvmgr exec` - Execute Python scripts with uv run
+
+### Build Commands
+- `uvmgr build` - Package building
+- `uvmgr release` - Release management
+
+### Utility Commands
+- `uvmgr shell` - Interactive shell
+- `uvmgr cache` - Cache management
+- `uvmgr exec` - Script execution with dependency management
+
+## Error Handling
+
+All commands should:
+1. Use the `handle_cli_exception` utility
+2. Provide meaningful error messages
+3. Support debug mode with `--debug`
+4. Return appropriate exit codes
