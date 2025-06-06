@@ -1,2 +1,0 @@
-2025-05-27 10:32:53,224 - __main__ - ERROR - Error during backtest: Unexpected keyword argument 'log_level'
-2025-05-27 10:32:53,225 - __main__ - ERROR - Backtest failed: Unexpected keyword argument 'log_level'

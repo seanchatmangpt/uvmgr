@@ -26,7 +26,6 @@ from typing import Final, List
 __all__: Final[List[str]] = [
     # core
     "deps",
-    "dev",           # lint / test / serve
     "project",       # new
     "build",
     "release",
@@ -47,7 +46,7 @@ _PACKAGE_PREFIX = __name__ + "."
 
 def __getattr__(name: str) -> ModuleType:
     """
-    Lazy-import sub-modules so we don’t pay the cost (or trigger missing
+    Lazy-import sub-modules so we don't pay the cost (or trigger missing
     extras) unless the command group is actually used.
     """
     if name not in __all__:

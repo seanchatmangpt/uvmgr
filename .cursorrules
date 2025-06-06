@@ -1,0 +1,3 @@
+Do not edit `pyproject.toml` file.
+
+Use `uv` for package management.

@@ -3,7 +3,6 @@ from pathlib import Path
 import typer
 
 from uvmgr.core.shell import colour, dump_json
-from uvmgr.ops import project as project_ops
 
 from .. import main as cli_root
 
