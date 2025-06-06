@@ -29,11 +29,14 @@ __all__: Final[List[str]] = [
     "project",       # new
     "build",
     "release",
+    "tests",         # new test command (tests)
     "tool",
     "cache",
     "index",
     "exec",
     "shell",
+    "serve",         # MCP server command
+    "lint",         # new lint command
     # advanced / optional
     "ai",
     "remote",

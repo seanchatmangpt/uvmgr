@@ -37,6 +37,7 @@ app = typer.Typer(
     add_completion=False,
     rich_markup_mode="rich",
     help="**uvmgr** – unified Python workflow engine (powered by *uv*).",
+    context_settings={"allow_extra_args": True},
 )
 
 # Record JSON preference in ctx.meta so sub-commands can honour it -------------
@@ -58,16 +59,6 @@ def _root(                              # noqa: D401
     ),
 ):
     """Callback only sets the JSON flag – no other side-effects."""
-
-
-def maybe_json(ctx: typer.Context, payload: Any) -> None:
-    """
-    Utility: in sub-commands call **maybe_json(ctx, data)**; if the user
-    passed --json we dump the object and exit early.
-    """
-    if ctx.meta.get("json"):
-        dump_json(payload)
-        raise typer.Exit()
 
 
 # ──────────────────────────────────────────────────────────────────────────────

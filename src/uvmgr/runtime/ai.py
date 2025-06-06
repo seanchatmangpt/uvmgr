@@ -39,10 +39,6 @@ def _init_lm(model: str, **kw) -> dspy.LM:
         **kw,
     }
 
-    # if model.startswith("ollama/"):
-        # strip prefix; Ollama doesn't need it
-        # cfg["api_base"] = os.getenv("OLLAMA_BASE", "http://localhost:11434/v1")
-        # cfg["api_key"] = os.getenv("OLLAMA_API_KEY", "ollama-no-key")  # dummy token
     if model.startswith("openai/"):
         cfg["api_key"] = os.getenv("OPENAI_API_KEY")
         if not cfg["api_key"]:
@@ -51,6 +47,37 @@ def _init_lm(model: str, **kw) -> dspy.LM:
     lm = dspy.LM(**{k: v for k, v in cfg.items() if v is not None})
     dspy.settings.configure(lm=lm, experimental=True)
     return lm
+
+
+def list_ollama_models() -> List[str]:
+    """List all available Ollama models."""
+    import requests
+    from urllib.parse import urljoin
+
+    base_url = os.getenv("OLLAMA_BASE", "http://localhost:11434")
+    try:
+        response = requests.get(urljoin(base_url, "/api/tags"))
+        response.raise_for_status()
+        models = response.json().get("models", [])
+        return [model["name"] for model in models]
+    except requests.RequestException as e:
+        _log.error(f"Failed to list Ollama models: {e}")
+        return []
+
+
+def delete_ollama_model(model: str) -> bool:
+    """Delete an Ollama model. Returns True if successful, False otherwise."""
+    import requests
+    from urllib.parse import urljoin
+
+    base_url = os.getenv("OLLAMA_BASE", "http://localhost:11434")
+    try:
+        response = requests.delete(urljoin(base_url, f"/api/delete"), json={"name": model})
+        response.raise_for_status()
+        return True
+    except requests.RequestException as e:
+        _log.error(f"Failed to delete Ollama model {model}: {e}")
+        return False
 
 
 # --------------------------------------------------------------------------- #

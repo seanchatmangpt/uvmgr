@@ -1,0 +1,1 @@
+# Rename file from serve.py to mcp.py (if not already done) so that the command is registered as 'uvmgr mcp serve'. 

@@ -33,3 +33,15 @@ def fix_tests(model: str, out_patch: Path = Path("fix.patch")) -> str:
     if diff:
         safe_write(out_patch, diff)
     return diff
+
+
+@timed
+def list_models() -> List[str]:
+    """List all available Ollama models."""
+    return _rt.list_ollama_models()
+
+
+@timed
+def delete_model(model: str) -> bool:
+    """Delete an Ollama model. Returns True if successful, False otherwise."""
+    return _rt.delete_ollama_model(model)

@@ -1,3 +1,5 @@
 Do not edit `pyproject.toml` file.
 
-Use `uv` for package management.
+Use `uvmgr` for package management.
+
+NEVER RUN uv, pytest, python, python3, coverage directly.

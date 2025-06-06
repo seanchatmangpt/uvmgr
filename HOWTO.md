@@ -1,343 +1,242 @@
-# uvmgr: Unified Python Workflow Engine Guide
-
-## Overview
-
-uvmgr is a powerful unified Python workflow engine powered by `uv`, designed to streamline Python project development, testing, and deployment. This guide covers best practices for using uvmgr's features to create and manage Python projects end-to-end.
-
-## Table of Contents
-
-1. [Getting Started](#getting-started)
-2. [Project Creation](#project-creation)
-3. [Project Lifecycle](#project-lifecycle)
-4. [Development Workflow](#development-workflow)
-5. [Quality Assurance](#quality-assurance)
-6. [Building and Releasing](#building-and-releasing)
-7. [Advanced Features](#advanced-features)
-
-## Getting Started
-
-### Installation
-
-```bash
-# Install uvmgr
-pip install uvmgr
-
-# Verify installation
-uvmgr --version
-```
-
-## Project Creation
-
-### Creating a New Project
-
-uvmgr uses [Substrate](https://github.com/superlinear-ai/substrate) as its default template for creating new Python projects. Substrate provides a modern, standardized project structure with best practices for Python development.
-
-```bash
-# Create a new project using the default Substrate template
-uvmgr new my-project
-
-# Create a project with a custom template
-uvmgr new my-project --template https://github.com/user/custom-template
-
-# Interactive mode with all configuration options
-uvmgr new my-project --interactive
-```
-
-### Project Configuration
-
-During project creation, you'll be prompted to configure:
-
-1. **Basic Information**
-   - Project name (converted to kebab-case)
-   - Package name (converted to snake_case)
-   - Project description
-   - Author information
-   - License selection
-
-2. **Development Tools**
-   - Pre-commit hooks for code quality
-   - Conventional commits for versioning
-   - GPG commit signing
-   - CI/CD platform (GitHub/GitLab)
-   - Test coverage tools
-
-3. **Environment Setup**
-   - Python version
-   - Development container configuration
-   - VS Code settings
-   - Git hooks
-
-### Project Structure
-
-The created project will have this structure:
-
-```
-my-project/
-├── .devcontainer/          # Dev container configuration
-├── .github/               # GitHub workflows
-├── src/
-│   └── my_project/       # Package source
-├── tests/                # Test suite
-├── .pre-commit-config.yaml
-├── pyproject.toml        # Project metadata and dependencies
-├── README.md
-└── CHANGELOG.md
-```
-
-### Template Features
-
-The Substrate template includes:
-
-1. **Development Environment**
-   - Dev container support
-   - VS Code integration
-   - Pre-configured linting and formatting
-   - Git hooks setup
-   - Virtual environment management with uv
-
-2. **Quality Assurance**
-   - Ruff for fast Python linting
-   - MyPy for static type checking
-   - Pre-commit hooks
-   - Test coverage with Coverage.py
-
-3. **CI/CD Pipeline**
-   - GitHub Actions or GitLab CI/CD
-   - Automated testing
-   - Code quality checks
-   - Release management
-
-4. **Documentation**
-   - README.md template
-   - CHANGELOG.md
-   - API documentation setup
-   - Development guides
-
-### Custom Templates
-
-You can use custom Copier templates by providing a URL:
-
-```bash
-# Use a custom template
-uvmgr new my-project --template https://github.com/user/custom-template
-
-# Pin template version
-uvmgr new my-project --template https://github.com/user/custom-template@v1.0.0
-```
-
-### Environment Management
-
-```bash
-# Open a Python REPL in your project environment
-uvmgr shell
-
-# Execute a Python script in the project environment
-uvmgr exec script.py
-
-# Run arbitrary tools in the project environment
-uvmgr tool <tool-name>
-```
-
-## Project Lifecycle
-
-### Dependency Management
-
-```bash
-# Add new dependencies
-uvmgr deps add requests pandas
-
-# Upgrade dependencies
-uvmgr deps upgrade
-
-# Remove dependencies
-uvmgr deps remove unused-package
-
-# Manage package indexes
-uvmgr index add https://custom.pypi.org/simple
-```
-
-### Cache Management
-
-```bash
-# Manage uv cache
-uvmgr cache clean
-uvmgr cache list
-```
-
-## Development Workflow
-
-### Development Tasks
-
-```bash
-# Run all development tasks (lint, test, serve)
-uvmgr dev
-
-# Individual tasks
-uvmgr lint    # Run Ruff + MyPy + Pre-commit
-uvmgr test    # Run coverage + pytest
-uvmgr serve   # Start FastAPI dev server
-```
-
-### Code Quality
-
-The `lint` command runs multiple quality checks:
-- Ruff for fast Python linting
-- MyPy for static type checking
-- Pre-commit hooks for git commit validation
-
-## Quality Assurance
-
-### Testing
-
-```bash
-# Run tests with coverage
-uvmgr test
-
-# Run specific test files
-uvmgr test tests/test_specific.py
-
-# Generate coverage reports
-uvmgr test --coverage
-```
-
-### AI-Assisted Development
-
-```bash
-# Use local or remote Language Models for development
-uvmgr ai <prompt>
-
-# Common use cases:
-uvmgr ai "Review this code for security issues"
-uvmgr ai "Generate test cases for this function"
-```
-
-## Building and Releasing
-
-### Building Packages
-
-```bash
-# Build wheel and sdist
-uvmgr build
-
-# Build specific formats
-uvmgr build --wheel-only
-uvmgr build --sdist-only
-```
-
-### Release Management
-
-```bash
-# Prepare a new release
-uvmgr release
-
-# The release command uses Commitizen to:
-# - Bump version numbers
-# - Generate changelog
-# - Create git tags
-# - Prepare release notes
-```
-
-## Advanced Features
-
-### Workflow Automation
-
-```bash
-# Execute BPMN workflows
-uvmgr agent run workflow.bpmn
-
-# Schedule tasks using APScheduler
-uvmgr ap-scheduler add "task_name" "cron_expression"
-```
-
-### Remote Execution
-
-```bash
-# Execute commands on remote systems
-uvmgr remote run <command>
-
-# Note: Remote execution features are under development
-```
-
-## Best Practices
-
-1. **Project Structure**
-   - Use `uvmgr new` to create standardized project layouts
-   - Follow the template's directory structure
-   - Keep dependencies in `pyproject.toml`
-
-2. **Development Workflow**
-   - Run `uvmgr dev` before committing changes
-   - Use `uvmgr lint` to maintain code quality
-   - Leverage `uvmgr ai` for code reviews and improvements
-
-3. **Dependency Management**
-   - Use `uvmgr deps` for all package operations
-   - Keep dependencies up to date with `uvmgr deps upgrade`
-   - Use `uvmgr cache` to manage package caches
-
-4. **Testing and Quality**
-   - Write tests for all new features
-   - Maintain high test coverage
-   - Use `uvmgr test` regularly during development
-
-5. **Release Process**
-   - Use `uvmgr release` for version management
-   - Follow semantic versioning
-   - Keep changelog up to date
-
-## Tips and Tricks
-
-- Use `--json` flag for machine-readable output:
-  ```bash
-  uvmgr --json <command>
-  ```
-
-- Combine commands for efficient workflows:
-  ```bash
-  uvmgr deps add new-package && uvmgr dev
-  ```
-
-- Use the shell for interactive development:
-  ```bash
-  uvmgr shell
-  ```
-
-## Troubleshooting
-
-Common issues and solutions:
-
-1. **Cache Issues**
-   ```bash
-   uvmgr cache clean
-   ```
-
-2. **Dependency Conflicts**
-   ```bash
-   uvmgr deps upgrade --latest
-   ```
-
-3. **Test Failures**
-   ```bash
-   uvmgr test --verbose
-   ```
-
-## Contributing
-
-To contribute to uvmgr:
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run `uvmgr dev` to verify
-5. Submit a pull request
-
-## License
-
-[Add appropriate license information]
+Of course. Here is a completely rewritten `HOWTO.md` file, drafted from scratch to be accurate, comprehensive, and logically structured based on the provided source code.
 
 ---
 
-For more detailed information about specific commands, use:
+# uvmgr: A Comprehensive User Guide
+
+Welcome to the comprehensive user guide for `uvmgr`. This document provides in-depth information and practical examples for every feature, serving as a complete reference for the tool.
+
+For a brief overview, please see the [README.md](README.md).
+
+## Table of Contents
+
+1.  [Core Concepts](#1-core-concepts)
+2.  [Installation](#2-installation)
+3.  [The Project Lifecycle](#3-the-project-lifecycle)
+    *   [Project Creation](#31-project-creation)
+    *   [Dependency Management](#32-dependency-management)
+    *   [Development Environment](#33-development-environment)
+    *   [Quality Assurance](#34-quality-assurance)
+    *   [Building and Releasing](#35-building-and-releasing)
+4.  [Advanced Features](#4-advanced-features)
+    *   [AI-Assisted Development](#41-ai-assisted-development)
+    *   [Automation and Scheduling](#42-automation-and-scheduling)
+    *   [Cache Management](#43-cache-management)
+5.  [A Note on Deprecated Commands](#5-a-note-on-deprecated-commands)
+
+## 1. Core Concepts
+
+### The uvmgr Architecture
+
+`uvmgr` is designed with a clean, three-layer architecture:
+*   **Commands (`src/uvmgr/commands`):** Defines the CLI interface that you interact with (using Typer).
+*   **Operations (`src/uvmgr/ops`):** Contains the core orchestration logic, written in pure Python.
+*   **Runtime (`src/uvmgr/runtime`):** The layer that performs side-effects, like running subprocesses (`uv`, `pytest`) or making network calls.
+
+### JSON Output
+
+All commands support a global `--json` or `-j` flag. When used, `uvmgr` will output machine-readable JSON instead of human-readable text, which is ideal for scripting and integration with other tools.
+
 ```bash
-uvmgr <command> --help
-``` 
+uvmgr --json deps list
+```
+
+## 2. Installation
+
+If you haven't already, install `uvmgr` using `pip`:
+```bash
+pip install uvmgr
+```
+
+## 3. The Project Lifecycle
+
+This guide walks you through the typical lifecycle of a Python project using `uvmgr`.
+
+### 3.1. Project Creation (`uvmgr new`)
+
+The `new` command scaffolds a new Python project. It sets up a standard directory structure and basic configuration files.
+
+```bash
+# Create a standard library project with a Typer CLI
+uvmgr new my-new-library
+
+# Create a project with a FastAPI skeleton included
+uvmgr new my-web-api --fastapi
+```
+*(Note: The project creation logic is currently a stub and will be fully implemented in a future version.)*
+
+### 3.2. Dependency Management (`uvmgr deps` & `uvmgr index`)
+
+#### Managing Dependencies (`deps`)
+Use the `deps` command group to manage your project's dependencies via `uv`.
+
+```bash
+# Add a runtime dependency to your project
+uvmgr deps add "requests" "pandas"
+
+# Add a development-only dependency
+uvmgr deps add "pytest" --dev
+
+# Remove a dependency
+uvmgr deps remove "pandas"
+
+# Upgrade all dependencies to the latest versions allowed by pyproject.toml
+uvmgr deps upgrade --all
+
+# List all packages in the virtual environment
+uvmgr deps list
+```
+
+#### Managing Package Indexes (`index`)
+If you need to use a private or alternative PyPI index, you can manage it with the `index` command.
+
+```bash
+# Add a custom index URL
+uvmgr index add https://my.private.pypi/simple
+
+# List all configured custom indexes
+uvmgr index list
+```
+
+### 3.3. Development Environment (`uvmgr exec`, `uvmgr shell`, `uvmgr tool`)
+
+#### Executing Scripts (`exec`)
+The `exec` command runs a Python script within the project's managed virtual environment, ensuring it has access to all installed dependencies.
+
+```bash
+# Run a script
+uvmgr exec scripts/my_script.py
+
+# Run a script and pass arguments to it
+uvmgr exec scripts/my_script.py --input data.csv --output results.csv
+
+# Run a script with temporary dependencies without installing them permanently
+uvmgr exec --with numpy --with matplotlib scripts/plot.py
+
+# Pipe a script into uvmgr from stdin
+echo 'import sys; print(sys.version)' | uvmgr exec -
+```
+
+#### Interactive Shell (`shell`)
+For interactive work and debugging, open a Python REPL directly in the project's environment. It will automatically use IPython if available.
+
+```bash
+uvmgr shell open
+```
+
+#### Running Tools (`tool`)
+The `tool` command allows you to install and run command-line tools in an isolated environment managed by `uv`, keeping your project's dependencies clean.
+
+```bash
+# Install a tool like black
+uvmgr tool install black
+
+# Run the installed tool
+uvmgr tool run black . --check
+
+# Print the directory where tools are installed
+uvmgr tool dir
+```
+
+### 3.4. Quality Assurance (`uvmgr tests`)
+
+The `tests` command group is your interface for running the project's test suite.
+
+```bash
+# Run the test suite with pytest
+uvmgr tests run
+
+# Run tests with verbose output
+uvmgr tests run -v
+
+# Run tests and generate a code coverage report
+uvmgr tests coverage
+```
+
+### 3.5. Building and Releasing (`uvmgr build` & `uvmgr release`)
+
+#### Building Packages (`build`)
+When you are ready to package your project, the `build` command creates `sdist` and `wheel` files.
+
+```bash
+# Build packages into the dist/ directory
+uvmgr build dist
+
+# Build and immediately upload to PyPI using Twine
+uvmgr build dist --upload
+```
+
+#### Release Management (`release`)
+`uvmgr` uses [Commitizen](https://commitizen-tools.github.io/commitizen/) to manage versions and changelogs based on your commit history.
+
+```bash
+# Automatically bump the version, update CHANGELOG.md, and create a git tag
+uvmgr release bump
+
+# Print the generated changelog to the console
+uvmgr release changelog
+```
+
+## 4. Advanced Features
+
+### 4.1. AI-Assisted Development (`uvmgr ai`)
+
+Leverage local or remote language models to enhance your workflow. By default, it uses `ollama/phi3:medium-128k`.
+
+```bash
+# Ask the AI to explain a concept or review code
+uvmgr ai ask "What are the pros and cons of using asyncio?"
+
+# Generate a markdown plan for a new feature and save it to a file
+uvmgr ai plan "Implement a Redis cache layer" --out PLAN.md
+
+# Automatically attempt to generate a patch for failing tests
+uvmgr ai fix-tests --patch "fix.patch"
+
+# List available local Ollama models
+uvmgr ai ollama list
+
+# Delete a local Ollama model
+uvmgr ai ollama delete llama3
+```
+
+### 4.2. Automation and Scheduling (`uvmgr agent` & `uvmgr ap-scheduler`)
+
+#### BPMN Workflows (`agent`)
+Run business process workflows defined in `.bpmn` files.
+
+```bash
+uvmgr agent run my_workflow.bpmn
+```
+
+#### Scheduled Tasks (`ap-scheduler`)
+Schedule commands to run at specific intervals or on a cron schedule.
+
+```bash
+# Schedule a command to run every 10 minutes
+uvmgr ap-scheduler add --every 600 "backup-job" "python scripts/backup.py"
+
+# Schedule a command to run at midnight every day
+uvmgr ap-scheduler add --cron "0 0 * * *" "cleanup-job" "rm -rf /tmp/cache"
+
+# List all scheduled jobs
+uvmgr ap-scheduler list
+
+# Remove a job
+uvmgr ap-scheduler remove "backup-job"
+
+# Start the scheduler in the foreground
+uvmgr ap-scheduler run
+```
+
+### 4.3. Cache Management (`uvmgr cache`)
+
+Manage the `uv` package cache.
+
+```bash
+# Show the location of the uv cache directory
+uvmgr cache dir
+
+# Prune (clean) the cache to remove unused packages
+uvmgr cache prune
+```
