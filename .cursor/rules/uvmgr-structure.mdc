@@ -1,0 +1,38 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# uvmgr Project Structure
+
+The uvmgr project is organized as a Python package with the following key components:
+
+## Core Components
+
+- Main CLI entry point: [src/uvmgr/cli.py](mdc:src/uvmgr/cli.py)
+  - Sets up logging and mounts sub-commands
+  - Handles global CLI options like --json
+  - Manages command routing
+
+- Logging configuration: [src/uvmgr/logging_config.py](mdc:src/uvmgr/logging_config.py)
+  - Configures logging levels and format
+  - Sets up environment-based logging
+
+- CLI utilities: [src/uvmgr/cli_utils.py](mdc:src/uvmgr/cli_utils.py)
+  - Handles CLI exception handling
+  - Provides debug mode support
+
+## Project Documentation
+
+- Main documentation: [HOWTO.md](mdc:HOWTO.md)
+  - Comprehensive guide to using uvmgr
+  - Covers project lifecycle and best practices
+  - Includes troubleshooting guides
+
+## Development Guidelines
+
+1. All new commands should be added as sub-commands in the `uvmgr.commands` package
+2. Use the logging configuration from `logging_config.py` for consistent logging
+3. Follow the CLI exception handling pattern in `cli_utils.py`
+4. Maintain test coverage for all new features
+5. Update HOWTO.md when adding new user-facing features

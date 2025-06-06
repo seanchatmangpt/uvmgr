@@ -13,17 +13,26 @@ authors = [
 requires-python = ">=3.12,<4.0"
 dependencies = [
   "apscheduler>=3.11.0",
+  "databento>=0.54.0",
   "dspy>=2.6.24",
+  "ember-ai>=0.0.1",
   "fastapi>=0.115.12",
   "keyring>=25.6.0",
   "nautilus-trader>=1.217.0",
+  "numpy>=2.2.6",
   "opentelemetry-sdk>=1.33.1",
+  "pandas>=2.2.3",
   "poethepoet (>=0.32.1)",
+  "pyarrow>=20.0.0",
   "pyperclip>=1.9.0",
+  "pytest>=8.3.5",
+  "pytz>=2025.2",
   "rich>=14.0.0",
   "ruff>=0.11.11",
   "spiffworkflow>=3.1.1",
   "typer>=0.15.1",
+  "yfinance>=0.2.61",
+  "zstandard>=0.23.0",
 ]
 
 [project.scripts]  # https://docs.astral.sh/uv/concepts/projects/config/#command-line-interfaces

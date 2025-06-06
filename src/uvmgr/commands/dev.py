@@ -8,6 +8,7 @@ import typer
 from typing import List
 
 from .. import main as cli_root
+from uvmgr.core.shell import colour
 from uvmgr.ops import devtasks as ops
 
 dev_app = typer.Typer(help="Developer tasks: lint, test, serve")
@@ -26,6 +27,24 @@ def test(
 ):
     """Run coverage + pytest."""
     ops.test(extra)
+
+
+@dev_app.command()
+def explain(
+    model: str = typer.Option(
+        "ollama/phi3:medium-128k",
+        "--model",
+        "-m",
+        help="AI model to use for explanation",
+    ),
+):
+    """Run tests and explain any failures using AI."""
+    explanation = ops.explain_tests(model)
+    if not explanation:
+        colour("✔ All tests passed!", "green")
+    else:
+        colour("\nTest Failure Analysis:", "yellow")
+        colour(explanation, "cyan")
 
 
 @dev_app.command()

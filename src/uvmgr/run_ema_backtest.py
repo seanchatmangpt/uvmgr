@@ -19,7 +19,7 @@ from nautilus_trader.backtest.node import (
 )
 from nautilus_trader.config import ImportableStrategyConfig, LoggingConfig
 from nautilus_trader.core.datetime import dt_to_unix_nanos
-from nautilus_trader.model import QuoteTick
+from nautilus_trader.model import QuoteTick, Venue
 from nautilus_trader.persistence.catalog import ParquetDataCatalog
 from nautilus_trader.persistence.wranglers import QuoteTickDataWrangler
 from nautilus_trader.test_kit.providers import CSVTickDataLoader, TestInstrumentProvider
@@ -198,7 +198,7 @@ async def run_backtest(
         logger.info(engine.trader.generate_positions_report())
         
         logger.info("\nAccount Report:")
-        logger.info(engine.trader.generate_account_report(venue_config.name))
+        logger.info(engine.trader.generate_account_report(Venue(venue_config.name)))
 
         return node
 

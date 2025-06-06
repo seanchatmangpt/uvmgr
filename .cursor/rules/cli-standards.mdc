@@ -1,0 +1,94 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# CLI Standards
+
+All command-line interfaces in this project must:
+1. Use Typer for implementation
+2. Be executed through the `uvmgr` command-line interface
+3. Never be executed directly via Python
+
+## Examples
+
+✅ Good:
+```python
+# Command implementation using Typer
+import typer
+from typing import Optional
+from datetime import datetime
+
+app = typer.Typer()
+
+@app.command()
+def run_task(
+    data_path: Path = typer.Argument(..., help="Path to data directory"),
+    name: str = typer.Option("default", help="Task name"),
+    start_date: datetime = typer.Option(..., formats=["%Y-%m-%d"], help="Start date"),
+    size: float = typer.Option(100.0, help="Size parameter"),
+) -> None:
+    """Run a task with the specified parameters."""
+    # Implementation
+```
+
+✅ Good (Usage):
+```bash
+# Execute via uvmgr
+uvmgr task run --data-path /path/to/data --name task1
+
+# Use global options
+uvmgr task run --json --debug ...
+```
+
+❌ Bad (Implementation):
+```python
+import argparse
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--data-path", required=True)
+    # ... more arguments
+    return parser.parse_args()
+```
+
+❌ Bad (Usage):
+```bash
+# Direct Python execution not allowed
+python -m uvmgr.task.run_task ...
+
+# Direct module import not allowed
+python -c "from uvmgr.task.run_task import main; main()"
+```
+
+## Implementation Guidelines
+
+1. Use Typer's type hints for automatic validation
+2. Leverage Typer's built-in help text and formatting
+3. Use Option() for optional parameters with defaults
+4. Use Argument() for required positional parameters
+5. Document all parameters with help text
+6. Use callback functions for complex validation
+7. Group related commands using Typer's command groups
+8. Always implement as `uvmgr` sub-commands
+9. Support global `uvmgr` options (--json, --debug, etc.)
+
+## Command Organization
+
+All commands must be organized under the `uvmgr.commands` package:
+```
+uvmgr/
+  commands/
+    __init__.py
+    deps.py       # Dependency management
+    test.py       # Testing commands
+    lint.py       # Linting commands
+    build.py      # Build commands
+    release.py    # Release management
+```
+
+## References
+
+- [src/uvmgr/cli.py](mdc:src/uvmgr/cli.py) - Main CLI entry point
+- [src/uvmgr/commands/](mdc:src/uvmgr/commands/) - Command implementations
+- [HOWTO.md](mdc:HOWTO.md) - Project documentation

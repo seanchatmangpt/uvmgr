@@ -7,29 +7,123 @@ uvmgr is a powerful unified Python workflow engine powered by `uv`, designed to 
 ## Table of Contents
 
 1. [Getting Started](#getting-started)
-2. [Project Lifecycle](#project-lifecycle)
-3. [Development Workflow](#development-workflow)
-4. [Quality Assurance](#quality-assurance)
-5. [Building and Releasing](#building-and-releasing)
-6. [Advanced Features](#advanced-features)
+2. [Project Creation](#project-creation)
+3. [Project Lifecycle](#project-lifecycle)
+4. [Development Workflow](#development-workflow)
+5. [Quality Assurance](#quality-assurance)
+6. [Building and Releasing](#building-and-releasing)
+7. [Advanced Features](#advanced-features)
 
 ## Getting Started
 
-### Creating a New Project
+### Installation
 
 ```bash
-# Create a new project using Copier templates
-uvmgr new my-project
+# Install uvmgr
+pip install uvmgr
 
-# Or use the project command (alternative)
-uvmgr project my-project
+# Verify installation
+uvmgr --version
 ```
 
-The template system will guide you through:
-- Project structure setup
-- Dependency management configuration
-- Development tools setup
-- CI/CD pipeline configuration
+## Project Creation
+
+### Creating a New Project
+
+uvmgr uses [Substrate](https://github.com/superlinear-ai/substrate) as its default template for creating new Python projects. Substrate provides a modern, standardized project structure with best practices for Python development.
+
+```bash
+# Create a new project using the default Substrate template
+uvmgr new my-project
+
+# Create a project with a custom template
+uvmgr new my-project --template https://github.com/user/custom-template
+
+# Interactive mode with all configuration options
+uvmgr new my-project --interactive
+```
+
+### Project Configuration
+
+During project creation, you'll be prompted to configure:
+
+1. **Basic Information**
+   - Project name (converted to kebab-case)
+   - Package name (converted to snake_case)
+   - Project description
+   - Author information
+   - License selection
+
+2. **Development Tools**
+   - Pre-commit hooks for code quality
+   - Conventional commits for versioning
+   - GPG commit signing
+   - CI/CD platform (GitHub/GitLab)
+   - Test coverage tools
+
+3. **Environment Setup**
+   - Python version
+   - Development container configuration
+   - VS Code settings
+   - Git hooks
+
+### Project Structure
+
+The created project will have this structure:
+
+```
+my-project/
+├── .devcontainer/          # Dev container configuration
+├── .github/               # GitHub workflows
+├── src/
+│   └── my_project/       # Package source
+├── tests/                # Test suite
+├── .pre-commit-config.yaml
+├── pyproject.toml        # Project metadata and dependencies
+├── README.md
+└── CHANGELOG.md
+```
+
+### Template Features
+
+The Substrate template includes:
+
+1. **Development Environment**
+   - Dev container support
+   - VS Code integration
+   - Pre-configured linting and formatting
+   - Git hooks setup
+   - Virtual environment management with uv
+
+2. **Quality Assurance**
+   - Ruff for fast Python linting
+   - MyPy for static type checking
+   - Pre-commit hooks
+   - Test coverage with Coverage.py
+
+3. **CI/CD Pipeline**
+   - GitHub Actions or GitLab CI/CD
+   - Automated testing
+   - Code quality checks
+   - Release management
+
+4. **Documentation**
+   - README.md template
+   - CHANGELOG.md
+   - API documentation setup
+   - Development guides
+
+### Custom Templates
+
+You can use custom Copier templates by providing a URL:
+
+```bash
+# Use a custom template
+uvmgr new my-project --template https://github.com/user/custom-template
+
+# Pin template version
+uvmgr new my-project --template https://github.com/user/custom-template@v1.0.0
+```
 
 ### Environment Management
 

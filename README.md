@@ -80,3 +80,105 @@ The following development environments are supported:
 - Run `cz bump` to bump the app's version, update the `CHANGELOG.md`, and create a git tag. Then push the changes and the git tag with `git push origin main --tags`.
 
 </details>
+
+# Market Data Client
+
+A Databento-like market data client implementation using yfinance as the data source. This project provides a similar interface to Databento's API but uses free data from Yahoo Finance, making it perfect for development and testing purposes.
+
+## Features
+
+- Databento-like API interface
+- Support for multiple data schemas (OHLCV bars at different intervals)
+- Multiple output formats (CSV, JSON, Parquet, compressed pickle)
+- Proper error handling and logging
+- Type hints and documentation
+- Production-ready code structure
+
+## Installation
+
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd <repository-name>
+```
+
+2. Create a virtual environment (recommended):
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+3. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+## Usage
+
+Here's a basic example of how to use the MarketDataClient:
+
+```python
+from market_data_client import MarketDataClient, Schema
+
+# Initialize client
+client = MarketDataClient()
+
+# Get hourly data for AAPL and MSFT
+data = client.get_range(
+    symbols=["AAPL", "MSFT"],
+    schema=Schema.OHLCV_1H,
+    start="2024-01-01",
+    end="2024-01-05"
+)
+
+# Convert to DataFrame
+df = data.to_df()
+print(df.head())
+
+# Save to different formats
+data.to_csv("market_data.csv")
+data.to_json("market_data.json")
+data.to_parquet("market_data.parquet")
+data.to_file("market_data.dbn.zst")  # Simulated DBN format
+```
+
+## Supported Schemas
+
+The client supports the following data schemas:
+
+- `OHLCV_1M`: 1-minute OHLCV bars
+- `OHLCV_5M`: 5-minute OHLCV bars
+- `OHLCV_15M`: 15-minute OHLCV bars
+- `OHLCV_1H`: 1-hour OHLCV bars
+- `OHLCV_1D`: 1-day OHLCV bars
+
+## Data Format
+
+The data is returned in a format similar to Databento's, with the following columns:
+
+- `ts_event`: Timestamp of the bar
+- `rtype`: Record type (34 for OHLCV data)
+- `publisher_id`: Publisher ID (1 for yfinance)
+- `instrument_id`: Unique identifier for each record
+- `open`: Opening price
+- `high`: Highest price
+- `low`: Lowest price
+- `close`: Closing price
+- `volume`: Trading volume
+- `symbol`: Symbol name
+
+## Limitations
+
+- Only supports 'raw_symbol' as the symbol type
+- Limited to OHLCV data (no order book data)
+- Data quality depends on Yahoo Finance
+- No real-time data support
+- Cost simulation always returns 0
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.

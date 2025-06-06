@@ -1,0 +1,59 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# uvmgr Testing Guide
+
+## Test Structure
+
+Tests are organized in the `tests/` directory with the following conventions:
+
+- Test files mirror the source structure: `tests/test_<module>.py`
+- Each test module focuses on a specific component
+- Test fixtures are defined at the module level when shared
+
+## Key Test Files
+
+- CLI tests: [tests/test_cli.py](mdc:tests/test_cli.py)
+  - Tests command-line interface functionality
+  - Verifies sub-command mounting
+  - Validates global options
+
+- Logging tests: [tests/test_logging.py](mdc:tests/test_logging.py)
+  - Verifies logging configuration
+  - Tests log level handling
+  - Validates log format
+
+## Testing Best Practices
+
+1. Use pytest fixtures for test setup and teardown
+2. Follow the Arrange-Act-Assert pattern
+3. Mock external dependencies
+4. Use meaningful test names that describe the scenario
+5. Include both positive and negative test cases
+6. Test edge cases and error conditions
+7. Maintain test isolation
+
+## Running Tests
+
+```bash
+# Run all tests
+uvmgr test
+
+# Run specific test file
+uvmgr test tests/test_cli.py
+
+# Run with coverage
+uvmgr test --coverage
+
+# Run with verbose output
+uvmgr test --verbose
+```
+
+## Test Coverage Requirements
+
+- Minimum coverage: 80%
+- Critical paths: 90%
+- CLI commands: 100%
+- Error handling: 100%

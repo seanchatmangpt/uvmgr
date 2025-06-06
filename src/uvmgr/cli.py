@@ -19,7 +19,8 @@ from typing import Any
 import typer
 
 from uvmgr.core.shell import colour, dump_json
-from uvmgr.core.telemetry import setup_logging
+from uvmgr.logging_config import setup_logging
+from uvmgr.cli_utils import handle_cli_exception
 
 import os
 os.environ.setdefault("LITELLM_LOCAL_MODEL_COST_MAP", "True")
@@ -27,7 +28,7 @@ os.environ.setdefault("LITELLM_LOCAL_MODEL_COST_MAP", "True")
 # ──────────────────────────────────────────────────────────────────────────────
 #  Logging bootstrap (idempotent)
 # ──────────────────────────────────────────────────────────────────────────────
-setup_logging("INFO")
+setup_logging()
 
 # ──────────────────────────────────────────────────────────────────────────────
 #  Root Typer application
@@ -87,4 +88,14 @@ for verb in commands_pkg.__all__:
 
     # Mount under the same name (convert _ to - for nicer CLI UX) --------------
     app.add_typer(sub_app, name=verb.replace("_", "-"))
+
+
+if __name__ == "__main__":
+    import sys
+    debug = "--debug" in sys.argv
+    try:
+        # ... main CLI logic ...
+        pass
+    except Exception as e:
+        handle_cli_exception(e, debug=debug)
 

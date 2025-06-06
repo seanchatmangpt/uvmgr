@@ -1,0 +1,107 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# DMN Format Standards
+
+All Decision Model and Notation (DMN) rules in this project must use JSON format instead of XML. This ensures better readability, maintainability, and easier programmatic manipulation of rules.
+
+## Examples
+
+✅ Good:
+```json
+{
+  "definitions": {
+    "id": "buy_on_gap",
+    "name": "Buy on Gap Strategy",
+    "namespace": "https://kiegroup.org/dmn/buy_on_gap",
+    "decision": {
+      "id": "BuyOnGapDecision",
+      "name": "Buy on Gap Decision",
+      "decisionTable": {
+        "hitPolicy": "UNIQUE",
+        "inputs": [
+          {
+            "id": "Volatility",
+            "label": "Volatility",
+            "type": "number"
+          },
+          {
+            "id": "OvernightGap",
+            "label": "Overnight Gap",
+            "type": "number"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "Action",
+            "label": "Action",
+            "type": "string"
+          }
+        ],
+        "rules": [
+          {
+            "conditions": {
+              "Volatility": "<= 0.02",
+              "OvernightGap": "< -0.01"
+            },
+            "action": "BUY"
+          },
+          {
+            "conditions": {
+              "Volatility": "> 0.02",
+              "OvernightGap": "< -0.015"
+            },
+            "action": "BUY"
+          },
+          {
+            "conditions": {
+              "Volatility": "-",
+              "OvernightGap": "-"
+            },
+            "action": "WAIT"
+          }
+        ]
+      }
+    }
+  }
+}
+```
+
+❌ Bad:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/">
+  <decision id="BuyOnGapDecision">
+    <decisionTable>
+      <!-- XML format not allowed -->
+    </decisionTable>
+  </decision>
+</definitions>
+```
+
+## Implementation Guidelines
+
+1. Store DMN rules in `.json` files
+2. Use camelCase for JSON keys
+3. Keep rule structure flat and readable
+4. Include clear comments for complex rules
+5. Validate JSON against schema
+6. Use meaningful IDs and names
+7. Group related rules in the same file
+
+## File Structure
+
+DMN rules should be stored in:
+```
+src/uvmgr/backtest/zen_rules/
+├── buy_on_gap.json
+├── etf_arbitrage.json
+└── tail_reaper.json
+```
+
+## References
+
+- [src/uvmgr/backtest/zen_rules/buy_on_gap.dmn](mdc:src/uvmgr/backtest/zen_rules/buy_on_gap.dmn) - Example of current XML implementation to be updated
+- [src/uvmgr/backtest/zen_chan_strategy.py](mdc:src/uvmgr/backtest/zen_chan_strategy.py) - Strategy implementation that uses DMN rules
