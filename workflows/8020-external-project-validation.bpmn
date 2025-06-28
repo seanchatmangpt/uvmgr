@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  id="external_project_8020_validation"
+                  targetNamespace="http://uvmgr.com/8020">
+
+  <bpmn:process id="external_project_validation_process" isExecutable="true" name="8020 External Project Validation">
+    
+    <!-- Start Event -->
+    <bpmn:startEvent id="start_validation" name="Start 8020 Validation">
+      <bpmn:outgoing>flow_to_setup</bpmn:outgoing>
+    </bpmn:startEvent>
+    
+    <!-- Phase 1: Environment Setup -->
+    <bpmn:sequenceFlow id="flow_to_setup" sourceRef="start_validation" targetRef="setup_environment"/>
+    
+    <bpmn:serviceTask id="setup_environment" name="Setup Test Environment">
+      <bpmn:incoming>flow_to_setup</bpmn:incoming>
+      <bpmn:outgoing>flow_to_otel_start</bpmn:outgoing>
+      <bpmn:extensionElements>
+        <bpmn:properties>
+          <bpmn:property name="script_type" value="python"/>
+          <bpmn:property name="script_content" value="uvmgr_8020_setup"/>
+          <bpmn:property name="otel_operation" value="setup_environment"/>
+          <bpmn:property name="timeout_seconds" value="300"/>
+        </bpmn:properties>
+      </bpmn:extensionElements>
+    </bpmn:serviceTask>
+    
+    <!-- Phase 2: OTEL Validation Start -->
+    <bpmn:sequenceFlow id="flow_to_otel_start" sourceRef="setup_environment" targetRef="start_otel_validation"/>
+    
+    <bpmn:serviceTask id="start_otel_validation" name="Start OTEL Monitoring">
+      <bpmn:incoming>flow_to_otel_start</bpmn:incoming>
+      <bpmn:outgoing>flow_to_project_generation</bpmn:outgoing>
+      <bpmn:extensionElements>
+        <bpmn:properties>
+          <bpmn:property name="script_type" value="python"/>
+          <bpmn:property name="script_content" value="start_otel_monitoring"/>
+          <bpmn:property name="otel_operation" value="otel_validation_start"/>
+        </bpmn:properties>
+      </bpmn:extensionElements>
+    </bpmn:serviceTask>
+    
+    <!-- Phase 3: Project Generation Parallel Gateway -->
+    <bpmn:sequenceFlow id="flow_to_project_generation" sourceRef="start_otel_validation" targetRef="project_generation_gateway"/>
+    
+    <bpmn:parallelGateway id="project_generation_gateway" name="Generate Multiple Project Types">
+      <bpmn:incoming>flow_to_project_generation</bpmn:incoming>
+      <bpmn:outgoing>flow_to_minimal</bpmn:outgoing>
+      <bpmn:outgoing>flow_to_fastapi</bpmn:outgoing>
+      <bpmn:outgoing>flow_to_substrate</bpmn:outgoing>
+      <bpmn:outgoing>flow_to_copier</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    
+    <!-- Minimal Project Branch -->
+    <bpmn:sequenceFlow id="flow_to_minimal" sourceRef="project_generation_gateway" targetRef="generate_minimal_project"/>
+    
+    <bpmn:serviceTask id="generate_minimal_project" name="Generate Minimal Project">
+      <bpmn:incoming>flow_to_minimal</bpmn:incoming>
+      <bpmn:outgoing>flow_minimal_to_test</bpmn:outgoing>
+      <bpmn:extensionElements>
+        <bpmn:properties>
+          <bpmn:property name="script_type" value="bash"/>
+          <bpmn:property name="script_content" value="generate_minimal_project"/>
+          <bpmn:property name="project_type" value="minimal"/>
+          <bpmn:property name="otel_operation" value="project_generation"/>
+        </bpmn:properties>
+      </bpmn:extensionElements>
+    </bpmn:serviceTask>
+    
+    <bpmn:sequenceFlow id="flow_minimal_to_test" sourceRef="generate_minimal_project" targetRef="test_minimal_project"/>
+    
+    <bpmn:serviceTask id="test_minimal_project" name="Test Minimal Project">
+      <bpmn:incoming>flow_minimal_to_test</bpmn:incoming>
+      <bpmn:outgoing>flow_minimal_to_join</bpmn:outgoing>
+      <bpmn:extensionElements>
+        <bpmn:properties>
+          <bpmn:property name="script_type" value="python"/>
+          <bpmn:property name="script_content" value="test_external_project"/>
+          <bpmn:property name="project_type" value="minimal"/>
+          <bpmn:property name="otel_operation" value="project_testing"/>
+          <bpmn:property name="required_success_rate" value="0.95"/>
+        </bpmn:properties>
+      </bpmn:extensionElements>
+    </bpmn:serviceTask>
+    
+    <!-- FastAPI Project Branch -->
+    <bpmn:sequenceFlow id="flow_to_fastapi" sourceRef="project_generation_gateway" targetRef="generate_fastapi_project"/>
+    
+    <bpmn:serviceTask id="generate_fastapi_project" name="Generate FastAPI Project">
+      <bpmn:incoming>flow_to_fastapi</bpmn:incoming>
+      <bpmn:outgoing>flow_fastapi_to_test</bpmn:outgoing>
+      <bpmn:extensionElements>
+        <bpmn:properties>
+          <bpmn:property name="script_type" value="bash"/>
+          <bpmn:property name="script_content" value="generate_fastapi_project"/>
+          <bpmn:property name="project_type" value="fastapi"/>
+          <bpmn:property name="otel_operation" value="project_generation"/>
+        </bpmn:properties>
+      </bpmn:extensionElements>
+    </bpmn:serviceTask>
+    
+    <bpmn:sequenceFlow id="flow_fastapi_to_test" sourceRef="generate_fastapi_project" targetRef="test_fastapi_project"/>
+    
+    <bpmn:serviceTask id="test_fastapi_project" name="Test FastAPI Project">
+      <bpmn:incoming>flow_fastapi_to_test</bpmn:incoming>
+      <bpmn:outgoing>flow_fastapi_to_join</bpmn:outgoing>
+      <bpmn:extensionElements>
+        <bpmn:properties>
+          <bpmn:property name="script_type" value="python"/>
+          <bpmn:property name="script_content" value="test_external_project"/>
+          <bpmn:property name="project_type" value="fastapi"/>
+          <bpmn:property name="otel_operation" value="project_testing"/>
+          <bpmn:property name="required_success_rate" value="0.90"/>
+        </bpmn:properties>
+      </bpmn:extensionElements>
+    </bpmn:serviceTask>
+    
+    <!-- Substrate Project Branch -->
+    <bpmn:sequenceFlow id="flow_to_substrate" sourceRef="project_generation_gateway" targetRef="generate_substrate_project"/>
+    
+    <bpmn:serviceTask id="generate_substrate_project" name="Generate Substrate Project">
+      <bpmn:incoming>flow_to_substrate</bpmn:incoming>
+      <bpmn:outgoing>flow_substrate_to_test</bpmn:outgoing>
+      <bpmn:extensionElements>
+        <bpmn:properties>
+          <bpmn:property name="script_type" value="bash"/>
+          <bpmn:property name="script_content" value="generate_substrate_project"/>
+          <bpmn:property name="project_type" value="substrate"/>
+          <bpmn:property name="otel_operation" value="project_generation"/>
+        </bpmn:properties>
+      </bpmn:extensionElements>
+    </bpmn:serviceTask>
+    
+    <bpmn:sequenceFlow id="flow_substrate_to_test" sourceRef="generate_substrate_project" targetRef="test_substrate_project"/>
+    
+    <bpmn:serviceTask id="test_substrate_project" name="Test Substrate Project">
+      <bpmn:incoming>flow_substrate_to_test</bpmn:incoming>
+      <bpmn:outgoing>flow_substrate_to_join</bpmn:outgoing>
+      <bpmn:extensionElements>
+        <bpmn:properties>
+          <bpmn:property name="script_type" value="python"/>
+          <bpmn:property name="script_content" value="test_external_project"/>
+          <bpmn:property name="project_type" value="substrate"/>
+          <bpmn:property name="otel_operation" value="project_testing"/>
+          <bpmn:property name="required_success_rate" value="0.85"/>
+        </bpmn:properties>
+      </bpmn:extensionElements>
+    </bpmn:serviceTask>
+    
+    <!-- Copier Template Branch -->
+    <bpmn:sequenceFlow id="flow_to_copier" sourceRef="project_generation_gateway" targetRef="test_copier_integration"/>
+    
+    <bpmn:serviceTask id="test_copier_integration" name="Test Copier Integration">
+      <bpmn:incoming>flow_to_copier</bpmn:incoming>
+      <bpmn:outgoing>flow_copier_to_join</bpmn:outgoing>
+      <bpmn:extensionElements>
+        <bpmn:properties>
+          <bpmn:property name="script_type" value="python"/>
+          <bpmn:property name="script_content" value="test_copier_integration"/>
+          <bpmn:property name="project_type" value="copier"/>
+          <bpmn:property name="otel_operation" value="copier_testing"/>
+          <bpmn:property name="required_success_rate" value="0.90"/>
+        </bpmn:properties>
+      </bpmn:extensionElements>
+    </bpmn:serviceTask>
+    
+    <!-- Join Gateway -->
+    <bpmn:sequenceFlow id="flow_minimal_to_join" sourceRef="test_minimal_project" targetRef="project_test_join"/>
+    <bpmn:sequenceFlow id="flow_fastapi_to_join" sourceRef="test_fastapi_project" targetRef="project_test_join"/>
+    <bpmn:sequenceFlow id="flow_substrate_to_join" sourceRef="test_substrate_project" targetRef="project_test_join"/>
+    <bpmn:sequenceFlow id="flow_copier_to_join" sourceRef="test_copier_integration" targetRef="project_test_join"/>
+    
+    <bpmn:parallelGateway id="project_test_join" name="Join Project Tests">
+      <bpmn:incoming>flow_minimal_to_join</bpmn:incoming>
+      <bpmn:incoming>flow_fastapi_to_join</bpmn:incoming>
+      <bpmn:incoming>flow_substrate_to_join</bpmn:incoming>
+      <bpmn:incoming>flow_copier_to_join</bpmn:incoming>
+      <bpmn:outgoing>flow_to_deployment</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    
+    <!-- Phase 4: Deployment Testing -->
+    <bpmn:sequenceFlow id="flow_to_deployment" sourceRef="project_test_join" targetRef="deployment_gateway"/>
+    
+    <bpmn:parallelGateway id="deployment_gateway" name="Test Deployment Methods">
+      <bpmn:incoming>flow_to_deployment</bpmn:incoming>
+      <bpmn:outgoing>flow_to_docker</bpmn:outgoing>
+      <bpmn:outgoing>flow_to_pyinstaller</bpmn:outgoing>
+      <bpmn:outgoing>flow_to_wheel</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    
+    <!-- Docker Deployment -->
+    <bpmn:sequenceFlow id="flow_to_docker" sourceRef="deployment_gateway" targetRef="test_docker_deployment"/>
+    
+    <bpmn:serviceTask id="test_docker_deployment" name="Test Docker Deployment">
+      <bpmn:incoming>flow_to_docker</bpmn:incoming>
+      <bpmn:outgoing>flow_docker_to_join</bpmn:outgoing>
+      <bpmn:extensionElements>
+        <bpmn:properties>
+          <bpmn:property name="script_type" value="bash"/>
+          <bpmn:property name="script_content" value="test_docker_deployment"/>
+          <bpmn:property name="deployment_type" value="docker"/>
+          <bpmn:property name="otel_operation" value="deployment_testing"/>
+        </bpmn:properties>
+      </bpmn:extensionElements>
+    </bpmn:serviceTask>
+    
+    <!-- PyInstaller Deployment -->
+    <bpmn:sequenceFlow id="flow_to_pyinstaller" sourceRef="deployment_gateway" targetRef="test_pyinstaller_deployment"/>
+    
+    <bpmn:serviceTask id="test_pyinstaller_deployment" name="Test PyInstaller Deployment">
+      <bpmn:incoming>flow_to_pyinstaller</bpmn:incoming>
+      <bpmn:outgoing>flow_pyinstaller_to_join</bpmn:outgoing>
+      <bpmn:extensionElements>
+        <bpmn:properties>
+          <bpmn:property name="script_type" value="bash"/>
+          <bpmn:property name="script_content" value="test_pyinstaller_deployment"/>
+          <bpmn:property name="deployment_type" value="pyinstaller"/>
+          <bpmn:property name="otel_operation" value="deployment_testing"/>
+        </bpmn:properties>
+      </bpmn:extensionElements>
+    </bpmn:serviceTask>
+    
+    <!-- Wheel Deployment -->
+    <bpmn:sequenceFlow id="flow_to_wheel" sourceRef="deployment_gateway" targetRef="test_wheel_deployment"/>
+    
+    <bpmn:serviceTask id="test_wheel_deployment" name="Test Wheel Deployment">
+      <bpmn:incoming>flow_to_wheel</bpmn:incoming>
+      <bpmn:outgoing>flow_wheel_to_join</bpmn:outgoing>
+      <bpmn:extensionElements>
+        <bpmn:properties>
+          <bpmn:property name="script_type" value="bash"/>
+          <bpmn:property name="script_content" value="test_wheel_deployment"/>
+          <bpmn:property name="deployment_type" value="wheel"/>
+          <bpmn:property name="otel_operation" value="deployment_testing"/>
+        </bpmn:properties>
+      </bpmn:extensionElements>
+    </bpmn:serviceTask>
+    
+    <!-- Deployment Join -->
+    <bpmn:sequenceFlow id="flow_docker_to_join" sourceRef="test_docker_deployment" targetRef="deployment_join"/>
+    <bpmn:sequenceFlow id="flow_pyinstaller_to_join" sourceRef="test_pyinstaller_deployment" targetRef="deployment_join"/>
+    <bpmn:sequenceFlow id="flow_wheel_to_join" sourceRef="test_wheel_deployment" targetRef="deployment_join"/>
+    
+    <bpmn:parallelGateway id="deployment_join" name="Join Deployment Tests">
+      <bpmn:incoming>flow_docker_to_join</bpmn:incoming>
+      <bpmn:incoming>flow_pyinstaller_to_join</bpmn:incoming>
+      <bpmn:incoming>flow_wheel_to_join</bpmn:incoming>
+      <bpmn:outgoing>flow_to_performance</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    
+    <!-- Phase 5: Performance Validation -->
+    <bpmn:sequenceFlow id="flow_to_performance" sourceRef="deployment_join" targetRef="validate_performance"/>
+    
+    <bpmn:serviceTask id="validate_performance" name="Validate Performance SLAs">
+      <bpmn:incoming>flow_to_performance</bpmn:incoming>
+      <bpmn:outgoing>flow_to_otel_analysis</bpmn:outgoing>
+      <bpmn:extensionElements>
+        <bpmn:properties>
+          <bpmn:property name="script_type" value="python"/>
+          <bpmn:property name="script_content" value="validate_performance_slas"/>
+          <bpmn:property name="otel_operation" value="performance_validation"/>
+          <bpmn:property name="sla_startup_time" value="500"/>
+          <bpmn:property name="sla_command_time" value="5000"/>
+          <bpmn:property name="sla_success_rate" value="0.95"/>
+        </bpmn:properties>
+      </bpmn:extensionElements>
+    </bpmn:serviceTask>
+    
+    <!-- Phase 6: OTEL Analysis -->
+    <bpmn:sequenceFlow id="flow_to_otel_analysis" sourceRef="validate_performance" targetRef="analyze_otel_data"/>
+    
+    <bpmn:serviceTask id="analyze_otel_data" name="Analyze OTEL Data">
+      <bpmn:incoming>flow_to_otel_analysis</bpmn:incoming>
+      <bpmn:outgoing>flow_to_decision</bpmn:outgoing>
+      <bpmn:extensionElements>
+        <bpmn:properties>
+          <bpmn:property name="script_type" value="python"/>
+          <bpmn:property name="script_content" value="analyze_otel_data"/>
+          <bpmn:property name="otel_operation" value="otel_analysis"/>
+          <bpmn:property name="analysis_window" value="3600"/>
+        </bpmn:properties>
+      </bpmn:extensionElements>
+    </bpmn:serviceTask>
+    
+    <!-- Decision Gateway -->
+    <bpmn:sequenceFlow id="flow_to_decision" sourceRef="analyze_otel_data" targetRef="validation_decision"/>
+    
+    <bpmn:exclusiveGateway id="validation_decision" name="8020 Validation Success?">
+      <bpmn:incoming>flow_to_decision</bpmn:incoming>
+      <bpmn:outgoing>flow_to_success</bpmn:outgoing>
+      <bpmn:outgoing>flow_to_failure</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    
+    <!-- Success Path -->
+    <bpmn:sequenceFlow id="flow_to_success" sourceRef="validation_decision" targetRef="generate_success_report">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">
+        task.data.get('validation_success', False) == True and 
+        task.data.get('overall_success_rate', 0) >= 0.80
+      </bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    
+    <bpmn:serviceTask id="generate_success_report" name="Generate Success Report">
+      <bpmn:incoming>flow_to_success</bpmn:incoming>
+      <bpmn:outgoing>flow_success_to_end</bpmn:outgoing>
+      <bpmn:extensionElements>
+        <bpmn:properties>
+          <bpmn:property name="script_type" value="python"/>
+          <bpmn:property name="script_content" value="generate_success_report"/>
+          <bpmn:property name="otel_operation" value="report_generation"/>
+          <bpmn:property name="report_type" value="success"/>
+        </bpmn:properties>
+      </bpmn:extensionElements>
+    </bpmn:serviceTask>
+    
+    <!-- Failure Path -->
+    <bpmn:sequenceFlow id="flow_to_failure" sourceRef="validation_decision" targetRef="generate_failure_report">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">
+        task.data.get('validation_success', False) == False or 
+        task.data.get('overall_success_rate', 0) < 0.80
+      </bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    
+    <bpmn:serviceTask id="generate_failure_report" name="Generate Failure Report">
+      <bpmn:incoming>flow_to_failure</bpmn:incoming>
+      <bpmn:outgoing>flow_failure_to_end</bpmn:outgoing>
+      <bpmn:extensionElements>
+        <bpmn:properties>
+          <bpmn:property name="script_type" value="python"/>
+          <bpmn:property name="script_content" value="generate_failure_report"/>
+          <bpmn:property name="otel_operation" value="report_generation"/>
+          <bpmn:property name="report_type" value="failure"/>
+        </bpmn:properties>
+      </bpmn:extensionElements>
+    </bpmn:serviceTask>
+    
+    <!-- End Events -->
+    <bpmn:sequenceFlow id="flow_success_to_end" sourceRef="generate_success_report" targetRef="end_success"/>
+    <bpmn:sequenceFlow id="flow_failure_to_end" sourceRef="generate_failure_report" targetRef="end_failure"/>
+    
+    <bpmn:endEvent id="end_success" name="8020 Validation Successful">
+      <bpmn:incoming>flow_success_to_end</bpmn:incoming>
+    </bpmn:endEvent>
+    
+    <bpmn:endEvent id="end_failure" name="8020 Validation Failed">
+      <bpmn:incoming>flow_failure_to_end</bpmn:incoming>
+      <bpmn:errorEventDefinition errorRef="validation_error"/>
+    </bpmn:endEvent>
+    
+  </bpmn:process>
+  
+  <!-- Error Definition -->
+  <bpmn:error id="validation_error" name="ValidationError" errorCode="8020_VALIDATION_FAILED"/>
+  
+</bpmn:definitions>

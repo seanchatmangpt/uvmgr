@@ -30,6 +30,66 @@ from uvmgr.core.semconv import AIAttributes
 from uvmgr.core.telemetry import span
 from uvmgr.runtime import ai as ai_runtime
 import re
+from dataclasses import dataclass
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Data Classes for Multi-Mind Analysis
+# ──────────────────────────────────────────────────────────────────────────────
+
+@dataclass
+class SpecialistAgent:
+    """Represents a specialist agent in Multi-Mind analysis."""
+    role: str
+    expertise: str
+    focus_areas: List[str]
+    perspective: str = ""
+
+
+# Specialist Registry - 8020 Implementation
+SPECIALIST_REGISTRY = {
+    "technical": SpecialistAgent(
+        role="Technical Architect",
+        expertise="System design, scalability, performance optimization",
+        focus_areas=["architecture", "performance", "scalability", "technical_debt"]
+    ),
+    "security": SpecialistAgent(
+        role="Security Expert", 
+        expertise="Cybersecurity, threat modeling, compliance",
+        focus_areas=["security", "privacy", "compliance", "risk_assessment"]
+    ),
+    "performance": SpecialistAgent(
+        role="Performance Engineer",
+        expertise="Optimization, benchmarking, resource efficiency",
+        focus_areas=["performance", "optimization", "resource_usage", "benchmarks"]
+    ),
+    "ux": SpecialistAgent(
+        role="UX/UI Specialist",
+        expertise="User experience, interface design, usability",
+        focus_areas=["user_experience", "usability", "accessibility", "design"]
+    ),
+    "business": SpecialistAgent(
+        role="Business Analyst",
+        expertise="Market analysis, ROI, strategic planning",
+        focus_areas=["business_value", "market_fit", "cost_benefit", "strategy"]
+    ),
+    "operations": SpecialistAgent(
+        role="DevOps/SRE",
+        expertise="Infrastructure, deployment, monitoring, reliability",
+        focus_areas=["infrastructure", "deployment", "monitoring", "reliability"]
+    ),
+    "data": SpecialistAgent(
+        role="Data Scientist",
+        expertise="Data analysis, machine learning, analytics",
+        focus_areas=["data_analysis", "machine_learning", "analytics", "insights"]
+    ),
+    "testing": SpecialistAgent(
+        role="QA Engineer",
+        expertise="Testing strategies, quality assurance, automation",
+        focus_areas=["testing", "quality_assurance", "automation", "validation"]
+    ),
+}
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -199,6 +259,279 @@ def analyze_code(
         })
         
         return results
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Project Analysis Operations (for external projects)
+# ──────────────────────────────────────────────────────────────────────────────
+
+@dataclass
+class AnalysisResult:
+    """Result of project analysis."""
+    success: bool
+    analysis: str = ""
+    suggestions: List[str] = None
+    error: str = ""
+    
+    def __post_init__(self):
+        if self.suggestions is None:
+            self.suggestions = []
+
+
+@dataclass 
+class SearchResult:
+    """Result of project search."""
+    file_path: Path
+    line_number: int
+    matched_text: str
+    context: str
+
+
+@dataclass
+class InitializationResult:
+    """Result of project initialization."""
+    success: bool
+    created_files: List[str] = None
+    error: str = ""
+    
+    def __post_init__(self):
+        if self.created_files is None:
+            self.created_files = []
+
+
+@dataclass
+class SessionResult:
+    """Result of session operation."""
+    success: bool
+    session_id: str = ""
+    error: str = ""
+
+
+def analyze_project(
+    project_path: Path,
+    function_name: Optional[str] = None,
+    file_path: Optional[str] = None,
+    depth: int = 3,
+) -> AnalysisResult:
+    """
+    Analyze an external project with Claude AI.
+    
+    Args:
+        project_path: Path to project directory
+        function_name: Specific function to analyze
+        file_path: Specific file to analyze
+        depth: Analysis depth (1-5)
+        
+    Returns:
+        AnalysisResult with findings and suggestions
+    """
+    with span("claude.analyze_project", project=str(project_path)):
+        try:
+            if not project_path.exists() or not project_path.is_dir():
+                return AnalysisResult(success=False, error="Invalid project path")
+            
+            # Build analysis context
+            context = _build_project_context(project_path, file_path, function_name)
+            
+            # Generate analysis prompt
+            prompt = f"""
+            Analyze the following project:
+            
+            Project: {project_path.name}
+            Path: {project_path}
+            Focus: {f"Function: {function_name}" if function_name else f"File: {file_path}" if file_path else "Full project"}
+            Depth: {depth}/5
+            
+            Context:
+            {context}
+            
+            Provide:
+            1. Overall assessment
+            2. Key insights and patterns
+            3. Potential improvements
+            4. Best practices recommendations
+            5. Architecture observations
+            
+            Be specific and actionable.
+            """
+            
+            analysis = ai_runtime.ask("openai/gpt-4o-mini", prompt)
+            
+            # Extract suggestions (simple parsing)
+            suggestions = []
+            if "recommendations:" in analysis.lower():
+                parts = analysis.lower().split("recommendations:")
+                if len(parts) > 1:
+                    rec_section = parts[1]
+                    for line in rec_section.split("\n"):
+                        line = line.strip()
+                        if line and (line.startswith("-") or line.startswith("•") or line[0].isdigit()):
+                            clean_line = line.lstrip("-•0123456789. ").strip()
+                            if clean_line:
+                                suggestions.append(clean_line)
+            
+            return AnalysisResult(
+                success=True,
+                analysis=analysis,
+                suggestions=suggestions[:10]  # Limit suggestions
+            )
+            
+        except Exception as e:
+            return AnalysisResult(success=False, error=str(e))
+
+
+def search_project(
+    project_path: Path,
+    query: str,
+    context_lines: int = 3,
+    file_pattern: Optional[str] = None,
+) -> List[SearchResult]:
+    """
+    Search through project files with AI assistance.
+    
+    Args:
+        project_path: Path to project directory
+        query: Search query (natural language)
+        context_lines: Lines of context around matches
+        file_pattern: File pattern filter
+        
+    Returns:
+        List of SearchResult objects
+    """
+    with span("claude.search_project", project=str(project_path), query=query):
+        try:
+            if not project_path.exists() or not project_path.is_dir():
+                return []
+            
+            results = []
+            
+            # Define search patterns based on file_pattern
+            if file_pattern:
+                file_patterns = [file_pattern]
+            else:
+                file_patterns = ["*.py", "*.js", "*.ts", "*.java", "*.cpp", "*.c", "*.go", "*.rs", "*.md", "*.txt"]
+            
+            # Search through files
+            for pattern in file_patterns:
+                for file_path in project_path.rglob(pattern):
+                    if file_path.is_file() and not _should_ignore_file(file_path):
+                        file_results = _search_file_content(file_path, query, context_lines)
+                        results.extend(file_results)
+            
+            # Sort by relevance (simple scoring)
+            results = _rank_search_results(results, query)
+            
+            return results[:100]  # Limit results
+            
+        except Exception as e:
+            add_span_event("search_project_error", {"error": str(e)})
+            return []
+
+
+def initialize_project(project_path: Path, profile: Optional[str] = None) -> InitializationResult:
+    """
+    Initialize Claude AI support for an external project.
+    
+    Args:
+        project_path: Path to project directory
+        profile: Project profile (python, javascript, rust, etc.)
+        
+    Returns:
+        InitializationResult with created files
+    """
+    with span("claude.initialize_project", project=str(project_path)):
+        try:
+            if not project_path.exists() or not project_path.is_dir():
+                return InitializationResult(success=False, error="Invalid project path")
+            
+            created_files = []
+            claude_dir = project_path / ".claude"
+            
+            # Create .claude directory
+            claude_dir.mkdir(exist_ok=True)
+            
+            # Create config.yml
+            config_path = claude_dir / "config.yml"
+            config_content = _generate_project_config(project_path, profile)
+            with open(config_path, "w") as f:
+                f.write(config_content)
+            created_files.append(str(config_path.relative_to(project_path)))
+            
+            # Create commands directory
+            commands_dir = claude_dir / "commands"
+            commands_dir.mkdir(exist_ok=True)
+            
+            # Create profile-specific commands
+            if profile:
+                profile_commands = _generate_profile_commands(profile)
+                for cmd_name, cmd_content in profile_commands.items():
+                    cmd_path = commands_dir / f"{cmd_name}.md"
+                    with open(cmd_path, "w") as f:
+                        f.write(cmd_content)
+                    created_files.append(str(cmd_path.relative_to(project_path)))
+            
+            # Create workflows directory
+            workflows_dir = claude_dir / "workflows"
+            workflows_dir.mkdir(exist_ok=True)
+            
+            # Create basic workflow
+            workflow_path = workflows_dir / "code-review.json"
+            workflow_content = _generate_basic_workflow()
+            with open(workflow_path, "w") as f:
+                f.write(workflow_content)
+            created_files.append(str(workflow_path.relative_to(project_path)))
+            
+            # Create memory file
+            memory_path = claude_dir / "memory.md"
+            memory_content = _generate_project_memory(project_path, profile)
+            with open(memory_path, "w") as f:
+                f.write(memory_content)
+            created_files.append(str(memory_path.relative_to(project_path)))
+            
+            return InitializationResult(success=True, created_files=created_files)
+            
+        except Exception as e:
+            return InitializationResult(success=False, error=str(e))
+
+
+def save_session(project_path: Path, session_name: str) -> SessionResult:
+    """
+    Save a session for a project.
+    
+    Args:
+        project_path: Path to project directory
+        session_name: Name for the session
+        
+    Returns:
+        SessionResult with session ID
+    """
+    with span("claude.save_session", project=str(project_path)):
+        try:
+            session_id = f"{project_path.name}_{session_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            
+            # Save session metadata
+            claude_dir = project_path / ".claude"
+            claude_dir.mkdir(exist_ok=True)
+            
+            sessions_dir = claude_dir / "sessions"
+            sessions_dir.mkdir(exist_ok=True)
+            
+            session_file = sessions_dir / f"{session_id}.json"
+            session_data = {
+                "id": session_id,
+                "name": session_name,
+                "project": str(project_path),
+                "created": datetime.now().isoformat(),
+                "type": "external_project"
+            }
+            
+            with open(session_file, "w") as f:
+                json.dump(session_data, f, indent=2)
+            
+            return SessionResult(success=True, session_id=session_id)
+            
+        except Exception as e:
+            return SessionResult(success=False, error=str(e))
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -547,24 +880,77 @@ def expert_debate(
 # Helper Functions
 # ──────────────────────────────────────────────────────────────────────────────
 
-def _auto_assign_specialists(topic: str) -> List[str]:
-    """Auto-assign specialist roles based on topic."""
-    # Use AI to determine appropriate specialists
-    prompt = f"For the topic '{topic}', suggest 4-6 specialist roles that would provide diverse perspectives."
+def analyze_topic_for_specialists(topic: str) -> List[str]:
+    """
+    Analyze topic and auto-assign specialist roles based on keywords and context.
     
-    specialists = ai_runtime.generate_specialists(prompt)
+    8020 Implementation: Use keyword analysis + fallback to most versatile specialists.
+    """
+    topic_lower = topic.lower()
     
-    # Default fallback
-    if not specialists:
-        specialists = [
-            "Technical Expert",
-            "Business Analyst",
-            "Security Specialist",
-            "User Experience Designer",
-            "Domain Expert",
+    # Score specialists based on topic relevance
+    specialist_scores = {}
+    
+    for key, specialist in SPECIALIST_REGISTRY.items():
+        score = 0
+        
+        # Check focus areas match
+        for focus_area in specialist.focus_areas:
+            if focus_area.replace("_", " ") in topic_lower:
+                score += 10
+        
+        # Check role keywords
+        role_keywords = specialist.role.lower().split()
+        for keyword in role_keywords:
+            if keyword in topic_lower:
+                score += 5
+        
+        # Check expertise keywords
+        expertise_keywords = specialist.expertise.lower().split()
+        for keyword in expertise_keywords:
+            if keyword in topic_lower:
+                score += 3
+        
+        specialist_scores[key] = score
+    
+    # Sort by score and get top specialists
+    ranked_specialists = sorted(specialist_scores.items(), key=lambda x: x[1], reverse=True)
+    
+    # Select 4-6 specialists: top scorers + ensuring diversity
+    selected = []
+    
+    # Always include top scorer
+    if ranked_specialists:
+        selected.append(SPECIALIST_REGISTRY[ranked_specialists[0][0]].role)
+    
+    # Add high-scoring specialists
+    for key, score in ranked_specialists[1:]:
+        if score > 0 and len(selected) < 6:
+            selected.append(SPECIALIST_REGISTRY[key].role)
+    
+    # Ensure minimum diversity (add key specialists if missing)
+    essential_roles = ["technical", "business", "security"]
+    for role_key in essential_roles:
+        role_name = SPECIALIST_REGISTRY[role_key].role
+        if role_name not in selected and len(selected) < 6:
+            selected.append(role_name)
+    
+    # Fallback to default set if nothing matches
+    if not selected:
+        selected = [
+            "Technical Architect", 
+            "Business Analyst", 
+            "Security Expert",
+            "UX/UI Specialist",
+            "Performance Engineer"
         ]
     
-    return specialists[:6]  # Limit to 6
+    return selected[:6]
+
+
+def _auto_assign_specialists(topic: str) -> List[str]:
+    """Auto-assign specialist roles based on topic analysis."""
+    return analyze_topic_for_specialists(topic)
 
 
 def _cross_pollinate_insights(
@@ -1121,3 +1507,471 @@ def _compile_workflow_output(steps: List[Dict[str, Any]]) -> str:
         outputs.append(f"Step {i} ({step['step']}): {step['output']}")
     
     return "\n".join(outputs)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Project Analysis Helper Functions
+# ──────────────────────────────────────────────────────────────────────────────
+
+def _build_project_context(
+    project_path: Path,
+    file_path: Optional[str] = None,
+    function_name: Optional[str] = None,
+) -> str:
+    """Build context for project analysis."""
+    context_parts = []
+    
+    # Project structure
+    context_parts.append("Project Structure:")
+    try:
+        structure = _get_project_structure(project_path, max_depth=2)
+        context_parts.append(structure)
+    except Exception:
+        context_parts.append("Could not analyze project structure")
+    
+    # Specific file/function content
+    if file_path:
+        full_path = project_path / file_path
+        if full_path.exists():
+            try:
+                with open(full_path, "r", encoding="utf-8") as f:
+                    content = f.read()
+                    if function_name:
+                        # Extract specific function
+                        func_content = _extract_function(content, function_name)
+                        if func_content:
+                            context_parts.append(f"\nFunction '{function_name}' in {file_path}:")
+                            context_parts.append(func_content)
+                        else:
+                            context_parts.append(f"\nFunction '{function_name}' not found in {file_path}")
+                    else:
+                        # Show first 2000 chars of file
+                        context_parts.append(f"\nFile {file_path}:")
+                        context_parts.append(content[:2000] + ("..." if len(content) > 2000 else ""))
+            except Exception as e:
+                context_parts.append(f"Could not read {file_path}: {e}")
+    
+    return "\n".join(context_parts)
+
+
+def _get_project_structure(project_path: Path, max_depth: int = 2) -> str:
+    """Get a simple project structure overview."""
+    lines = []
+    
+    def add_path(path: Path, depth: int = 0):
+        if depth > max_depth:
+            return
+        
+        indent = "  " * depth
+        if path.is_dir():
+            lines.append(f"{indent}{path.name}/")
+            # Only show important directories and files
+            try:
+                for child in sorted(path.iterdir()):
+                    if not child.name.startswith('.') or child.name in ['.github', '.vscode']:
+                        if child.is_dir() and depth < max_depth:
+                            add_path(child, depth + 1)
+                        elif child.is_file() and _is_important_file(child):
+                            lines.append(f"{indent}  {child.name}")
+            except PermissionError:
+                lines.append(f"{indent}  [Permission Denied]")
+        else:
+            lines.append(f"{indent}{path.name}")
+    
+    add_path(project_path)
+    return "\n".join(lines[:50])  # Limit output
+
+
+def _is_important_file(file_path: Path) -> bool:
+    """Check if a file is important for project analysis."""
+    important_files = {
+        "package.json", "requirements.txt", "Cargo.toml", "go.mod", "pom.xml",
+        "Dockerfile", "docker-compose.yml", "README.md", "LICENSE", "setup.py",
+        "pyproject.toml", "Makefile", "CMakeLists.txt", ".gitignore", "CHANGELOG.md"
+    }
+    
+    return file_path.name in important_files or file_path.suffix in {".md", ".yml", ".yaml", ".json", ".toml"}
+
+
+def _extract_function(content: str, function_name: str) -> Optional[str]:
+    """Extract a specific function from file content."""
+    lines = content.split("\n")
+    
+    # Simple Python function extraction
+    if any(line.strip().startswith("def ") for line in lines):
+        return _extract_python_function(lines, function_name)
+    
+    # Simple JavaScript/TypeScript function extraction
+    if any("function " in line or "=>" in line for line in lines):
+        return _extract_js_function(lines, function_name)
+    
+    return None
+
+
+def _extract_python_function(lines: List[str], function_name: str) -> Optional[str]:
+    """Extract Python function."""
+    func_lines = []
+    in_function = False
+    base_indent = 0
+    
+    for line in lines:
+        if line.strip().startswith(f"def {function_name}("):
+            in_function = True
+            base_indent = len(line) - len(line.lstrip())
+            func_lines.append(line)
+        elif in_function:
+            if line.strip() == "":
+                func_lines.append(line)
+            elif len(line) - len(line.lstrip()) <= base_indent and line.strip():
+                # End of function
+                break
+            else:
+                func_lines.append(line)
+    
+    return "\n".join(func_lines) if func_lines else None
+
+
+def _extract_js_function(lines: List[str], function_name: str) -> Optional[str]:
+    """Extract JavaScript/TypeScript function."""
+    func_lines = []
+    in_function = False
+    brace_count = 0
+    
+    for line in lines:
+        if f"function {function_name}" in line or f"{function_name} =" in line or f"{function_name}:" in line:
+            in_function = True
+            func_lines.append(line)
+            brace_count += line.count("{") - line.count("}")
+        elif in_function:
+            func_lines.append(line)
+            brace_count += line.count("{") - line.count("}")
+            if brace_count <= 0:
+                break
+    
+    return "\n".join(func_lines) if func_lines else None
+
+
+def _should_ignore_file(file_path: Path) -> bool:
+    """Check if file should be ignored in search."""
+    ignore_patterns = {
+        ".git", "__pycache__", "node_modules", ".pytest_cache", ".venv", "venv",
+        "build", "dist", ".idea", ".vscode", "target", "bin", "obj"
+    }
+    
+    # Check if any parent directory should be ignored
+    for part in file_path.parts:
+        if part in ignore_patterns:
+            return True
+    
+    # Check file extensions to ignore
+    ignore_extensions = {".pyc", ".pyo", ".class", ".o", ".so", ".dylib", ".exe", ".bin"}
+    if file_path.suffix in ignore_extensions:
+        return True
+    
+    return False
+
+
+def _search_file_content(file_path: Path, query: str, context_lines: int) -> List[SearchResult]:
+    """Search for query in a single file."""
+    results = []
+    query_lower = query.lower()
+    
+    try:
+        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+            lines = f.readlines()
+        
+        for i, line in enumerate(lines):
+            if query_lower in line.lower():
+                # Get context lines
+                start = max(0, i - context_lines)
+                end = min(len(lines), i + context_lines + 1)
+                context_lines_list = lines[start:end]
+                
+                results.append(SearchResult(
+                    file_path=file_path,
+                    line_number=i + 1,
+                    matched_text=line.strip(),
+                    context="".join(context_lines_list).strip()
+                ))
+    
+    except Exception:
+        # Skip files that can't be read
+        pass
+    
+    return results
+
+
+def _rank_search_results(results: List[SearchResult], query: str) -> List[SearchResult]:
+    """Rank search results by relevance."""
+    query_words = query.lower().split()
+    
+    def score_result(result: SearchResult) -> int:
+        score = 0
+        text = result.matched_text.lower()
+        
+        # Exact phrase match
+        if query.lower() in text:
+            score += 50
+        
+        # Word matches
+        for word in query_words:
+            if word in text:
+                score += 10
+        
+        # File type bonus
+        if result.file_path.suffix in {".py", ".js", ".ts", ".java"}:
+            score += 5
+        
+        return score
+    
+    # Score and sort
+    scored_results = [(score_result(r), r) for r in results]
+    scored_results.sort(key=lambda x: x[0], reverse=True)
+    
+    return [r for _, r in scored_results]
+
+
+def _generate_project_config(project_path: Path, profile: Optional[str]) -> str:
+    """Generate project configuration file."""
+    config = f"""# Claude AI Configuration for {project_path.name}
+# Generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+project:
+  name: {project_path.name}
+  path: {project_path}
+  profile: {profile or 'general'}
+  
+settings:
+  model: openai/gpt-4o-mini
+  temperature: 0.1
+  max_tokens: 4096
+  
+features:
+  multi_mind: true
+  code_analysis: true
+  search: true
+  workflows: true
+  
+directories:
+  commands: .claude/commands
+  workflows: .claude/workflows
+  sessions: .claude/sessions
+  
+ignore:
+  - node_modules/
+  - __pycache__/
+  - .git/
+  - build/
+  - dist/
+  - .venv/
+"""
+    
+    if profile == "python":
+        config += """
+  - .pytest_cache/
+  - *.pyc
+  - *.pyo
+"""
+    elif profile == "javascript":
+        config += """
+  - coverage/
+  - .nyc_output/
+  - *.min.js
+"""
+    elif profile == "rust":
+        config += """
+  - target/
+  - Cargo.lock
+"""
+    
+    return config
+
+
+def _generate_profile_commands(profile: str) -> Dict[str, str]:
+    """Generate profile-specific commands."""
+    commands = {}
+    
+    if profile == "python":
+        commands["python-review"] = """# Python Code Review
+
+Review Python code with focus on:
+
+## Instructions
+
+1. **Code Quality**
+   - PEP 8 compliance
+   - Pythonic patterns
+   - Type hints usage
+
+2. **Performance**
+   - Algorithm efficiency
+   - Memory usage
+   - Generator vs list usage
+
+3. **Security**
+   - Input validation
+   - SQL injection prevention
+   - Secrets handling
+
+4. **Testing**
+   - Test coverage
+   - Test quality
+   - Mock usage
+
+Provide specific, actionable feedback with examples.
+"""
+        
+        commands["python-optimize"] = """# Python Performance Optimization
+
+Analyze Python code for performance improvements:
+
+## Instructions
+
+1. **Algorithmic Optimization**
+   - Time complexity analysis
+   - Space complexity improvements
+   - Data structure selection
+
+2. **Python-Specific Optimizations**
+   - List comprehensions vs loops
+   - Generator usage
+   - Built-in function usage
+   - NumPy/Pandas optimizations
+
+3. **Profiling Recommendations**
+   - Suggest profiling tools
+   - Identify bottlenecks
+   - Memory optimization
+
+Provide benchmarks and examples where possible.
+"""
+    
+    elif profile == "javascript":
+        commands["js-review"] = """# JavaScript Code Review
+
+Review JavaScript/TypeScript code:
+
+## Instructions
+
+1. **Code Quality**
+   - ESLint compliance
+   - Modern JS patterns
+   - TypeScript usage
+
+2. **Performance**
+   - Bundle size optimization
+   - Async/await patterns
+   - Memory leaks
+
+3. **Security**
+   - XSS prevention
+   - CSRF protection
+   - Input sanitization
+
+4. **Best Practices**
+   - Error handling
+   - Testing patterns
+   - Documentation
+"""
+    
+    elif profile == "rust":
+        commands["rust-review"] = """# Rust Code Review
+
+Review Rust code with focus on:
+
+## Instructions
+
+1. **Safety & Ownership**
+   - Borrow checker compliance
+   - Memory safety
+   - Lifetime annotations
+
+2. **Performance**
+   - Zero-cost abstractions
+   - Efficient algorithms
+   - Compiler optimizations
+
+3. **Idiomatic Rust**
+   - Pattern matching
+   - Error handling with Result
+   - Iterator patterns
+
+4. **Cargo & Dependencies**
+   - Dependency management
+   - Feature flags
+   - Documentation
+"""
+    
+    return commands
+
+
+def _generate_basic_workflow() -> str:
+    """Generate a basic code review workflow."""
+    workflow = {
+        "name": "code-review",
+        "description": "Comprehensive code review workflow",
+        "steps": [
+            {
+                "type": "analyze",
+                "name": "Code Quality Analysis",
+                "focus": "quality",
+                "depth": "standard"
+            },
+            {
+                "type": "analyze", 
+                "name": "Security Review",
+                "focus": "security",
+                "depth": "deep"
+            },
+            {
+                "type": "analyze",
+                "name": "Performance Analysis", 
+                "focus": "performance",
+                "depth": "standard"
+            },
+            {
+                "type": "synthesize",
+                "name": "Compile Report",
+                "output": "markdown"
+            }
+        ]
+    }
+    
+    return json.dumps(workflow, indent=2)
+
+
+def _generate_project_memory(project_path: Path, profile: Optional[str]) -> str:
+    """Generate initial project memory file."""
+    memory = f"""# Project Memory: {project_path.name}
+
+## Project Overview
+- **Path**: {project_path}
+- **Profile**: {profile or 'General'}
+- **Initialized**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+## Key Insights
+<!-- Add important insights about this project -->
+
+## Architecture Notes
+<!-- Document architectural decisions and patterns -->
+
+## Development Guidelines
+<!-- Project-specific development practices -->
+
+## Known Issues
+<!-- Track known issues and technical debt -->
+
+## Performance Notes
+<!-- Performance characteristics and optimizations -->
+
+## Security Considerations
+<!-- Security-related notes and requirements -->
+
+## Testing Strategy
+<!-- Testing approach and coverage goals -->
+
+## Documentation
+<!-- Links to important documentation -->
+"""
+    
+    return memory

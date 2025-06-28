@@ -195,69 +195,287 @@ def multi_mind(
 @app.command("analyze")
 @instrument_command("claude_analyze", track_args=True)
 def analyze(
-    file_path: Path = typer.Argument(..., help="File or directory to analyze"),
+    project_path: Path = typer.Argument(..., help="External project path to analyze"),
+    file_path: Optional[str] = typer.Option(None, "--file", "-f", help="Specific file to analyze"),
+    function: Optional[str] = typer.Option(None, "--function", help="Specific function to analyze"),
     focus: Optional[str] = typer.Option(
         None,
         "--focus",
-        "-f",
         help="Analysis focus: performance, security, architecture, all"
     ),
-    depth: str = typer.Option(
-        "standard",
+    depth: int = typer.Option(
+        3,
         "--depth",
         "-d",
-        help="Analysis depth: quick, standard, deep"
-    ),
-    experts: int = typer.Option(
-        3,
-        "--experts",
-        "-e",
         min=1,
-        max=10,
-        help="Number of expert reviewers"
+        max=5,
+        help="Analysis depth (1-5)"
+    ),
+    save_session: bool = typer.Option(
+        False,
+        "--save-session",
+        "-s",
+        help="Save analysis session for this project"
     ),
 ):
     """
-    Deep code analysis with configurable expert reviewers.
+    Analyze code in external projects with Claude AI.
     
-    Performs comprehensive code analysis using multiple AI experts
-    focusing on different aspects like performance, security, and
-    architecture.
+    This command performs deep code analysis on external projects, providing
+    insights into function implementations, architecture patterns, and potential
+    improvements. Designed specifically for working with codebases outside
+    of the current uvmgr project.
+    
+    Examples:
+        uvmgr claude analyze /path/to/project
+        uvmgr claude analyze /path/to/project --file src/main.py --depth 5
+        uvmgr claude analyze /path/to/project --function process_data --save-session
     """
-    if not file_path.exists():
-        console.print(f"[red]❌ Path not found: {file_path}[/red]")
+    if not project_path.exists():
+        console.print(f"[red]❌ Project path not found: {project_path}[/red]")
+        raise typer.Exit(1)
+    
+    if not project_path.is_dir():
+        console.print(f"[red]❌ Path must be a directory: {project_path}[/red]")
         raise typer.Exit(1)
     
     add_span_attributes(**{
-        AIAttributes.OPERATION: "code_analysis",
-        "ai.file_path": str(file_path),
+        AIAttributes.OPERATION: "external_project_analysis",
+        "ai.project_path": str(project_path),
+        "ai.file_path": file_path,
+        "ai.function": function,
         "ai.focus": focus or "all",
         "ai.depth": depth,
-        "ai.experts": experts,
     })
     
-    console.print(f"🔍 Analyzing: [bold]{file_path}[/bold]")
-    console.print(f"📋 Focus: {focus or 'all aspects'}, Depth: {depth}, Experts: {experts}")
+    console.print(f"🔍 Analyzing external project: [bold]{project_path.name}[/bold]")
+    console.print(f"📁 Project: {project_path}")
+    if file_path:
+        console.print(f"📄 File: {file_path}")
+    if function:
+        console.print(f"🔧 Function: {function}")
+    console.print(f"📋 Focus: {focus or 'comprehensive'}, Depth: {depth}/5")
     
     try:
-        results = claude_ops.analyze_code(
+        results = claude_ops.analyze_project(
+            project_path=project_path,
+            function_name=function,
             file_path=file_path,
-            focus=focus,
-            depth=depth,
-            num_experts=experts
+            depth=depth
         )
         
-        _display_analysis_results(results)
+        if results.success:
+            console.print("\n[green]✅ Analysis Complete![/green]")
+            console.print(Panel(
+                results.analysis,
+                title="Project Analysis Results",
+                border_style="green"
+            ))
+            
+            if results.suggestions:
+                console.print("\n[bold cyan]💡 Recommendations:[/bold cyan]")
+                for i, suggestion in enumerate(results.suggestions, 1):
+                    console.print(f"  {i}. {suggestion}")
+            
+            # Save session if requested
+            if save_session:
+                session_result = claude_ops.save_session(project_path, "analysis_session")
+                if session_result.success:
+                    console.print(f"\n💾 Session saved: {session_result.session_id}")
+        else:
+            console.print(f"[red]❌ Analysis failed: {results.error}[/red]")
+            raise typer.Exit(1)
         
-        add_span_event("code_analysis_completed", {
-            "file": str(file_path),
-            "issues_found": len(results.get("issues", [])),
-            "suggestions": len(results.get("suggestions", [])),
+        add_span_event("external_project_analysis_completed", {
+            "project": str(project_path),
+            "suggestions_count": len(results.suggestions),
+            "session_saved": save_session,
         })
         
     except Exception as e:
-        add_span_event("code_analysis_failed", {"error": str(e)})
+        add_span_event("external_project_analysis_failed", {"error": str(e)})
         console.print(f"[red]❌ Analysis failed: {e}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command("search-project")
+@instrument_command("claude_search_project", track_args=True)
+def search_project(
+    project_path: Path = typer.Argument(..., help="External project path to search"),
+    query: str = typer.Option(..., "--query", "-q", help="Search query (natural language)"),
+    context_lines: int = typer.Option(3, "--context", "-c", help="Context lines around matches"),
+    file_pattern: Optional[str] = typer.Option(None, "--pattern", "-p", help="File pattern (e.g., '*.py')"),
+    ai_rank: bool = typer.Option(True, "--ai-rank/--no-ai-rank", help="Use AI to rank results"),
+    save_session: bool = typer.Option(False, "--save-session", "-s", help="Save search session"),
+):
+    """
+    Search through external project files with AI assistance.
+    
+    This command searches through project files using Claude AI to understand
+    context and provide intelligent search results beyond simple text matching.
+    Perfect for exploring unfamiliar codebases.
+    
+    Examples:
+        uvmgr claude search-project /path/to/project --query "authentication logic"
+        uvmgr claude search-project /path/to/project -q "database connections" -p "*.py"
+        uvmgr claude search-project /path/to/project --query "error handling" --save-session
+    """
+    if not project_path.exists():
+        console.print(f"[red]❌ Project path not found: {project_path}[/red]")
+        raise typer.Exit(1)
+    
+    if not project_path.is_dir():
+        console.print(f"[red]❌ Path must be a directory: {project_path}[/red]")
+        raise typer.Exit(1)
+    
+    add_span_attributes(**{
+        AIAttributes.OPERATION: "external_project_search",
+        "ai.project_path": str(project_path),
+        "ai.query": query,
+        "ai.context_lines": context_lines,
+        "ai.file_pattern": file_pattern,
+        "ai.ai_rank": ai_rank,
+    })
+    
+    console.print(f"🔍 Searching external project: [bold]{project_path.name}[/bold]")
+    console.print(f"📁 Project: {project_path}")
+    console.print(f"🔎 Query: [cyan]'{query}'[/cyan]")
+    if file_pattern:
+        console.print(f"📄 Pattern: {file_pattern}")
+    
+    try:
+        results = claude_ops.search_project(
+            project_path=project_path,
+            query=query,
+            context_lines=context_lines,
+            file_pattern=file_pattern
+        )
+        
+        if not results:
+            console.print("\n[yellow]No matches found.[/yellow]")
+            console.print("💡 Try adjusting your query or search pattern.")
+            return
+        
+        # Display results in a table
+        table = Table(title=f"Search Results for '{query}' in {project_path.name}")
+        table.add_column("File", style="cyan", no_wrap=True)
+        table.add_column("Line", style="magenta")
+        table.add_column("Match", style="green")
+        table.add_column("Context", style="dim")
+        
+        for result in results[:20]:  # Limit to 20 results for display
+            file_rel = result.file_path.relative_to(project_path) if result.file_path.is_relative_to(project_path) else result.file_path
+            match_text = result.matched_text[:60] + "..." if len(result.matched_text) > 60 else result.matched_text
+            context_text = result.context[:80] + "..." if len(result.context) > 80 else result.context
+            
+            table.add_row(
+                str(file_rel),
+                str(result.line_number),
+                match_text,
+                context_text
+            )
+        
+        console.print(f"\n[green]Found {len(results)} matches![/green]")
+        console.print(table)
+        
+        if len(results) > 20:
+            console.print(f"\n[dim]... and {len(results) - 20} more results[/dim]")
+        
+        # Save session if requested
+        if save_session:
+            session_result = claude_ops.save_session(project_path, f"search_{query.replace(' ', '_')}")
+            if session_result.success:
+                console.print(f"\n💾 Search session saved: {session_result.session_id}")
+        
+        add_span_event("external_project_search_completed", {
+            "project": str(project_path),
+            "query": query,
+            "results_count": len(results),
+            "session_saved": save_session,
+        })
+        
+    except Exception as e:
+        add_span_event("external_project_search_failed", {"error": str(e)})
+        console.print(f"[red]❌ Search failed: {e}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command("init-project")
+@instrument_command("claude_init_project", track_args=True)
+def init_project(
+    project_path: Path = typer.Argument(..., help="External project path to initialize"),
+    profile: Optional[str] = typer.Option(None, "--profile", "-p", help="Project profile (python, javascript, rust, etc.)"),
+    force: bool = typer.Option(False, "--force", "-f", help="Force initialization even if .claude exists"),
+):
+    """
+    Initialize Claude AI support for an external project.
+    
+    This command sets up Claude AI integration for an external project,
+    creating necessary configuration files and directories to enable
+    advanced AI-assisted development workflows.
+    
+    Examples:
+        uvmgr claude init-project /path/to/project
+        uvmgr claude init-project /path/to/project --profile python
+        uvmgr claude init-project /path/to/project --profile rust --force
+    """
+    if not project_path.exists():
+        console.print(f"[red]❌ Project path not found: {project_path}[/red]")
+        raise typer.Exit(1)
+    
+    if not project_path.is_dir():
+        console.print(f"[red]❌ Path must be a directory: {project_path}[/red]")
+        raise typer.Exit(1)
+    
+    # Check if already initialized
+    claude_dir = project_path / ".claude"
+    if claude_dir.exists() and not force:
+        console.print(f"[yellow]⚠️ Project already has Claude integration (.claude directory exists)[/yellow]")
+        console.print("Use --force to reinitialize")
+        raise typer.Exit(1)
+    
+    add_span_attributes(**{
+        AIAttributes.OPERATION: "initialize_external_project",
+        "ai.project_path": str(project_path),
+        "ai.profile": profile,
+        "ai.force": force,
+    })
+    
+    console.print(f"🚀 Initializing Claude AI for: [bold]{project_path.name}[/bold]")
+    console.print(f"📁 Project: {project_path}")
+    if profile:
+        console.print(f"🏷️ Profile: {profile}")
+    
+    try:
+        result = claude_ops.initialize_project(project_path, profile)
+        
+        if result.success:
+            console.print(f"\n[green]✅ Claude AI initialized successfully![/green]")
+            console.print("\n[bold]Created files:[/bold]")
+            for file in result.created_files:
+                console.print(f"  📄 {file}")
+            
+            console.print("\n[bold cyan]Next steps:[/bold cyan]")
+            console.print("  1. Review .claude/config.yml for project settings")
+            console.print("  2. Add custom commands in .claude/commands/")
+            console.print("  3. Run analysis: uvmgr claude analyze /path/to/project")
+            console.print("  4. Search project: uvmgr claude search-project /path/to/project -q 'your query'")
+            
+            if profile:
+                console.print(f"\n💡 Profile-specific commands were added for {profile} development")
+        else:
+            console.print(f"[red]❌ Initialization failed: {result.error}[/red]")
+            raise typer.Exit(1)
+        
+        add_span_event("external_project_initialized", {
+            "project": str(project_path),
+            "profile": profile,
+            "files_created": len(result.created_files),
+        })
+        
+    except Exception as e:
+        add_span_event("external_project_init_failed", {"error": str(e)})
+        console.print(f"[red]❌ Initialization failed: {e}[/red]")
         raise typer.Exit(1)
 
 

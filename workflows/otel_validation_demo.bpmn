@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  id="otel_validation_workflow"
+                  targetNamespace="http://uvmgr.com/otel">
+  
+  <bpmn:process id="otel_validation_process" isExecutable="true">
+    <bpmn:startEvent id="start_validation" name="Start OTEL Validation">
+      <bpmn:outgoing>to_setup</bpmn:outgoing>
+    </bpmn:startEvent>
+    
+    <bpmn:sequenceFlow id="to_setup" sourceRef="start_validation" targetRef="setup_validation"/>
+    
+    <bpmn:serviceTask id="setup_validation" name="Setup Validation Environment">
+      <bpmn:incoming>to_setup</bpmn:incoming>
+      <bpmn:outgoing>to_test_1</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <bpmn:sequenceFlow id="to_test_1" sourceRef="setup_validation" targetRef="test_task_1"/>
+    
+    <bpmn:serviceTask id="test_task_1" name="Execute Test: uvmgr otel status">
+      <bpmn:incoming>to_test_1</bpmn:incoming>
+      <bpmn:outgoing>to_test_2</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <bpmn:sequenceFlow id="to_test_2" sourceRef="test_task_1" targetRef="test_task_2"/>
+    
+    <bpmn:serviceTask id="test_task_2" name="Execute Test: uvmgr tests run tests/test_instrumentation.py">
+      <bpmn:incoming>to_test_2</bpmn:incoming>
+      <bpmn:outgoing>to_test_3</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <bpmn:sequenceFlow id="to_test_3" sourceRef="test_task_2" targetRef="test_task_3"/>
+    
+    <bpmn:serviceTask id="test_task_3" name="Execute Test: uvmgr otel validate spans">
+      <bpmn:incoming>to_test_3</bpmn:incoming>
+      <bpmn:outgoing>to_test_4</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <bpmn:sequenceFlow id="to_test_4" sourceRef="test_task_3" targetRef="test_task_4"/>
+    
+    <bpmn:serviceTask id="test_task_4" name="Execute Test: uvmgr otel validate metrics">
+      <bpmn:incoming>to_test_4</bpmn:incoming>
+      <bpmn:outgoing>to_validate</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <bpmn:sequenceFlow id="to_validate" sourceRef="test_task_4" targetRef="validate_results"/>
+    
+    <bpmn:serviceTask id="validate_results" name="Validate OTEL Results">
+      <bpmn:incoming>to_validate</bpmn:incoming>
+      <bpmn:outgoing>to_end</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <bpmn:sequenceFlow id="to_end" sourceRef="validate_results" targetRef="end_validation"/>
+    
+    <bpmn:endEvent id="end_validation" name="OTEL Validation Complete">
+      <bpmn:incoming>to_end</bpmn:incoming>
+    </bpmn:endEvent>
+  </bpmn:process>
+</bpmn:definitions>

@@ -81,6 +81,7 @@ from rich.table import Table
 from uvmgr.core.instrumentation import add_span_attributes, add_span_event, instrument_command
 from uvmgr.core.semconv import CIAttributes, CIOperations
 from uvmgr.core.telemetry import metric_counter, metric_histogram, span
+from uvmgr.ops.weaver_generation import consolidate_generation
 
 console = Console()
 app = typer.Typer(help="8020 Weaver Forge automation and development workflows")
@@ -300,29 +301,46 @@ def _run_validation() -> dict:
 
 
 def _run_generation() -> dict:
-    """Run code generation from semantic conventions."""
+    """Run code generation from semantic conventions using 80/20 approach."""
     with span("forge.step.generation"):
         add_span_event("generation.started", {"registry_path": str(REGISTRY_PATH)})
 
         start_time = time.time()
 
-        # Import the generation function
         try:
-            import sys
-            sys.path.append(str(REGISTRY_PATH.parent))
-            from validate_semconv import generate_python_constants
-
-            generate_python_constants()
-
+            # Use consolidated generation (80/20 approach)
+            output_path = Path("src/uvmgr/core/semconv.py")
+            
+            result = consolidate_generation(
+                registry_path=REGISTRY_PATH,
+                output_path=output_path,
+                language="python",
+                template_path=Path("src/uvmgr/templates")
+            )
+            
             duration = time.time() - start_time
-            add_span_event("generation.success", {"duration": duration})
-            metric_counter("forge.generation.passed")(1)
-
-            return {
-                "status": "passed",
-                "duration": duration,
-                "output": "Python constants generated successfully"
-            }
+            
+            if result.get("status") == "success":
+                add_span_event("generation.success", {
+                    "duration": duration,
+                    "attributes_generated": result.get("attributes_generated", 0),
+                    "template_used": result.get("template_used", False)
+                })
+                metric_counter("forge.generation.passed")(1)
+                metric_histogram("forge.generation.duration")(duration)
+                
+                return {
+                    "status": "passed",
+                    "duration": duration,
+                    "output": f"Generated {result.get('attributes_generated', 0)} attributes",
+                    "template_used": result.get("template_used", False),
+                    "output_path": result.get("output_path")
+                }
+            else:
+                # Fallback to legacy generation for compatibility
+                console.print("[yellow]⚠ Falling back to legacy generation method[/yellow]")
+                return _run_legacy_generation(start_time)
+                
         except Exception as e:
             duration = time.time() - start_time
             add_span_event("generation.failed", {
@@ -330,7 +348,44 @@ def _run_generation() -> dict:
                 "error": str(e)
             })
             metric_counter("forge.generation.failed")(1)
-            raise RuntimeError(f"Generation failed: {e}")
+            
+            # 80/20 error recovery: try legacy method
+            console.print(f"[yellow]⚠ Generation failed: {e}[/yellow]")
+            console.print("[blue]Attempting legacy generation method...[/blue]")
+            try:
+                return _run_legacy_generation(start_time)
+            except Exception as legacy_error:
+                raise RuntimeError(f"Both generation methods failed. New: {e}, Legacy: {legacy_error}")
+
+
+def _run_legacy_generation(start_time: float) -> dict:
+    """Fallback to legacy generation method for compatibility."""
+    try:
+        import sys
+        sys.path.append(str(REGISTRY_PATH.parent))
+        from validate_semconv import generate_python_constants
+
+        generate_python_constants()
+
+        duration = time.time() - start_time
+        add_span_event("generation.legacy_success", {"duration": duration})
+        metric_counter("forge.generation.legacy.passed")(1)
+
+        return {
+            "status": "passed",
+            "duration": duration,
+            "output": "Python constants generated successfully (legacy method)",
+            "template_used": False,
+            "fallback": True
+        }
+    except Exception as e:
+        duration = time.time() - start_time
+        add_span_event("generation.legacy_failed", {
+            "duration": duration,
+            "error": str(e)
+        })
+        metric_counter("forge.generation.legacy.failed")(1)
+        raise RuntimeError(f"Legacy generation failed: {e}")
 
 
 def _run_otel_validation() -> dict:

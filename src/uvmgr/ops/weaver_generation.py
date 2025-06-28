@@ -14,7 +14,12 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from jinja2 import Environment, FileSystemLoader, Template
+try:
+    from jinja2 import Environment, FileSystemLoader, Template
+    JINJA2_AVAILABLE = True
+except ImportError:
+    JINJA2_AVAILABLE = False
+    Environment = FileSystemLoader = Template = None
 from uvmgr.core.instrumentation import add_span_attributes, add_span_event
 from uvmgr.core.telemetry import span
 
@@ -29,7 +34,7 @@ class WeaverGenerator:
         
     def _setup_jinja_env(self):
         """Initialize Jinja2 environment with custom filters."""
-        if self.template_path.exists():
+        if JINJA2_AVAILABLE and self.template_path.exists():
             self.env = Environment(
                 loader=FileSystemLoader(str(self.template_path)),
                 trim_blocks=True,
@@ -38,6 +43,9 @@ class WeaverGenerator:
             # Add custom filters for semantic conventions
             self.env.filters["to_python_const"] = self._to_python_const
             self.env.filters["to_python_type"] = self._to_python_type
+            self.env.filters["groupby"] = self._groupby_filter
+            self.env.filters["selectattr"] = self._selectattr_filter
+            self.env.filters["unique"] = self._unique_filter
         else:
             self.env = None
             
@@ -59,6 +67,46 @@ class WeaverGenerator:
             "int[]": "List[int]",
         }
         return type_map.get(type_str, "Any")
+        
+    @staticmethod
+    def _groupby_filter(items, attribute):
+        """Group items by attribute (simplified for 80/20)."""
+        groups = {}
+        for item in items:
+            if hasattr(item, attribute):
+                key = getattr(item, attribute)
+            elif isinstance(item, dict):
+                key = item.get(attribute, "unknown")
+            else:
+                key = "unknown"
+                
+            if key not in groups:
+                groups[key] = []
+            groups[key].append(item)
+        return groups.items()
+        
+    @staticmethod
+    def _selectattr_filter(items, attribute):
+        """Select items that have attribute (simplified for 80/20)."""
+        result = []
+        for item in items:
+            if hasattr(item, attribute):
+                if getattr(item, attribute):
+                    result.append(item)
+            elif isinstance(item, dict) and item.get(attribute):
+                result.append(item)
+        return result
+        
+    @staticmethod
+    def _unique_filter(items):
+        """Return unique items (simplified for 80/20)."""
+        seen = set()
+        result = []
+        for item in items:
+            if item not in seen:
+                seen.add(item)
+                result.append(item)
+        return result
         
     def generate_python(self, output_path: Path, attributes: Dict[str, Any]) -> Dict[str, Any]:
         """

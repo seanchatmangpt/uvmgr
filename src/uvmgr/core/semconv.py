@@ -11,7 +11,7 @@ Semantic Convention Constants for uvmgr
 This module contains auto-generated semantic convention constants that provide
 type-safe access to OpenTelemetry semantic convention attributes.
 
-Generated on: 2025-06-27T21:56:56.269792
+Generated on: 2025-06-27T22:54:03.624267
 Weaver version: weaver 0.15.3
 Registry: /Users/sac/dev/uvmgr/weaver-forge/registry
 """
@@ -29,79 +29,46 @@ class CliAttributes:
     
     CLI_EXIT_CODE: Final[str] = "cli.exit_code"  # The exit code of the CLI command
     
-    COMMAND: Final[str] = "cli.command"  # Alias for CLI_COMMAND (compatibility)
-    
-    OPTIONS: Final[str] = "cli.options"  # CLI options and arguments
-    
-    EXIT_CODE: Final[str] = "cli.exit_code"  # Alias for CLI_EXIT_CODE (compatibility)
-    
 
 
 # Package management operation attributes
 class PackageAttributes:
     """Package management operation attributes"""
     
-    NAME: Final[str] = "package.name"  # Name of the package being operated on
+    PACKAGE_NAME: Final[str] = "package.name"  # Name of the package being operated on
     
-    VERSION: Final[str] = "package.version"  # Version specification or resolved version
+    PACKAGE_VERSION: Final[str] = "package.version"  # Version specification or resolved version
     
-    OPERATION: Final[str] = "package.operation"  # The type of package operation
+    PACKAGE_OPERATION: Final[str] = "package.operation"  # The type of package operation
     
-    DEV_DEPENDENCY: Final[str] = "package.dev_dependency"  # Whether this is a dev dependency
 
 
-# Search operation attributes
-class SearchAttributes:
-    """Search operation attributes"""
-    
-    OPERATION: Final[str] = "search.operation"  # The type of search operation
-    
-    PATTERN: Final[str] = "search.pattern"  # Search pattern or query
-    
-    SEARCH_TYPE: Final[str] = "search.type"  # Specific type of search within operation
-    
-    FILE_PATTERN: Final[str] = "search.file_pattern"  # File pattern for search scope
-    
-    RESULTS_COUNT: Final[str] = "search.results_count"  # Number of search results
-    
-    EXECUTION_TIME: Final[str] = "search.execution_time"  # Time taken to execute search
-    
-    PARALLEL_ENABLED: Final[str] = "search.parallel_enabled"  # Whether parallel processing was used
-    
-    CACHE_HIT: Final[str] = "search.cache_hit"  # Whether search result was from cache
 
 
-# Search operation types
-class SearchOperations:
-    """Search operation types"""
-    
-    CODE_SEARCH: Final[str] = "code_search"  # AST-based code search
-    
-    DEPS_SEARCH: Final[str] = "deps_search"  # Dependency analysis and search
-    
-    FILE_SEARCH: Final[str] = "file_search"  # File content and metadata search
-    
-    LOG_SEARCH: Final[str] = "log_search"  # Log aggregation and search
-    
-    SEMANTIC_SEARCH: Final[str] = "semantic_search"  # AI-powered semantic search
-    
-    MULTI_SEARCH: Final[str] = "multi_search"  # Multi-faceted search across sources
 
-
-# Package operations
-class PackageOperations:
-    """Standard package operation values"""
-    
-    ADD: Final[str] = "add"
-    
-    REMOVE: Final[str] = "remove"
-    
-    UPDATE: Final[str] = "update"
-    
-    LIST: Final[str] = "list"
-    
-    SYNC: Final[str] = "sync"
-
+# Validation helpers
+def validate_attribute(attribute_name: str, attribute_value: str) -> bool:
+    """Validate that an attribute name and value are valid semantic conventions."""
+    valid_attributes = {
+        
+        
+        CliAttributes.CLI_COMMAND,
+        
+        CliAttributes.CLI_SUBCOMMAND,
+        
+        CliAttributes.CLI_EXIT_CODE,
+        
+        
+        
+        PackageAttributes.PACKAGE_NAME,
+        
+        PackageAttributes.PACKAGE_VERSION,
+        
+        PackageAttributes.PACKAGE_OPERATION,
+        
+        
+    }
+    return attribute_name in valid_attributes
 
 # Process execution attributes
 class ProcessAttributes:
@@ -114,8 +81,6 @@ class ProcessAttributes:
     EXIT_CODE: Final[str] = "process.exit_code"  # Process exit code
     
     WORKING_DIRECTORY: Final[str] = "process.working_directory"  # Working directory
-    
-    DURATION: Final[str] = "process.duration"  # Execution duration
 
 
 # Test execution attributes  
@@ -146,8 +111,6 @@ class BuildAttributes:
     OUTPUT_PATH: Final[str] = "build.output_path"  # Output path
     
     SIZE: Final[str] = "build.size"  # Build artifact size
-    
-    DURATION: Final[str] = "build.duration"  # Build duration
 
 
 # Project creation attributes
@@ -166,28 +129,6 @@ class ProjectOperations:
     """Standard project operation values"""
     
     CREATE: Final[str] = "create"
-
-
-# Release operation attributes
-class ReleaseAttributes:
-    """Release operation attributes"""
-    
-    VERSION: Final[str] = "release.version"  # Release version
-    
-    TYPE: Final[str] = "release.type"  # Release type (major, minor, patch)
-    
-    OPERATION: Final[str] = "release.operation"  # Release operation type
-
-
-# Release operations
-class ReleaseOperations:
-    """Standard release operation values"""
-    
-    BUMP: Final[str] = "bump"
-    
-    CHANGELOG: Final[str] = "changelog"
-    
-    TAG: Final[str] = "tag"
 
 
 # AI operation attributes
@@ -239,7 +180,7 @@ class CIOperations:
     RUN: Final[str] = "run"
 
 
-# Workflow execution attributes
+# Workflow attributes
 class WorkflowAttributes:
     """Workflow execution attributes"""
     
@@ -263,35 +204,44 @@ class WorkflowOperations:
     VALIDATE: Final[str] = "validate"
     
     PARSE: Final[str] = "parse"
+
+
+# Package operations
+class PackageOperations:
+    """Standard package operation values"""
     
+    ADD: Final[str] = "add"
+    
+    REMOVE: Final[str] = "remove"
+    
+    UPDATE: Final[str] = "update"
+    
+    LIST: Final[str] = "list"
+    
+    SYNC: Final[str] = "sync"
 
 
+# Release operation attributes
+class ReleaseAttributes:
+    """Release operation attributes"""
+    
+    VERSION: Final[str] = "release.version"  # Release version
+    
+    TYPE: Final[str] = "release.type"  # Release type (major, minor, patch)
+    
+    OPERATION: Final[str] = "release.operation"  # Release operation type
 
 
+# Release operations
+class ReleaseOperations:
+    """Standard release operation values"""
+    
+    BUMP: Final[str] = "bump"
+    
+    CHANGELOG: Final[str] = "changelog"
+    
+    TAG: Final[str] = "tag"
 
-# Validation helpers
-def validate_attribute(attribute_name: str, attribute_value: str) -> bool:
-    """Validate that an attribute name and value are valid semantic conventions."""
-    valid_attributes = {
-        
-        
-        CliAttributes.CLI_COMMAND,
-        
-        CliAttributes.CLI_SUBCOMMAND,
-        
-        CliAttributes.CLI_EXIT_CODE,
-        
-        
-        
-        PackageAttributes.PACKAGE_NAME,
-        
-        PackageAttributes.PACKAGE_VERSION,
-        
-        PackageAttributes.PACKAGE_OPERATION,
-        
-        
-    }
-    return attribute_name in valid_attributes
 
 # Tool management attributes
 class ToolAttributes:
@@ -335,6 +285,29 @@ class ToolOperations:
     SYNC: Final[str] = "sync"
 
 
+# uvx-specific attributes
+class UvxAttributes:
+    """uvx-specific attributes for isolated tool management"""
+    
+    OPERATION: Final[str] = "uvx.operation"  # uvx operation type
+    
+    PACKAGE: Final[str] = "uvx.package"  # Package name
+    
+    TOOL: Final[str] = "uvx.tool"  # Tool name
+    
+    PYTHON_VERSION: Final[str] = "uvx.python_version"  # Python version
+    
+    FORCE: Final[str] = "uvx.force"  # Force reinstall flag
+    
+    TOOL_COUNT: Final[str] = "uvx.tool_count"  # Number of tools
+    
+    CATEGORY: Final[str] = "uvx.category"  # Tool category
+    
+    RECOMMENDATION_COUNT: Final[str] = "uvx.recommendation_count"  # Recommendations
+    
+    HEALTH_STATUS: Final[str] = "uvx.health_status"  # Health status
+
+
 # Cache management attributes
 class CacheAttributes:
     """Cache management attributes"""
@@ -359,67 +332,6 @@ class CacheOperations:
     SIZE: Final[str] = "size"
     
     DIR: Final[str] = "dir"
-
-
-# uvx-specific attributes
-class UvxAttributes:
-    """uvx-specific attributes for isolated tool management"""
-    
-    OPERATION: Final[str] = "uvx.operation"  # uvx operation type
-    
-    PACKAGE: Final[str] = "uvx.package"  # Package name
-    
-    TOOL: Final[str] = "uvx.tool"  # Tool name
-    
-    PYTHON_VERSION: Final[str] = "uvx.python_version"  # Python version
-    
-    FORCE: Final[str] = "uvx.force"  # Force reinstall flag
-    
-    TOOL_COUNT: Final[str] = "uvx.tool_count"  # Number of tools
-    
-    CATEGORY: Final[str] = "uvx.category"  # Tool category
-    
-    RECOMMENDATION_COUNT: Final[str] = "uvx.recommendation_count"  # Recommendations
-    
-    HEALTH_STATUS: Final[str] = "uvx.health_status"  # Health status
-
-
-# Export all classes for convenient importing
-__all__ = [
-    "CliAttributes",
-    "PackageAttributes",
-    "PackageOperations",
-    "ProcessAttributes",
-    "TestAttributes", 
-    "BuildAttributes",
-    "ProjectAttributes",
-    "ProjectOperations",
-    "ReleaseAttributes",
-    "ReleaseOperations",
-    "AIAttributes",
-    "CIAttributes",
-    "CIOperations",
-    "WorkflowAttributes",
-    "WorkflowOperations",
-    "ToolAttributes",
-    "ToolOperations",
-    "CacheAttributes",
-    "CacheOperations",
-    "UvxAttributes",
-    "IndexAttributes",
-    "IndexOperations",
-    "RemoteAttributes",
-    "RemoteOperations",
-    "SearchAttributes",
-    "SearchOperations",
-    "ServerAttributes",
-    "ServerOperations",
-    "ShellAttributes",
-    "ShellOperations",
-    "McpAttributes",
-    "McpOperations",
-    "validate_attribute",
-]
 
 
 # Index management attributes
@@ -449,31 +361,45 @@ class RemoteAttributes:
     OPERATION: Final[str] = "remote.operation"  # Remote operation type
     
     URL: Final[str] = "remote.url"  # Remote URL
+    
+    BRANCH: Final[str] = "remote.branch"  # Git branch
+    
+    COMMIT: Final[str] = "remote.commit"  # Git commit hash
 
 
 # Remote operations
 class RemoteOperations:
     """Standard remote operation values"""
     
-    SYNC: Final[str] = "sync"
+    CLONE: Final[str] = "clone"
     
-    FETCH: Final[str] = "fetch"
+    PULL: Final[str] = "pull"
+    
+    PUSH: Final[str] = "push"
 
 
-# Search operation attributes  
+# Search operation attributes
 class SearchAttributes:
     """Search operation attributes"""
     
     OPERATION: Final[str] = "search.operation"  # Search operation type
     
     QUERY: Final[str] = "search.query"  # Search query
+    
+    RESULTS_COUNT: Final[str] = "search.results_count"  # Number of results
+    
+    SOURCE: Final[str] = "search.source"  # Search source
 
 
 # Search operations
 class SearchOperations:
     """Standard search operation values"""
     
-    PACKAGES: Final[str] = "packages"
+    PACKAGE: Final[str] = "package"
+    
+    FILE: Final[str] = "file"
+    
+    CODE: Final[str] = "code"
 
 
 # Server operation attributes
@@ -482,7 +408,11 @@ class ServerAttributes:
     
     OPERATION: Final[str] = "server.operation"  # Server operation type
     
+    HOST: Final[str] = "server.host"  # Server host
+    
     PORT: Final[str] = "server.port"  # Server port
+    
+    PROTOCOL: Final[str] = "server.protocol"  # Server protocol
 
 
 # Server operations
@@ -492,6 +422,8 @@ class ServerOperations:
     START: Final[str] = "start"
     
     STOP: Final[str] = "stop"
+    
+    RESTART: Final[str] = "restart"
 
 
 # Shell operation attributes
@@ -499,32 +431,56 @@ class ShellAttributes:
     """Shell operation attributes"""
     
     OPERATION: Final[str] = "shell.operation"  # Shell operation type
+    
+    COMMAND: Final[str] = "shell.command"  # Shell command
+    
+    WORKING_DIR: Final[str] = "shell.working_dir"  # Working directory
+    
+    EXIT_CODE: Final[str] = "shell.exit_code"  # Exit code
 
 
 # Shell operations
 class ShellOperations:
     """Standard shell operation values"""
     
-    RUN: Final[str] = "run"
-
-
-# MCP (Model Context Protocol) attributes
-class McpAttributes:
-    """MCP operation attributes"""
-    
-    OPERATION: Final[str] = "mcp.operation"  # MCP operation type
-    
-    TOOL_NAME: Final[str] = "mcp.tool_name"  # Tool name
-    
-    SERVER_NAME: Final[str] = "mcp.server_name"  # Server name
-
-
-# MCP operations
-class McpOperations:
-    """Standard MCP operation values"""
-    
-    START: Final[str] = "start"
-    
-    STOP: Final[str] = "stop"
-    
     EXECUTE: Final[str] = "execute"
+    
+    INTERACTIVE: Final[str] = "interactive"
+    
+    BACKGROUND: Final[str] = "background"
+
+
+# Export all classes for convenient importing
+__all__ = [
+    "CliAttributes",
+    "PackageAttributes",
+    "PackageOperations",
+    "ProcessAttributes",
+    "TestAttributes", 
+    "BuildAttributes",
+    "ProjectAttributes",
+    "ProjectOperations",
+    "ReleaseAttributes",
+    "ReleaseOperations",
+    "ToolAttributes",
+    "ToolOperations",
+    "UvxAttributes",
+    "CacheAttributes",
+    "CacheOperations",
+    "IndexAttributes", 
+    "IndexOperations",
+    "RemoteAttributes",
+    "RemoteOperations",
+    "SearchAttributes",
+    "SearchOperations",
+    "ServerAttributes",
+    "ServerOperations",
+    "ShellAttributes",
+    "ShellOperations",
+    "AIAttributes",
+    "CIAttributes",
+    "CIOperations",
+    "WorkflowAttributes",
+    "WorkflowOperations",
+    "validate_attribute",
+]

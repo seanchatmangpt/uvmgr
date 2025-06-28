@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="otel_validation" name="OTEL Validation Workflow" isExecutable="true">
+    
+    <bpmn:startEvent id="start" name="Start OTEL Validation">
+      <bpmn:outgoing>Flow_to_init</bpmn:outgoing>
+    </bpmn:startEvent>
+    
+    <bpmn:sequenceFlow id="Flow_to_init" sourceRef="start" targetRef="initialize_otel" />
+    
+    <bpmn:serviceTask id="initialize_otel" name="Initialize OTEL">
+      <bpmn:incoming>Flow_to_init</bpmn:incoming>
+      <bpmn:outgoing>Flow_to_span_test</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <bpmn:sequenceFlow id="Flow_to_span_test" sourceRef="initialize_otel" targetRef="test_span_creation" />
+    
+    <bpmn:serviceTask id="test_span_creation" name="Test Span Creation">
+      <bpmn:incoming>Flow_to_span_test</bpmn:incoming>
+      <bpmn:outgoing>Flow_to_metrics_test</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <bpmn:sequenceFlow id="Flow_to_metrics_test" sourceRef="test_span_creation" targetRef="test_metrics_collection" />
+    
+    <bpmn:serviceTask id="test_metrics_collection" name="Test Metrics Collection">
+      <bpmn:incoming>Flow_to_metrics_test</bpmn:incoming>
+      <bpmn:outgoing>Flow_to_semconv_test</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <bpmn:sequenceFlow id="Flow_to_semconv_test" sourceRef="test_metrics_collection" targetRef="test_semantic_conventions" />
+    
+    <bpmn:serviceTask id="test_semantic_conventions" name="Test Semantic Conventions">
+      <bpmn:incoming>Flow_to_semconv_test</bpmn:incoming>
+      <bpmn:outgoing>Flow_to_instrumentation_test</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <bpmn:sequenceFlow id="Flow_to_instrumentation_test" sourceRef="test_semantic_conventions" targetRef="test_instrumentation" />
+    
+    <bpmn:serviceTask id="test_instrumentation" name="Test Instrumentation">
+      <bpmn:incoming>Flow_to_instrumentation_test</bpmn:incoming>
+      <bpmn:outgoing>Flow_to_error_test</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <bpmn:sequenceFlow id="Flow_to_error_test" sourceRef="test_instrumentation" targetRef="test_error_handling" />
+    
+    <bpmn:serviceTask id="test_error_handling" name="Test Error Handling">
+      <bpmn:incoming>Flow_to_error_test</bpmn:incoming>
+      <bpmn:outgoing>Flow_to_performance_test</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <bpmn:sequenceFlow id="Flow_to_performance_test" sourceRef="test_error_handling" targetRef="test_performance_tracking" />
+    
+    <bpmn:serviceTask id="test_performance_tracking" name="Test Performance Tracking">
+      <bpmn:incoming>Flow_to_performance_test</bpmn:incoming>
+      <bpmn:outgoing>Flow_to_gateway</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <bpmn:sequenceFlow id="Flow_to_gateway" sourceRef="test_performance_tracking" targetRef="validation_gateway" />
+    
+    <bpmn:exclusiveGateway id="validation_gateway" name="All Tests Passed?">
+      <bpmn:incoming>Flow_to_gateway</bpmn:incoming>
+      <bpmn:outgoing>Flow_to_success</bpmn:outgoing>
+      <bpmn:outgoing>Flow_to_failure</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    
+    <bpmn:sequenceFlow id="Flow_to_success" name="Yes" sourceRef="validation_gateway" targetRef="validation_success">
+      <bpmn:conditionExpression>all_tests_passed == True</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    
+    <bpmn:sequenceFlow id="Flow_to_failure" name="No" sourceRef="validation_gateway" targetRef="validation_failure">
+      <bpmn:conditionExpression>all_tests_passed == False</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    
+    <bpmn:serviceTask id="validation_success" name="Generate Success Report">
+      <bpmn:incoming>Flow_to_success</bpmn:incoming>
+      <bpmn:outgoing>Flow_to_end_success</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <bpmn:sequenceFlow id="Flow_to_end_success" sourceRef="validation_success" targetRef="end_success" />
+    
+    <bpmn:endEvent id="end_success" name="Validation Successful">
+      <bpmn:incoming>Flow_to_end_success</bpmn:incoming>
+    </bpmn:endEvent>
+    
+    <bpmn:serviceTask id="validation_failure" name="Generate Failure Report">
+      <bpmn:incoming>Flow_to_failure</bpmn:incoming>
+      <bpmn:outgoing>Flow_to_end_failure</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <bpmn:sequenceFlow id="Flow_to_end_failure" sourceRef="validation_failure" targetRef="end_failure" />
+    
+    <bpmn:endEvent id="end_failure" name="Validation Failed">
+      <bpmn:incoming>Flow_to_end_failure</bpmn:incoming>
+    </bpmn:endEvent>
+    
+  </bpmn:process>
+</bpmn:definitions>

@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="WeaverForgeOTELValidation" isExecutable="true">
+    
+    <bpmn:startEvent id="StartEvent_1" name="Start OTEL Validation">
+      <bpmn:outgoing>Flow_1</bpmn:outgoing>
+    </bpmn:startEvent>
+    
+    <!-- Step 1: Test Weaver Forge Generation -->
+    <bpmn:task id="Task_TestGeneration" name="Test Weaver Forge Generation">
+      <bpmn:incoming>Flow_1</bpmn:incoming>
+      <bpmn:outgoing>Flow_2</bpmn:outgoing>
+      <bpmn:script>
+        print("Testing Weaver Forge generation...")
+        import subprocess
+        import sys
+        import os
+        
+        # Test forge workflow
+        result = subprocess.run([
+            sys.executable, "-m", "uvmgr.commands.forge", "workflow", "--no-test"
+        ], capture_output=True, text=True, cwd=os.getcwd())
+        
+        generation_success = result.returncode == 0
+        print(f"Generation test result: {'PASSED' if generation_success else 'FAILED'}")
+        if not generation_success:
+            print(f"Error: {result.stderr}")
+        
+        # Store result for next step
+        task.workflow.data["generation_success"] = generation_success
+        task.workflow.data["generation_output"] = result.stdout
+      </bpmn:script>
+    </bpmn:task>
+    
+    <!-- Step 2: Validate Semantic Conventions -->
+    <bpmn:task id="Task_ValidateSemanticConventions" name="Validate Semantic Conventions">
+      <bpmn:incoming>Flow_2</bpmn:incoming>
+      <bpmn:outgoing>Flow_3</bpmn:outgoing>
+      <bpmn:script>
+        print("Validating semantic conventions...")
+        
+        # Test that semconv classes can be imported
+        try:
+            from uvmgr.core.semconv import (
+                ProcessAttributes, TestAttributes, BuildAttributes,
+                ProjectAttributes, AIAttributes, CIAttributes
+            )
+            semconv_success = True
+            print("Semantic convention imports: PASSED")
+        except ImportError as e:
+            semconv_success = False
+            print(f"Semantic convention imports: FAILED - {e}")
+        
+        task.workflow.data["semconv_success"] = semconv_success
+      </bpmn:script>
+    </bpmn:task>
+    
+    <!-- Step 3: Test OTEL Instrumentation -->
+    <bpmn:task id="Task_TestOTELInstrumentation" name="Test OTEL Instrumentation">
+      <bpmn:incoming>Flow_3</bpmn:incoming>
+      <bpmn:outgoing>Flow_4</bpmn:outgoing>
+      <bpmn:script>
+        print("Testing OTEL instrumentation...")
+        
+        # Test that instrumentation decorators work
+        try:
+            from uvmgr.core.instrumentation import instrument_command, add_span_event
+            from uvmgr.core.telemetry import span, metric_counter
+            
+            # Test basic instrumentation
+            @instrument_command("test_command")
+            def test_function():
+                with span("test.span"):
+                    add_span_event("test.event", {"test": "data"})
+                    metric_counter("test.counter")(1)
+                return "success"
+            
+            result = test_function()
+            instrumentation_success = result == "success"
+            print("OTEL instrumentation: PASSED")
+            
+        except Exception as e:
+            instrumentation_success = False
+            print(f"OTEL instrumentation: FAILED - {e}")
+        
+        task.workflow.data["instrumentation_success"] = instrumentation_success
+      </bpmn:script>
+    </bpmn:task>
+    
+    <!-- Step 4: Test Template System -->
+    <bpmn:task id="Task_TestTemplateSystem" name="Test Template System">
+      <bpmn:incoming>Flow_4</bpmn:incoming>
+      <bpmn:outgoing>Flow_5</bpmn:outgoing>
+      <bpmn:script>
+        print("Testing template system...")
+        
+        try:
+            from uvmgr.ops.weaver_generation import WeaverGenerator
+            from pathlib import Path
+            
+            # Test generator initialization
+            registry_path = Path("weaver-forge/registry")
+            generator = WeaverGenerator(registry_path)
+            
+            # Test template system availability
+            template_available = generator.env is not None
+            print(f"Template system available: {template_available}")
+            
+            # Test basic generation functions
+            const_name = generator._to_python_const("test.attribute.name")
+            expected = "TEST_ATTRIBUTE_NAME"
+            template_success = const_name == expected
+            
+            print(f"Template system: {'PASSED' if template_success else 'FAILED'}")
+            
+        except Exception as e:
+            template_success = False
+            print(f"Template system: FAILED - {e}")
+        
+        task.workflow.data["template_success"] = template_success
+      </bpmn:script>
+    </bpmn:task>
+    
+    <!-- Step 5: Generate Validation Report -->
+    <bpmn:task id="Task_GenerateReport" name="Generate Validation Report">
+      <bpmn:incoming>Flow_5</bpmn:incoming>
+      <bpmn:outgoing>Flow_6</bpmn:outgoing>
+      <bpmn:script>
+        print("\n" + "="*50)
+        print("WEAVER FORGE OTEL VALIDATION REPORT")
+        print("="*50)
+        
+        # Get results from previous steps
+        generation_success = task.workflow.data.get("generation_success", False)
+        semconv_success = task.workflow.data.get("semconv_success", False)
+        instrumentation_success = task.workflow.data.get("instrumentation_success", False)
+        template_success = task.workflow.data.get("template_success", False)
+        
+        # Calculate overall success
+        tests = [generation_success, semconv_success, instrumentation_success, template_success]
+        total_tests = len(tests)
+        passed_tests = sum(tests)
+        success_rate = (passed_tests / total_tests) * 100
+        
+        print(f"📊 Test Results:")
+        print(f"   • Weaver Forge Generation: {'✅ PASSED' if generation_success else '❌ FAILED'}")
+        print(f"   • Semantic Conventions:    {'✅ PASSED' if semconv_success else '❌ FAILED'}")
+        print(f"   • OTEL Instrumentation:    {'✅ PASSED' if instrumentation_success else '❌ FAILED'}")
+        print(f"   • Template System:         {'✅ PASSED' if template_success else '❌ FAILED'}")
+        print(f"\n📈 Summary:")
+        print(f"   • Tests Passed: {passed_tests}/{total_tests}")
+        print(f"   • Success Rate: {success_rate:.1f}%")
+        
+        # 80/20 Analysis
+        if success_rate >= 80:
+            print(f"\n🎯 80/20 ANALYSIS: SUCCESS")
+            print(f"   The refactored Weaver Forge system meets the 80/20 principle")
+            print(f"   Core functionality is working with {success_rate:.1f}% success rate")
+        else:
+            print(f"\n⚠️  80/20 ANALYSIS: NEEDS IMPROVEMENT")
+            print(f"   Success rate of {success_rate:.1f}% below 80% threshold")
+        
+        # OTEL Validation Status
+        if instrumentation_success and semconv_success:
+            print(f"\n🔍 OTEL VALIDATION: ✅ PASSED")
+            print(f"   OpenTelemetry integration is working correctly")
+        else:
+            print(f"\n🔍 OTEL VALIDATION: ❌ FAILED")
+            print(f"   OpenTelemetry integration needs attention")
+        
+        print("="*50)
+        
+        # Store final results
+        task.workflow.data["overall_success"] = success_rate >= 80
+        task.workflow.data["success_rate"] = success_rate
+        task.workflow.data["otel_validated"] = instrumentation_success and semconv_success
+      </bpmn:script>
+    </bpmn:task>
+    
+    <!-- End Event -->
+    <bpmn:endEvent id="EndEvent_1" name="Validation Complete">
+      <bpmn:incoming>Flow_6</bpmn:incoming>
+    </bpmn:endEvent>
+    
+    <!-- Sequence Flows -->
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_TestGeneration" />
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_TestGeneration" targetRef="Task_ValidateSemanticConventions" />
+    <bpmn:sequenceFlow id="Flow_3" sourceRef="Task_ValidateSemanticConventions" targetRef="Task_TestOTELInstrumentation" />
+    <bpmn:sequenceFlow id="Flow_4" sourceRef="Task_TestOTELInstrumentation" targetRef="Task_TestTemplateSystem" />
+    <bpmn:sequenceFlow id="Flow_5" sourceRef="Task_TestTemplateSystem" targetRef="Task_GenerateReport" />
+    <bpmn:sequenceFlow id="Flow_6" sourceRef="Task_GenerateReport" targetRef="EndEvent_1" />
+    
+  </bpmn:process>
+</bpmn:definitions>

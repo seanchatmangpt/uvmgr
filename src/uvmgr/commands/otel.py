@@ -841,34 +841,45 @@ def _test_performance_tracking():
 
 
 def _test_workflow_integration():
-    """Test SpiffWorkflow OTEL integration."""
+    """Test SpiffWorkflow OTEL integration with comprehensive validation."""
     try:
-        # Create a minimal valid BPMN for testing
-        import tempfile
-
-        from uvmgr.runtime.agent.spiff import validate_bpmn_file
-        minimal_bpmn = """<?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
-                  id="test_workflow">
-  <bpmn:process id="test_process" isExecutable="true">
-    <bpmn:startEvent id="start"/>
-  </bpmn:process>
-</bpmn:definitions>"""
-
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".bpmn", delete=False) as f:
-            f.write(minimal_bpmn)
-            bpmn_path = Path(f.name)
-
-        # Test validation (should work without errors)
-        result = validate_bpmn_file(bpmn_path)
-
-        # Cleanup
-        bpmn_path.unlink()
+        # Use the full SpiffWorkflow OTEL validation system
+        from uvmgr.ops.spiff_otel_validation import run_8020_otel_validation
+        
+        add_span_event("workflow_integration_test_started")
+        
+        # Run 80/20 OTEL validation through SpiffWorkflow
+        validation_result = run_8020_otel_validation()
+        
+        success = validation_result.success
+        metrics_validated = validation_result.metrics_validated
+        spans_validated = validation_result.spans_validated
+        workflow_duration = validation_result.duration_seconds
+        
+        add_span_event("workflow_integration_test_completed", {
+            "success": success,
+            "metrics_validated": metrics_validated,
+            "spans_validated": spans_validated,
+            "workflow_duration": workflow_duration,
+        })
 
         return {
-            "status": "passed",
-            "message": "Workflow integration with OTEL works correctly",
-            "details": {"validation_result": result}
+            "status": "passed" if success else "failed",
+            "message": f"SpiffWorkflow OTEL integration {'passed' if success else 'failed'}",
+            "details": {
+                "workflow_success": success,
+                "metrics_validated": metrics_validated,
+                "spans_validated": spans_validated,
+                "workflow_duration": workflow_duration,
+                "validation_steps": len(validation_result.validation_steps),
+                "errors": len(validation_result.errors),
+            }
+        }
+    except ImportError as e:
+        return {
+            "status": "failed",
+            "message": "SpiffWorkflow dependencies not available",
+            "details": {"error": str(e), "suggestion": "Install with: pip install spiffworkflow"}
         }
     except Exception as e:
         return {
