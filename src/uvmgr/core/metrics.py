@@ -15,16 +15,26 @@ from __future__ import annotations
 
 import time
 from contextlib import contextmanager
+from dataclasses import dataclass
 from typing import Any
 
 from .semconv import (
-    AiAttributes,
+    AIAttributes,
     BuildAttributes,
     PackageAttributes,
     ProcessAttributes,
     TestAttributes,
 )
 from .telemetry import metric_counter, metric_gauge, metric_histogram
+
+
+@dataclass
+class OperationResult:
+    """Result of an operation with timing and context information."""
+    success: bool
+    duration: float
+    error: Exception | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class BaseMetrics:
@@ -115,6 +125,14 @@ class PackageMetrics(BaseMetrics):
             elif operation == "update":
                 self.packages_updated(1, **attributes)
 
+    def record_add(self, package_name: str, version: str | None, dev: bool, result: OperationResult):
+        """Record package add operation."""
+        self.record_package_operation("add", package_name, version, dev, result.duration, result.success)
+
+    def record_remove(self, package_name: str, result: OperationResult):
+        """Record package remove operation."""
+        self.record_package_operation("remove", package_name, None, False, result.duration, result.success)
+
 
 class BuildMetrics(BaseMetrics):
     """Metrics for build operations."""
@@ -151,6 +169,14 @@ class BuildMetrics(BaseMetrics):
             if artifact_size:
                 self.artifact_size(artifact_size, **attributes)
                 attributes[BuildAttributes.SIZE] = str(artifact_size)
+
+    def record_wheel(self, artifact_size: int, output_path: str, result: OperationResult):
+        """Record wheel build operation."""
+        self.record_build_operation("wheel", result.duration, result.success, artifact_size, output_path)
+
+    def record_exe(self, artifact_size: int, platform: str, result: OperationResult):
+        """Record executable build operation."""
+        self.record_build_operation("exe", result.duration, result.success, artifact_size)
 
 
 class TestMetrics(BaseMetrics):
@@ -230,9 +256,9 @@ class AiMetrics(BaseMetrics):
     ):
         """Record AI-specific metrics."""
         attributes = {
-            AiAttributes.OPERATION: operation,
-            AiAttributes.MODEL: model,
-            AiAttributes.PROVIDER: provider,
+            AIAttributes.OPERATION: operation,
+            AIAttributes.MODEL: model,
+            AIAttributes.PROVIDER: provider,
         }
 
         self.record_operation(operation, duration, success, attributes)
@@ -242,15 +268,19 @@ class AiMetrics(BaseMetrics):
 
             if input_tokens:
                 self.tokens_input(input_tokens, **attributes)
-                attributes[AiAttributes.TOKENS_INPUT] = str(input_tokens)
+                attributes[AIAttributes.TOKENS_INPUT] = str(input_tokens)
 
             if output_tokens:
                 self.tokens_output(output_tokens, **attributes)
-                attributes[AiAttributes.TOKENS_OUTPUT] = str(output_tokens)
+                attributes[AIAttributes.TOKENS_OUTPUT] = str(output_tokens)
 
             if cost:
                 self.ai_cost(cost, **attributes)
-                attributes[AiAttributes.COST] = str(cost)
+                attributes[AIAttributes.COST] = str(cost)
+
+    def record_completion(self, model: str, provider: str, input_tokens: int, output_tokens: int, cost: float, result: OperationResult):
+        """Record AI completion operation."""
+        self.record_ai_operation("completion", model, provider, result.duration, result.success, input_tokens, output_tokens, cost)
 
 
 class ProcessMetrics(BaseMetrics):

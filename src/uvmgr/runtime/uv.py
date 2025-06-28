@@ -23,6 +23,10 @@ from pathlib import Path
 from uvmgr.core.config import env_or
 from uvmgr.core.process import run_logged
 from uvmgr.core.telemetry import span
+from uvmgr.core.metrics import package_metrics, OperationResult
+from uvmgr.core.semconv import PackageAttributes
+from uvmgr.core.instrumentation import add_span_attributes, add_span_event
+import time
 
 _log = logging.getLogger("uvmgr.runtime.uv")
 
@@ -62,14 +66,69 @@ def call(sub_cmd: str, *, capture: bool = False, cwd: Path | None = None) -> str
 # High-level helpers – used by ops.deps
 # --------------------------------------------------------------------------- #
 def add(pkgs: list[str], *, dev: bool = False) -> None:
+    start_time = time.time()
+    
     with span("uv.add", pkgs=" ".join(pkgs), dev=dev):
-        flags = "--dev" if dev else ""
-        call(f"add {flags} {' '.join(pkgs)}")
+        add_span_attributes(**{
+            PackageAttributes.OPERATION: "add",
+            PackageAttributes.DEV_DEPENDENCY: dev,
+            "package.count": len(pkgs),
+        })
+        add_span_event("uv.add.started", {"packages": pkgs, "dev": dev})
+        
+        try:
+            flags = "--dev" if dev else ""
+            call(f"add {flags} {' '.join(pkgs)}")
+            
+            # Record successful metrics for each package
+            duration = time.time() - start_time
+            for pkg in pkgs:
+                result = OperationResult(success=True, duration=duration)
+                package_metrics.record_add(pkg, None, dev, result)
+            
+            add_span_event("uv.add.completed", {"packages": pkgs, "success": True})
+            
+        except Exception as e:
+            # Record failed metrics for each package
+            duration = time.time() - start_time
+            for pkg in pkgs:
+                result = OperationResult(success=False, duration=duration, error=e)
+                package_metrics.record_add(pkg, None, dev, result)
+            
+            add_span_event("uv.add.failed", {"error": str(e), "packages": pkgs})
+            raise
 
 
 def remove(pkgs: list[str]) -> None:
+    start_time = time.time()
+    
     with span("uv.remove", pkgs=" ".join(pkgs)):
-        call(f"remove {' '.join(pkgs)}")
+        add_span_attributes(**{
+            PackageAttributes.OPERATION: "remove",
+            "package.count": len(pkgs),
+        })
+        add_span_event("uv.remove.started", {"packages": pkgs})
+        
+        try:
+            call(f"remove {' '.join(pkgs)}")
+            
+            # Record successful metrics for each package
+            duration = time.time() - start_time
+            for pkg in pkgs:
+                result = OperationResult(success=True, duration=duration)
+                package_metrics.record_remove(pkg, result)
+            
+            add_span_event("uv.remove.completed", {"packages": pkgs, "success": True})
+            
+        except Exception as e:
+            # Record failed metrics for each package
+            duration = time.time() - start_time
+            for pkg in pkgs:
+                result = OperationResult(success=False, duration=duration, error=e)
+                package_metrics.record_remove(pkg, result)
+            
+            add_span_event("uv.remove.failed", {"error": str(e), "packages": pkgs})
+            raise
 
 
 def upgrade(*, all_pkgs: bool = False, pkgs: list[str] | None = None) -> None:

@@ -7,9 +7,11 @@ User-facing dependency orchestration (uv add / remove / upgrade / list).
 from __future__ import annotations
 
 import logging
+import time
 
 from uvmgr.core.shell import timed
-from uvmgr.core.telemetry import span
+from uvmgr.core.telemetry import span, metric_counter, metric_histogram
+from uvmgr.core.semconv import PackageAttributes, PackageOperations
 from uvmgr.runtime import uv as _rt
 
 _log = logging.getLogger("uvmgr.ops.deps")
@@ -17,8 +19,44 @@ _log = logging.getLogger("uvmgr.ops.deps")
 
 @timed
 def add(pkgs: list[str], *, dev: bool = False) -> dict:
-    with span("deps.add", pkgs=" ".join(pkgs), dev=dev):
-        _rt.add(pkgs, dev=dev)
+    start_time = time.time()
+    
+    with span("deps.add", 
+              **{PackageAttributes.OPERATION: PackageOperations.ADD,
+                 PackageAttributes.NAME: " ".join(pkgs),
+                 PackageAttributes.DEV_DEPENDENCY: dev,
+                 "package.count": len(pkgs)}) as current_span:
+        
+        # Record operation start
+        metric_counter("deps.operations")(1, {
+            "operation": "add",
+            "dev": str(dev),
+            "package_count": len(pkgs)
+        })
+        
+        try:
+            _rt.add(pkgs, dev=dev)
+            
+            # Record success metrics
+            duration = time.time() - start_time
+            metric_histogram("deps.operation.duration")(duration, {
+                "operation": "add",
+                "success": "true"
+            })
+            
+            current_span.set_attribute("operation.success", True)
+            current_span.set_attribute("operation.duration", duration)
+            
+        except Exception as e:
+            # Record failure metrics
+            duration = time.time() - start_time
+            metric_counter("deps.errors")(1, {"operation": "add"})
+            metric_histogram("deps.operation.duration")(duration, {
+                "operation": "add", 
+                "success": "false"
+            })
+            raise
+            
     _log.debug("Added %s (dev=%s)", pkgs, dev)
     return {"added": pkgs, "dev": dev}
 

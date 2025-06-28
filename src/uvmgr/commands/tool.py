@@ -19,7 +19,8 @@ from __future__ import annotations
 
 import typer
 
-from uvmgr.core.instrumentation import instrument_subcommand
+from uvmgr.core.instrumentation import instrument_command, add_span_attributes, add_span_event
+from uvmgr.core.semconv import ToolAttributes, ToolOperations
 from uvmgr.core.shell import colour
 from uvmgr.ops import tools as tools_ops
 
@@ -33,7 +34,7 @@ cli_root.app.add_typer(tool_app, name="tool")  # ← mount on the root CLI
 # Commands
 # ──────────────────────────────────────────────────────────────────────────────
 @tool_app.command("run")
-@instrument_subcommand("tool")
+@instrument_command("tool_run", track_args=True)
 def run(
     pkg_and_args: list[str] = typer.Argument(
         ...,
@@ -51,7 +52,7 @@ def run(
 
 
 @tool_app.command("install")
-@instrument_subcommand("tool")
+@instrument_command("tool_install", track_args=True)
 def install(
     pkgs: list[str] = typer.Argument(
         ...,
@@ -64,7 +65,7 @@ def install(
 
 
 @tool_app.command("dir")
-@instrument_subcommand("tool")
+@instrument_command("tool_dir", track_args=True)
 def dir_() -> None:
     """Print the venv’s *bin* directory that hosts console-scripts."""
     colour(tools_ops.tool_dir(), "cyan")

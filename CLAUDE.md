@@ -6,6 +6,44 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 uvmgr is a unified Python workflow engine that wraps around `uv` (a fast Python package manager) to streamline the entire Python development lifecycle. It provides a clean CLI interface with a three-layer architecture: Commands → Operations → Runtime.
 
+### System Architecture Insights
+- **Unified Workflow Engine**: Integrates package management, testing, building, AI assistance, and observability
+- **External System Integration**: Seamlessly connects to uv, PyPI, Git, Docker, OpenTelemetry, and AI services
+- **MCP Protocol Support**: Enables AI agents to interact with uvmgr programmatically
+- **Comprehensive Telemetry**: Built-in OpenTelemetry instrumentation for all operations
+- **Weaver Forge Integration**: Automated code generation and instrumentation capabilities
+
+## Project Introspection & Visualization
+
+uvmgr provides comprehensive project introspection capabilities through architectural diagrams and telemetry:
+
+### Architectural Visualization
+```bash
+# Generate system architecture diagrams (C4 Context/Container)
+# View three-layer architecture flow: Commands → Ops → Runtime
+# Understand component relationships and external integrations
+# Analyze AI/MCP integration patterns
+```
+
+### System Observability
+```bash
+# OpenTelemetry instrumentation and tracing
+uvmgr otel validate
+uvmgr otel demo
+
+# Real-time metrics and performance monitoring
+# Comprehensive telemetry for all command executions
+# Integration with Prometheus and OTEL Collector
+```
+
+### Component Analysis
+```bash
+# Analyze command layer (17+ CLI commands)
+# Inspect operations layer (business logic)
+# Monitor runtime layer (subprocess execution)
+# Review core infrastructure (cache, config, telemetry)
+```
+
 ## Key Development Commands
 
 ### Running Tests
@@ -85,6 +123,31 @@ uvmgr release version major
 2. **Three-Layer Architecture**: Commands call ops, ops call runtime
 3. **Dependency Injection**: Core utilities injected where needed
 4. **Async Support**: Many operations support async execution
+5. **Observer Pattern**: Telemetry system instruments all operations
+6. **Strategy Pattern**: Multiple execution strategies (local, remote, containerized)
+7. **Factory Pattern**: Dynamic command loading and registration
+8. **Decorator Pattern**: Weaver Forge instrumentation and code generation
+
+### Execution Flow Architecture
+```
+User Input → CLI Parser → Command Router
+    ↓
+Commands Layer (Validation, Auth, Telemetry Start)
+    ↓
+Operations Layer (Business Logic, Data Processing)
+    ↓
+Runtime Layer (Process Execution, File/Network Operations)
+    ↓
+Core Infrastructure (Cache, Config, Metrics, Paths)
+```
+
+### Integration Ecosystem
+- **Package Management**: uv, PyPI integration
+- **Version Control**: Git operations and workflow automation
+- **Containerization**: Docker build and deployment
+- **AI Services**: OpenAI, Groq API integration via DSPy
+- **Observability**: OpenTelemetry, Prometheus, metrics export
+- **Code Generation**: Weaver Forge templating and instrumentation
 
 ## Important Development Rules
 
@@ -129,16 +192,39 @@ def do_something(arg: str = typer.Argument(..., help="Description")):
 - Cache directory: `~/.uvmgr_cache/`
 - Virtual environments: `.venv/` in project root
 
-## MCP Server
+## MCP Server & AI Integration
 
-To work with MCP features:
+uvmgr includes a comprehensive Model Context Protocol (MCP) server for AI agent integration:
+
+### MCP Server Features
 ```bash
 # Install MCP dependencies
 pip install 'uvmgr[mcp]'
 
 # Start MCP server
 uvmgr serve start
+uvmgr serve status
+
+# Available MCP tools for AI agents:
+# - ai: AI assistance and automation
+# - build: PyInstaller and distribution building
+# - deps: Package dependency management
+# - exec: Command execution and subprocess management
+# - files: File system operations
+# - project: Project structure and configuration
+# - test: Testing and coverage operations
 ```
+
+### AI Agent Capabilities
+- **Programmatic Access**: AI agents can execute all uvmgr commands via MCP
+- **Context Awareness**: Agents receive project structure and configuration context
+- **Automated Workflows**: Complex multi-step operations through agent coordination
+- **Real-time Feedback**: Telemetry and logging integration for agent observability
+
+### Supported AI Frameworks
+- **DSPy**: Advanced AI pipeline construction and optimization
+- **FastMCP**: High-performance MCP server implementation
+- **Ember-AI**: AI workflow automation and orchestration
 
 ## Common Development Tasks
 
@@ -166,6 +252,35 @@ uvmgr ai fix-tests
 uvmgr ai plan "Feature description"
 ```
 
+### Agent Coordination & Workflows
+```bash
+# SpiffWorkflow integration for complex automation
+uvmgr agent coordinate
+uvmgr agent swarm
+
+# APScheduler for task scheduling
+uvmgr ap-scheduler start
+uvmgr ap-scheduler status
+
+# Remote execution capabilities
+uvmgr remote execute
+```
+
+### Observability & Telemetry
+```bash
+# OpenTelemetry validation and testing
+uvmgr otel validate
+uvmgr otel demo
+
+# Weaver semantic convention validation
+uvmgr weaver validate
+uvmgr weaver generate
+
+# Comprehensive system instrumentation
+# Automatic span creation for all operations
+# Metrics collection and export
+```
+
 ## Pre-commit Hooks
 
 The project uses extensive pre-commit hooks. They run automatically on commit but can be run manually:
@@ -189,15 +304,42 @@ mypy src/
 mypy
 ```
 
-## Key Dependencies
+## Key Dependencies & Technology Stack
 
-- **CLI**: typer, rich (for enhanced terminal output)
-- **Testing**: pytest, pytest-mock, coverage
-- **AI**: dspy, fastmcp, ember-ai
-- **Web**: fastapi
-- **Workflow**: spiffworkflow, apscheduler
-- **Telemetry**: opentelemetry-sdk
-- **Packaging**: pyinstaller, pyinstaller-hooks-contrib
+### Core Infrastructure
+- **CLI Framework**: typer (command structure), rich (enhanced terminal output)
+- **Async Runtime**: asyncio, aiofiles (high-performance I/O)
+- **Configuration**: TOML-based config management
+- **Caching**: Advanced caching system with cleanup automation
+
+### Development & Testing
+- **Testing**: pytest, pytest-mock, coverage (comprehensive test suite)
+- **Code Quality**: ruff, mypy, black (linting and formatting)
+- **Documentation**: pdoc (API documentation generation)
+
+### AI & Automation
+- **AI Frameworks**: dspy (AI pipelines), ember-ai (workflow automation)
+- **MCP Integration**: fastmcp (Model Context Protocol server)
+- **Agent Coordination**: Multi-agent workflow orchestration
+
+### Workflow & Orchestration
+- **Process Automation**: spiffworkflow (BPMN workflow engine)
+- **Task Scheduling**: apscheduler (cron-like scheduling)
+- **Remote Execution**: Distributed command execution
+
+### Observability & Telemetry
+- **Instrumentation**: opentelemetry-sdk (comprehensive tracing)
+- **Metrics**: Prometheus integration, custom metrics collection
+- **Semantic Conventions**: Weaver-based OTEL semantic conventions
+
+### Build & Distribution
+- **Packaging**: pyinstaller, pyinstaller-hooks-contrib (executable building)
+- **Container**: Docker integration for containerized builds
+- **Package Management**: uv (fast Python package manager)
+
+### Web & API
+- **Web Framework**: fastapi (for MCP server and web interfaces)
+- **HTTP Client**: Advanced HTTP client for external API integration
 
 ## Error Handling
 
@@ -208,10 +350,27 @@ mypy
 
 ## Performance Considerations
 
-- The project emphasizes speed by using `uv` underneath
-- Cache operations are used extensively (`~/.uvmgr_cache/`)
-- Subprocess calls are made with proper error handling
-- Async operations are preferred for I/O-bound tasks
+### Speed Optimizations
+- **uv Integration**: Leverages uv's Rust-based performance for package operations
+- **Extensive Caching**: Intelligent caching system (`~/.uvmgr_cache/`) with automatic cleanup
+- **Async Architecture**: Preferred async operations for I/O-bound tasks
+- **Parallel Execution**: Concurrent command execution where applicable
+
+### Resource Management
+- **Memory Efficiency**: Careful subprocess management and resource cleanup
+- **Disk Usage**: Automatic cache management and temporary file cleanup
+- **Network Optimization**: Efficient package downloads and API calls
+
+### Monitoring & Profiling
+- **Built-in Telemetry**: OpenTelemetry instrumentation for performance monitoring
+- **Execution Tracing**: Detailed spans for command execution analysis
+- **Metrics Collection**: Performance metrics export to Prometheus
+- **Error Tracking**: Comprehensive error handling and reporting
+
+### Scalability Features
+- **Remote Execution**: Distribute heavy operations across multiple systems
+- **Agent Coordination**: Scale complex workflows through agent orchestration
+- **Containerized Builds**: Isolated build environments for consistent performance
 
 ## PyInstaller Integration
 

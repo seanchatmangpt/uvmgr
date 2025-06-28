@@ -1,15 +1,31 @@
 {
-    "name": "uvmgr",
-    "dockerComposeFile": "../docker-compose.yml",
-    "service": "devcontainer",
-    "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}/",
+    "name": "uvmgr OTEL Development",
+    "dockerComposeFile": "docker-compose.otel.yml",
+    "service": "uvmgr-dev",
+    "workspaceFolder": "/workspace",
     "features": {
         "ghcr.io/devcontainers/features/docker-in-docker:2": {},
         "ghcr.io/devcontainers-extra/features/starship:1": {}
     },
     "overrideCommand": true,
     "remoteUser": "user",
-    "postStartCommand": "sudo chown -R user:user /opt/ && uv sync --python ${localEnv:PYTHON_VERSION:3.12} --all-extras && pre-commit install --install-hooks",
+    "postCreateCommand": "bash .devcontainer/setup.sh",
+    "postStartCommand": "bash .devcontainer/start-otel.sh",
+    
+    "forwardPorts": [4317, 4318, 16686, 9090, 3000, 8888],
+    "portsAttributes": {
+        "4317": {"label": "OTEL OTLP gRPC", "onAutoForward": "silent"},
+        "4318": {"label": "OTEL OTLP HTTP", "onAutoForward": "silent"}, 
+        "16686": {"label": "Jaeger UI", "onAutoForward": "openBrowser"},
+        "9090": {"label": "Prometheus", "onAutoForward": "openBrowser"},
+        "3000": {"label": "Grafana", "onAutoForward": "openBrowser"}
+    },
+    
+    "remoteEnv": {
+        "OTEL_SERVICE_NAME": "uvmgr-dev",
+        "OTEL_EXPORTER_OTLP_ENDPOINT": "http://localhost:4317",
+        "OTEL_RESOURCE_ATTRIBUTES": "service.name=uvmgr,service.version=dev,environment=devcontainer"
+    },
     "customizations": {
         "jetbrains": {
             "backend": "PyCharm",
