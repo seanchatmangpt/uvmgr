@@ -17,6 +17,8 @@ Key Features
 • **Telemetry Integration**: Full OpenTelemetry instrumentation
 • **Spiff Integration**: Native SpiffWorkflow engine support
 • **Testing Framework**: Built-in workflow testing and validation
+• **8020 Validation**: End-to-end external project validation workflows
+• **OTEL Verification**: Comprehensive OpenTelemetry data validation
 
 Available Commands
 -----------------
@@ -25,6 +27,8 @@ Available Commands
 - **test**: Test workflow execution with OTEL validation
 - **parse**: Parse and analyze workflow structure
 - **stats**: Get workflow statistics and metrics
+- **8020**: Execute 8020 external project validation workflow
+- **otel-validate**: Validate OTEL integration in workflows
 
 Workflow Features
 ----------------

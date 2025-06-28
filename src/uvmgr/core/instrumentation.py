@@ -143,7 +143,7 @@ def instrument_command(
 
             # Extract meaningful attributes from args/kwargs
             attributes = {
-                CliAttributes.COMMAND: command_name,
+                CliAttributes.CLI_COMMAND: command_name,
                 "cli.module": func.__module__.split(".")[-1],
                 SpanAttributes.CODE_FUNCTION: func.__name__,
                 SpanAttributes.CODE_NAMESPACE: func.__module__,

@@ -1,0 +1,27 @@
+{
+  "workflow": "otel_validation.bpmn",
+  "iterations": 1,
+  "otel_validation": true,
+  "tests": {
+    "bpmn_validation": {
+      "status": "passed",
+      "valid": true
+    },
+    "execution": {
+      "status": "passed",
+      "results": [
+        {
+          "iteration": 1,
+          "status": "completed",
+          "duration": 0.005654096603393555,
+          "steps": 1,
+          "tasks": 14
+        }
+      ]
+    },
+    "otel_integration": {
+      "status": "passed",
+      "message": "OTEL integration working correctly"
+    }
+  }
+}

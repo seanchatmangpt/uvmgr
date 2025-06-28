@@ -29,6 +29,12 @@ class CliAttributes:
     
     CLI_EXIT_CODE: Final[str] = "cli.exit_code"  # The exit code of the CLI command
     
+    COMMAND: Final[str] = "cli.command"  # Alias for CLI_COMMAND (compatibility)
+    
+    OPTIONS: Final[str] = "cli.options"  # CLI options and arguments
+    
+    EXIT_CODE: Final[str] = "cli.exit_code"  # Alias for CLI_EXIT_CODE (compatibility)
+    
 
 
 # Package management operation attributes

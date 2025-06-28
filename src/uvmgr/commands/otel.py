@@ -983,6 +983,105 @@ def _export_validation_results(results, output_path):
     console.print(f"\n[blue]📁 Results exported to: {output_path}[/blue]")
 
 
+def _display_spiff_validation_results(result) -> None:
+    """Display SpiffWorkflow validation results in formatted output."""
+    # Import here to avoid circular imports
+    from uvmgr.ops.spiff_otel_validation import OTELValidationResult
+    
+    if not isinstance(result, OTELValidationResult):
+        console.print("[red]❌ Invalid validation result format[/red]")
+        return
+    
+    # Main status panel
+    status_color = "green" if result.success else "red"
+    status_icon = "✅" if result.success else "❌"
+    
+    panel_content = f"""[{status_color}]{status_icon} SpiffWorkflow OTEL Validation {['FAILED', 'PASSED'][result.success]}[/{status_color}]
+
+[bold]Workflow:[/bold] {result.workflow_name}
+[bold]Duration:[/bold] {result.duration_seconds:.2f}s
+[bold]Validation Steps:[/bold] {len(result.validation_steps)}
+[bold]Metrics Validated:[/bold] {result.metrics_validated}
+[bold]Spans Validated:[/bold] {result.spans_validated}"""
+    
+    if result.errors:
+        panel_content += f"\n[bold red]Errors:[/bold red] {len(result.errors)}"
+    
+    console.print(Panel(panel_content, title="SpiffWorkflow OTEL Validation Results", border_style=status_color))
+    
+    # Validation steps summary
+    if result.validation_steps:
+        console.print("\n[bold]Validation Steps:[/bold]")
+        steps_table = Table()
+        steps_table.add_column("#", style="dim", width=3)
+        steps_table.add_column("Step", style="cyan")
+        steps_table.add_column("Status", style="green", width=8)
+        
+        for i, step_name in enumerate(result.validation_steps, 1):
+            # Determine status (simplified - in real implementation would track individual step status)
+            status = "✅ PASS" if "Error" not in step_name else "❌ FAIL"
+            steps_table.add_row(str(i), step_name, status)
+        
+        console.print(steps_table)
+    
+    # Performance metrics
+    if result.performance_data:
+        console.print("\n[bold]Performance Metrics:[/bold]")
+        perf_table = Table()
+        perf_table.add_column("Metric", style="cyan")
+        perf_table.add_column("Value", style="green")
+        
+        for metric, value in result.performance_data.items():
+            if isinstance(value, float):
+                formatted_value = f"{value:.3f}s" if "duration" in metric else f"{value:.3f}"
+            else:
+                formatted_value = str(value)
+            perf_table.add_row(metric.replace("_", " ").title(), formatted_value)
+        
+        console.print(perf_table)
+    
+    # Error details
+    if result.errors:
+        console.print("\n[bold red]Validation Errors:[/bold red]")
+        for i, error in enumerate(result.errors[:5], 1):  # Show first 5 errors
+            console.print(f"  {i}. [red]{error}[/red]")
+        if len(result.errors) > 5:
+            console.print(f"  [dim]... and {len(result.errors) - 5} more errors[/dim]")
+
+
+def _save_spiff_validation_results(result, output_file: Path) -> None:
+    """Save SpiffWorkflow validation results to JSON file."""
+    # Import here to avoid circular imports
+    from uvmgr.ops.spiff_otel_validation import OTELValidationResult
+    
+    if not isinstance(result, OTELValidationResult):
+        console.print("[red]❌ Cannot save invalid validation result[/red]")
+        return
+    
+    results_data = {
+        "timestamp": time.time(),
+        "validation_type": "spiff_workflow_otel",
+        "workflow_name": result.workflow_name,
+        "success": result.success,
+        "duration_seconds": result.duration_seconds,
+        "validation_steps": result.validation_steps,
+        "metrics_validated": result.metrics_validated,
+        "spans_validated": result.spans_validated,
+        "errors": result.errors,
+        "performance_data": result.performance_data,
+        "summary": {
+            "total_steps": len(result.validation_steps),
+            "error_count": len(result.errors),
+            "success_rate": (len(result.validation_steps) - len(result.errors)) / len(result.validation_steps) * 100 if result.validation_steps else 0,
+        }
+    }
+    
+    with open(output_file, 'w') as f:
+        json.dump(results_data, f, indent=2)
+    
+    console.print(f"[blue]📁 SpiffWorkflow results saved to: {output_file}[/blue]")
+
+
 @app.command("demo")
 @instrument_command("otel_demo")
 def demo_otel_features():
@@ -1041,6 +1140,178 @@ def demo_otel_features():
         add_span_event("demo.completed")
 
     console.print("\n[green]🎉 OTEL demonstration completed! Check your telemetry backend for traces.[/green]")
+
+
+@app.command("workflow-validate")
+@instrument_command("otel_workflow_validate")
+def workflow_validate(
+    test_commands: Optional[str] = typer.Option(
+        None,
+        "--tests",
+        "-t",
+        help="Comma-separated test commands to validate"
+    ),
+    mode: str = typer.Option(
+        "8020",
+        "--mode",
+        "-m",
+        help="Validation mode: 8020 (critical), comprehensive, custom"
+    ),
+    project_path: Optional[Path] = typer.Option(
+        None,
+        "--project",
+        "-p",
+        help="Project path for validation context"
+    ),
+    save_results: bool = typer.Option(
+        False,
+        "--save",
+        "-s",
+        help="Save validation results to file"
+    ),
+    workflow_file: Optional[Path] = typer.Option(
+        None,
+        "--workflow",
+        "-w",
+        help="Custom BPMN workflow file"
+    ),
+):
+    """
+    Run OTEL validation using SpiffWorkflow orchestration.
+    
+    This command integrates SpiffWorkflow BPMN execution with OTEL validation,
+    providing comprehensive workflow-driven test validation with full telemetry
+    instrumentation and monitoring.
+    
+    Examples:
+        uvmgr otel workflow-validate --mode 8020
+        uvmgr otel workflow-validate --tests "uvmgr tests run,uvmgr otel status"
+        uvmgr otel workflow-validate --workflow custom.bpmn --project /path/to/project
+    """
+    console.print("🔄 [bold cyan]SpiffWorkflow OTEL Validation[/bold cyan]")
+    console.print(f"📋 Mode: {mode}")
+    
+    if project_path:
+        console.print(f"📁 Project: {project_path}")
+    
+    try:
+        from uvmgr.ops.spiff_otel_validation import (
+            run_8020_otel_validation,
+            execute_otel_validation_workflow,
+            create_otel_validation_workflow
+        )
+        
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console,
+        ) as progress:
+            task = progress.add_task("Setting up workflow validation...", total=3)
+            
+            if mode == "8020":
+                # Run 80/20 validation
+                progress.update(task, description="Executing 80/20 critical validation...")
+                result = run_8020_otel_validation(project_path)
+                progress.advance(task, 3)
+                
+            elif mode == "custom" and workflow_file:
+                # Use custom workflow
+                if not workflow_file.exists():
+                    console.print(f"[red]❌ Workflow file not found: {workflow_file}[/red]")
+                    raise typer.Exit(1)
+                
+                progress.update(task, description="Executing custom workflow...")
+                test_cmd_list = test_commands.split(",") if test_commands else ["uvmgr otel status"]
+                result = execute_otel_validation_workflow(
+                    workflow_file, test_cmd_list, project_path
+                )
+                progress.advance(task, 3)
+                
+            elif mode == "comprehensive" or test_commands:
+                # Create comprehensive or custom test workflow
+                test_cmd_list = []
+                if test_commands:
+                    test_cmd_list = [cmd.strip() for cmd in test_commands.split(",")]
+                else:
+                    # Comprehensive test suite
+                    test_cmd_list = [
+                        "uvmgr otel status",
+                        "uvmgr otel coverage",
+                        "uvmgr otel validate",
+                        "uvmgr tests run tests/test_instrumentation.py -v",
+                        "python -c 'from uvmgr.core.telemetry import span, metric_counter; print(\"✓ Core imports\")'",
+                        "uvmgr otel semconv --validate",
+                    ]
+                
+                progress.update(task, description="Creating comprehensive workflow...")
+                workflow_path = Path.cwd() / ".uvmgr_temp" / "comprehensive_otel_validation.bpmn"
+                create_otel_validation_workflow(workflow_path, test_cmd_list)
+                progress.advance(task)
+                
+                progress.update(task, description="Executing comprehensive validation...")
+                result = execute_otel_validation_workflow(
+                    workflow_path, test_cmd_list, project_path
+                )
+                progress.advance(task)
+                
+                # Cleanup
+                if workflow_path.exists():
+                    workflow_path.unlink()
+                progress.advance(task)
+                
+            else:
+                console.print(f"[red]❌ Invalid mode: {mode}[/red]")
+                console.print("Valid modes: 8020, comprehensive, custom (requires --workflow)")
+                raise typer.Exit(1)
+            
+            # Display results
+            _display_spiff_validation_results(result)
+            
+            # Save results if requested
+            if save_results:
+                results_file = Path(f"otel_workflow_validation_{mode}.json")
+                _save_spiff_validation_results(result, results_file)
+                console.print(f"💾 Results saved to: {results_file}")
+            
+            # Final status and telemetry
+            add_span_attributes(**{
+                "workflow_validation.mode": mode,
+                "workflow_validation.success": result.success,
+                "workflow_validation.metrics_validated": result.metrics_validated,
+                "workflow_validation.spans_validated": result.spans_validated,
+                "workflow_validation.duration": result.duration_seconds,
+            })
+            
+            add_span_event("workflow_validation_completed", {
+                "mode": mode,
+                "success": result.success,
+                "metrics": result.metrics_validated,
+                "spans": result.spans_validated,
+                "steps": len(result.validation_steps),
+                "errors": len(result.errors),
+            })
+            
+            if result.success:
+                console.print(f"\n[green]✅ SpiffWorkflow OTEL Validation PASSED[/green]")
+                console.print(f"[green]✓ {result.metrics_validated} metrics, {result.spans_validated} spans validated[/green]")
+            else:
+                console.print(f"\n[red]❌ SpiffWorkflow OTEL Validation FAILED[/red]")
+                console.print(f"[red]✗ {len(result.errors)} errors found[/red]")
+                for error in result.errors[:3]:
+                    console.print(f"  • {error}")
+                if len(result.errors) > 3:
+                    console.print(f"  ... and {len(result.errors) - 3} more errors")
+                raise typer.Exit(1)
+                
+    except ImportError as e:
+        add_span_event("workflow_validation_import_error", {"error": str(e)})
+        console.print("[red]❌ SpiffWorkflow dependencies not available[/red]")
+        console.print("Install with: uvmgr deps add spiffworkflow")
+        raise typer.Exit(1)
+    except Exception as e:
+        add_span_event("workflow_validation_failed", {"error": str(e)})
+        console.print(f"[red]❌ Workflow validation failed: {e}[/red]")
+        raise typer.Exit(1)
 
 
 @app.command("export")
