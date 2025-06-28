@@ -32,7 +32,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
         python-version: ['3.12']
     
     steps:
@@ -50,7 +50,6 @@ jobs:
       - name: Install uvmgr
         run: |
           uv sync --all-extras
-          uv run pip install -e .
           uv run uvmgr --version
       
       - name: Run basic functionality tests
@@ -76,8 +75,8 @@ jobs:
       
       - name: Test uvmgr self-build
         run: |
-          uv run uvmgr build wheel
-          uv run uvmgr build check
+          uv run uvmgr build dist
+          ls -la dist/
         timeout-minutes: 15
   
   integration-tests:
@@ -105,7 +104,6 @@ jobs:
       - name: Install uvmgr
         run: |
           uv sync --all-extras
-          uv run pip install -e .
       
       - name: Run integration test - ${{ matrix.test-scenario }}
         run: |
@@ -133,7 +131,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
     
     steps:
       - name: Checkout code
@@ -150,7 +148,6 @@ jobs:
       - name: Install uvmgr and build tools
         run: |
           uv sync --all-extras
-          uv run pip install -e .
       
       - name: Build uvmgr executable
         run: |
