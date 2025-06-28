@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  id="test_workflow"
+                  targetNamespace="http://uvmgr.com/test">
+  
+  <bpmn:process id="test_process" isExecutable="true" name="Test Validation Process">
+    <bpmn:startEvent id="start_event" name="Start Validation">
+      <bpmn:outgoing>flow_to_validate</bpmn:outgoing>
+    </bpmn:startEvent>
+    
+    <bpmn:sequenceFlow id="flow_to_validate" sourceRef="start_event" targetRef="validate_code"/>
+    
+    <bpmn:scriptTask id="validate_code" name="Code Validation">
+      <bpmn:incoming>flow_to_validate</bpmn:incoming>
+      <bpmn:outgoing>flow_to_test</bpmn:outgoing>
+      <bpmn:script>print("Validating code...")</bpmn:script>
+    </bpmn:scriptTask>
+    
+    <bpmn:sequenceFlow id="flow_to_test" sourceRef="validate_code" targetRef="run_tests"/>
+    
+    <bpmn:scriptTask id="run_tests" name="Run Test Suite">
+      <bpmn:incoming>flow_to_test</bpmn:incoming>
+      <bpmn:outgoing>flow_to_end</bpmn:outgoing>
+      <bpmn:script>print("Running tests...")</bpmn:script>
+    </bpmn:scriptTask>
+    
+    <bpmn:sequenceFlow id="flow_to_end" sourceRef="run_tests" targetRef="end_event"/>
+    
+    <bpmn:endEvent id="end_event" name="Validation Complete">
+      <bpmn:incoming>flow_to_end</bpmn:incoming>
+    </bpmn:endEvent>
+  </bpmn:process>
+</bpmn:definitions>

@@ -81,7 +81,7 @@ def exe(
     """Build executable using PyInstaller."""
     start_time = time.time()
     
-    with span("ops.build.exe", name=name, onefile=onefile):
+    with span("ops.build.exe", exe_name=name, onefile=onefile):
         add_span_attributes(**{
             BuildAttributes.TYPE: "exe",
             "build.name": name,

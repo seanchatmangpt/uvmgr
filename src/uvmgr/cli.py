@@ -19,6 +19,7 @@ import typer
 
 from uvmgr.cli_utils import handle_cli_exception
 from uvmgr.logging_config import setup_logging
+from uvmgr.core.instrumentation import instrument_command
 
 os.environ.setdefault("LITELLM_LOCAL_MODEL_COST_MAP", "True")
 
@@ -45,6 +46,7 @@ def _json_cb(ctx: typer.Context, value: bool):
 
 
 @app.callback()
+@instrument_command("uvmgr_main", track_args=True)
 def _root(
     ctx: typer.Context,
     json_: bool = typer.Option(

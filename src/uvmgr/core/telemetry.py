@@ -43,21 +43,40 @@ def setup_logging(level: str = "INFO") -> None:
 try:
     from opentelemetry import metrics, trace
     from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+    from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
     from opentelemetry.sdk.resources import Resource
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
+    from opentelemetry.sdk.metrics import MeterProvider
+    from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+
+    # Only initialize if OTEL endpoint is configured
+    _OTEL_ENDPOINT = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
+    if not _OTEL_ENDPOINT:
+        raise ImportError("OTEL_EXPORTER_OTLP_ENDPOINT not set")
 
     _RESOURCE = Resource.create(
         {
-            "service.name": "uvmgr",
+            "service.name": os.getenv("OTEL_SERVICE_NAME", "uvmgr"),
             "service.instance.id": os.getenv("HOSTNAME", "localhost"),
             "os.type": platform.system().lower(),
         }
     )
-    _PROVIDER = TracerProvider(resource=_RESOURCE)
-    _PROVIDER.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
-    trace.set_tracer_provider(_PROVIDER)
+    
+    # Setup Traces
+    _TRACE_PROVIDER = TracerProvider(resource=_RESOURCE)
+    _TRACE_PROVIDER.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=_OTEL_ENDPOINT)))
+    trace.set_tracer_provider(_TRACE_PROVIDER)
     _TRACER = trace.get_tracer("uvmgr")
+    
+    # Setup Metrics
+    _METRIC_READER = PeriodicExportingMetricReader(
+        OTLPMetricExporter(endpoint=_OTEL_ENDPOINT),
+        export_interval_millis=5000  # Export every 5 seconds
+    )
+    _METRIC_PROVIDER = MeterProvider(resource=_RESOURCE, metric_readers=[_METRIC_READER])
+    metrics.set_meter_provider(_METRIC_PROVIDER)
+    _METER = metrics.get_meter("uvmgr")
 
     @contextmanager
     def span(name: str, span_kind=None, **attrs: Any):
@@ -68,16 +87,16 @@ try:
             yield
 
     def metric_counter(name: str) -> Callable[[int], None]:
-        return metrics.get_meter("uvmgr").create_counter(name).add
+        return _METER.create_counter(name).add
 
     def metric_histogram(name: str, unit: str = "s") -> Callable[[float], None]:
         """Create a histogram metric for recording distributions."""
-        return metrics.get_meter("uvmgr").create_histogram(name, unit=unit).record
+        return _METER.create_histogram(name, unit=unit).record
 
     def metric_gauge(name: str) -> Callable[[float], None]:
         """Create a gauge metric for recording current values."""
         # Note: OTEL uses UpDownCounter for gauge-like behavior
-        return metrics.get_meter("uvmgr").create_up_down_counter(name).add
+        return _METER.create_up_down_counter(name).add
 
     def record_exception(e: Exception, escaped: bool = True, attributes: dict[str, Any] | None = None):
         """Record an exception in the current span with semantic conventions."""

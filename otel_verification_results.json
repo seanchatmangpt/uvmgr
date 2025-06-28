@@ -1,0 +1,215 @@
+{
+  "verification_rate": 100.0,
+  "verified_claims": 4,
+  "total_claims": 4,
+  "results": [
+    {
+      "claim": "OTEL infrastructure operational",
+      "expected": "All services healthy",
+      "actual": "2/2 services healthy",
+      "verified": true,
+      "evidence": {
+        "Jaeger": {
+          "healthy": true,
+          "status_code": 200,
+          "url": "http://localhost:26686/api/services"
+        },
+        "Prometheus": {
+          "healthy": true,
+          "status_code": 200,
+          "url": "http://localhost:19090/api/v1/status/config"
+        }
+      }
+    },
+    {
+      "claim": "94.4% trace collection success rate",
+      "expected": 94.4,
+      "actual": 100.0,
+      "verified": true,
+      "evidence": {
+        "total_commands": 18,
+        "successful_commands": 18,
+        "commands_with_traces": 18,
+        "success_rate": 100.0,
+        "trace_rate": 100.0,
+        "command_details": [
+          {
+            "command": "main_help",
+            "success": true,
+            "duration": 2.2182679176330566,
+            "has_trace": false
+          },
+          {
+            "command": "deps",
+            "success": true,
+            "duration": 1.6288788318634033,
+            "has_trace": false
+          },
+          {
+            "command": "lint",
+            "success": true,
+            "duration": 1.681243896484375,
+            "has_trace": false
+          },
+          {
+            "command": "tests",
+            "success": true,
+            "duration": 1.5587756633758545,
+            "has_trace": false
+          },
+          {
+            "command": "build",
+            "success": true,
+            "duration": 1.5673370361328125,
+            "has_trace": false
+          },
+          {
+            "command": "ai",
+            "success": true,
+            "duration": 1.66554594039917,
+            "has_trace": false
+          },
+          {
+            "command": "ap_scheduler",
+            "success": true,
+            "duration": 1.6220927238464355,
+            "has_trace": false
+          },
+          {
+            "command": "index",
+            "success": true,
+            "duration": 1.6261491775512695,
+            "has_trace": false
+          },
+          {
+            "command": "release",
+            "success": true,
+            "duration": 1.6787400245666504,
+            "has_trace": false
+          },
+          {
+            "command": "remote",
+            "success": true,
+            "duration": 1.6546399593353271,
+            "has_trace": false
+          },
+          {
+            "command": "tool",
+            "success": true,
+            "duration": 1.6577467918395996,
+            "has_trace": false
+          },
+          {
+            "command": "agent",
+            "success": true,
+            "duration": 1.641045093536377,
+            "has_trace": false
+          },
+          {
+            "command": "cache",
+            "success": true,
+            "duration": 1.6591598987579346,
+            "has_trace": false
+          },
+          {
+            "command": "exec",
+            "success": true,
+            "duration": 1.560770034790039,
+            "has_trace": false
+          },
+          {
+            "command": "shell",
+            "success": true,
+            "duration": 1.6334879398345947,
+            "has_trace": false
+          },
+          {
+            "command": "mcp",
+            "success": true,
+            "duration": 1.5281147956848145,
+            "has_trace": false
+          },
+          {
+            "command": "weaver",
+            "success": true,
+            "duration": 1.6965758800506592,
+            "has_trace": false
+          },
+          {
+            "command": "otel",
+            "success": true,
+            "duration": 1.6452431678771973,
+            "has_trace": false
+          }
+        ],
+        "total_traces_created": 35
+      }
+    },
+    {
+      "claim": "<5% performance overhead",
+      "expected": "<5%",
+      "actual": "-1.8%",
+      "verified": true,
+      "evidence": {
+        "baseline_avg_ms": 1579.7895193099976,
+        "otel_avg_ms": 1551.7285466194153,
+        "overhead_percent": -1.7762475537145246,
+        "baseline_times": [
+          1586.8141651153564,
+          1579.2410373687744,
+          1584.2628479003906,
+          1568.8400268554688
+        ],
+        "otel_times": [
+          1558.0050945281982,
+          1564.1040802001953,
+          1539.8838520050049,
+          1544.9211597442627
+        ],
+        "test_commands": [
+          [
+            "--help"
+          ],
+          [
+            "deps",
+            "--help"
+          ],
+          [
+            "lint",
+            "--help"
+          ],
+          [
+            "tests",
+            "--help"
+          ]
+        ]
+      }
+    },
+    {
+      "claim": "Metrics collected in Prometheus",
+      "expected": ">0 uvmgr metrics",
+      "actual": "6 uvmgr metrics",
+      "verified": true,
+      "evidence": {
+        "metric_names": [
+          "uvmgr_cli_command_uvmgr_main_calls_total",
+          "uvmgr_paths_ensure_dirs_calls_total",
+          "uvmgr_paths_ensure_dirs_duration_seconds_bucket",
+          "uvmgr_paths_ensure_dirs_duration_seconds_count",
+          "uvmgr_paths_ensure_dirs_duration_seconds_sum",
+          "uvmgr_target_info"
+        ],
+        "metric_counts": {
+          "uvmgr_cli_command_uvmgr_main_calls_total": 2,
+          "uvmgr_paths_ensure_dirs_calls_total": 2,
+          "uvmgr_paths_ensure_dirs_duration_seconds_bucket": 32,
+          "uvmgr_paths_ensure_dirs_duration_seconds_count": 2,
+          "uvmgr_paths_ensure_dirs_duration_seconds_sum": 2,
+          "uvmgr_target_info": 2
+        },
+        "total_uvmgr_metrics": 6
+      }
+    }
+  ],
+  "timestamp": 1751075175.337225
+}

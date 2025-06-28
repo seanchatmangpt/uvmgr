@@ -1,0 +1,179 @@
+{
+  "timestamp": 1751073939.569466,
+  "environment": "devcontainer",
+  "summary": {
+    "total_tests": 18,
+    "successful": 18,
+    "traces_found": 17,
+    "metrics_found": 0
+  },
+  "performance": {
+    "baseline_avg": 1.5815216898918152,
+    "otel_avg": 1.5785174369812012,
+    "overhead_pct": -0.18995964012479152
+  },
+  "results": [
+    {
+      "command": "--help",
+      "description": "CLI help",
+      "success": true,
+      "duration": 1.7316663265228271,
+      "traces_found": false,
+      "metrics_found": false,
+      "error": null
+    },
+    {
+      "command": "deps --help",
+      "description": "Dependencies",
+      "success": true,
+      "duration": 1.688256025314331,
+      "traces_found": true,
+      "metrics_found": false,
+      "error": null
+    },
+    {
+      "command": "lint --help",
+      "description": "Linting",
+      "success": true,
+      "duration": 1.737727165222168,
+      "traces_found": true,
+      "metrics_found": false,
+      "error": null
+    },
+    {
+      "command": "tests --help",
+      "description": "Testing",
+      "success": true,
+      "duration": 1.7149441242218018,
+      "traces_found": true,
+      "metrics_found": false,
+      "error": null
+    },
+    {
+      "command": "build --help",
+      "description": "Building",
+      "success": true,
+      "duration": 1.6795179843902588,
+      "traces_found": true,
+      "metrics_found": false,
+      "error": null
+    },
+    {
+      "command": "ai --help",
+      "description": "AI tools",
+      "success": true,
+      "duration": 1.70597505569458,
+      "traces_found": true,
+      "metrics_found": false,
+      "error": null
+    },
+    {
+      "command": "ap-scheduler --help",
+      "description": "AP Scheduler",
+      "success": true,
+      "duration": 1.709669828414917,
+      "traces_found": true,
+      "metrics_found": false,
+      "error": null
+    },
+    {
+      "command": "index --help",
+      "description": "Package indexes",
+      "success": true,
+      "duration": 1.6170070171356201,
+      "traces_found": true,
+      "metrics_found": false,
+      "error": null
+    },
+    {
+      "command": "release --help",
+      "description": "Release tools",
+      "success": true,
+      "duration": 1.6370019912719727,
+      "traces_found": true,
+      "metrics_found": false,
+      "error": null
+    },
+    {
+      "command": "remote --help",
+      "description": "Remote runner",
+      "success": true,
+      "duration": 1.6436960697174072,
+      "traces_found": true,
+      "metrics_found": false,
+      "error": null
+    },
+    {
+      "command": "tool --help",
+      "description": "Tool manager",
+      "success": true,
+      "duration": 1.6455323696136475,
+      "traces_found": true,
+      "metrics_found": false,
+      "error": null
+    },
+    {
+      "command": "agent --help",
+      "description": "BPMN agent",
+      "success": true,
+      "duration": 1.69895601272583,
+      "traces_found": true,
+      "metrics_found": false,
+      "error": null
+    },
+    {
+      "command": "cache --help",
+      "description": "Cache manager",
+      "success": true,
+      "duration": 1.5923380851745605,
+      "traces_found": true,
+      "metrics_found": false,
+      "error": null
+    },
+    {
+      "command": "exec --help",
+      "description": "Script executor",
+      "success": true,
+      "duration": 1.6293449401855469,
+      "traces_found": true,
+      "metrics_found": false,
+      "error": null
+    },
+    {
+      "command": "shell --help",
+      "description": "Shell/REPL",
+      "success": true,
+      "duration": 1.6160609722137451,
+      "traces_found": true,
+      "metrics_found": false,
+      "error": null
+    },
+    {
+      "command": "mcp --help",
+      "description": "MCP server",
+      "success": true,
+      "duration": 1.618906021118164,
+      "traces_found": true,
+      "metrics_found": false,
+      "error": null
+    },
+    {
+      "command": "weaver --help",
+      "description": "Weaver tools",
+      "success": true,
+      "duration": 1.5859630107879639,
+      "traces_found": true,
+      "metrics_found": false,
+      "error": null
+    },
+    {
+      "command": "otel --help",
+      "description": "OTEL tools",
+      "success": true,
+      "duration": 1.627589225769043,
+      "traces_found": true,
+      "metrics_found": false,
+      "error": null
+    }
+  ]
+}

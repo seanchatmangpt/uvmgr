@@ -144,8 +144,8 @@ def dogfood(
     # Track dogfood build (self-build)
     add_span_attributes(
         **{
-            BuildAttributes.OPERATION: "dogfood",
-            BuildAttributes.TYPE: "executable",
+            BuildAttributes.TYPE: "exe",
+            "build.operation": "dogfood",
             "build.self_build": True,
             "build.include_version": version,
             "build.test": test,

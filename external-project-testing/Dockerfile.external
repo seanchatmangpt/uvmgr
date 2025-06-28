@@ -1,0 +1,81 @@
+FROM mcr.microsoft.com/devcontainers/python:3.12
+
+# Install system dependencies for external project testing
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    build-essential \
+    sudo \
+    vim \
+    tree \
+    jq \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install UV package manager
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.cargo/bin:$PATH"
+
+# Switch to vscode user
+USER vscode
+
+# Install UV for user
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/home/vscode/.cargo/bin:$PATH"
+
+# Set up workspace directory
+WORKDIR /workspace
+
+# Copy uvmgr source for installation
+COPY --chown=vscode:vscode . /tmp/uvmgr-source
+
+# Install uvmgr in development mode with all extras
+RUN cd /tmp/uvmgr-source && \
+    uv venv /opt/uvmgr-venv && \
+    /opt/uvmgr-venv/bin/uv pip install -e ".[mcp,ai,otel,build]"
+
+# Add uvmgr to PATH
+ENV PATH="/opt/uvmgr-venv/bin:$PATH"
+ENV VIRTUAL_ENV="/opt/uvmgr-venv"
+
+# Install additional tools for external project testing
+RUN /opt/uvmgr-venv/bin/pip install \
+    copier \
+    cookiecutter \
+    pre-commit \
+    bump2version \
+    twine \
+    black \
+    ruff \
+    mypy \
+    pytest \
+    pytest-cov \
+    pytest-mock \
+    pytest-asyncio \
+    httpx \
+    requests \
+    fastapi \
+    uvicorn
+
+# Create clean workspace for testing
+RUN mkdir -p /workspace /test-results /scripts
+WORKDIR /workspace
+
+# Set up git for testing (required for many operations)
+RUN git config --global user.email "test@uvmgr.dev" && \
+    git config --global user.name "uvmgr External Test" && \
+    git config --global init.defaultBranch main
+
+# Create test script directories
+RUN mkdir -p /scripts
+
+# Set up shell environment
+RUN echo 'export PS1="(uvmgr-external) \u@\h:\w$ "' >> ~/.bashrc && \
+    echo 'echo "uvmgr external testing environment ready"' >> ~/.bashrc && \
+    echo 'uvmgr --version' >> ~/.bashrc
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD uvmgr --version && python -c "import uvmgr; print('uvmgr ready')" || exit 1
+
+# Default command for interactive use
+CMD ["/bin/bash"]

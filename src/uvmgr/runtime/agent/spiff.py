@@ -63,23 +63,20 @@ def _step(wf: BpmnWorkflow) -> None:
         step_start = time.time()
         tasks_processed = 0
         
-        # Process user tasks
-        user_tasks = wf.get_ready_user_tasks()
-        if user_tasks:
-            add_span_event("workflow.user_tasks.found", {"count": len(user_tasks)})
+        # Get next ready task and execute it
+        next_task = wf.get_next_task()
+        if next_task:
+            task_type = "script" if hasattr(next_task.task_spec, 'script') else "service"
+            _process_task(wf, next_task, task_type)
+            tasks_processed = 1
             
-        for task in user_tasks:
-            _process_task(wf, task, "user")
-            tasks_processed += 1
-
-        # Process service tasks
-        service_tasks = wf.get_ready_service_tasks()
-        if service_tasks:
-            add_span_event("workflow.service_tasks.found", {"count": len(service_tasks)})
-            
-        for task in service_tasks:
-            _process_task(wf, task, "service")
-            tasks_processed += 1
+            add_span_event("workflow.task.executed", {
+                "task_name": getattr(next_task.task_spec, 'name', str(next_task)),
+                "task_type": task_type,
+            })
+        else:
+            # No tasks ready, workflow might be waiting or complete
+            add_span_event("workflow.step.no_tasks", {"workflow_completed": wf.is_completed()})
         
         step_duration = time.time() - step_start
         
@@ -112,14 +109,15 @@ def _process_task(wf: BpmnWorkflow, task: Task, task_type: str) -> None:
         })
         
         try:
-            if task_type == "user":
-                colour(f"⏸  waiting for user task: {task_name}", "yellow")
-                input("Press <Enter> when done …")
+            # Execute the task based on its type
+            if task_type == "script":
+                colour(f"🔄 executing script task: {task_name}", "cyan")
+                # For script tasks, just complete them (SpiffWorkflow handles execution)
+                task.complete()
             else:
-                colour(f"↻  auto-completing service task: {task_name}", "cyan")
-            
-            # Complete the task
-            wf.complete_task_from_id(task.id)
+                colour(f"↻ auto-completing service task: {task_name}", "cyan")
+                # For other tasks, complete directly
+                task.complete()
             
             task_duration = time.time() - task_start
             
@@ -171,27 +169,64 @@ def run_bpmn(path: Path) -> Dict[str, Any]:
         total_tasks = 0
         
         try:
-            # Execute workflow steps
-            while not wf.is_completed():
-                step_start_tasks = len(list(wf.get_ready_tasks()))
-                _step(wf)
-                step_end_tasks = len(list(wf.get_completed_tasks()))
+            # Execute workflow steps with safety mechanisms
+            max_iterations = 100  # Prevent infinite loops
+            last_task_id = None
+            iterations = 0
+            
+            while not wf.is_completed() and iterations < max_iterations:
+                iterations += 1
                 
+                # Get next task for safety checking
+                next_task = wf.get_next_task()
+                if not next_task:
+                    add_span_event("workflow.no_ready_tasks", {"iteration": iterations})
+                    break
+                    
+                # Check for infinite loop (same task repeating)
+                current_task_id = next_task.id
+                if current_task_id == last_task_id:
+                    add_span_event("workflow.infinite_loop_detected", {
+                        "task_id": current_task_id,
+                        "task_name": getattr(next_task.task_spec, 'name', 'unknown'),
+                        "iteration": iterations
+                    })
+                    break
+                
+                last_task_id = current_task_id
+                all_tasks_before = len(list(wf.get_tasks()))
+                
+                # Execute step
+                _step(wf)
+                
+                all_tasks_after = len(list(wf.get_tasks()))
                 steps += 1
-                total_tasks += (step_end_tasks - step_start_tasks + step_start_tasks)
+                total_tasks += all_tasks_after
                 
                 # Add progress update
                 add_span_event("workflow.step.completed", {
                     "step_number": steps,
-                    "completed_tasks": step_end_tasks,
+                    "iteration": iterations,
+                    "total_tasks": all_tasks_after,
+                })
+                
+                # Safety: Add small delay to prevent CPU spinning
+                time.sleep(0.001)
+            
+            if iterations >= max_iterations:
+                add_span_event("workflow.max_iterations_reached", {
+                    "max_iterations": max_iterations,
+                    "steps": steps
                 })
             
             execution_duration = time.time() - execution_start
             
             # Final workflow state
             final_tasks = list(wf.get_tasks())
-            completed_tasks = list(wf.get_completed_tasks())
-            failed_tasks = [t for t in final_tasks if hasattr(t, 'state') and 'CANCELLED' in str(t.state)]
+            # Count tasks by state using SpiffWorkflow states
+            from SpiffWorkflow.task import TaskState
+            completed_tasks = [t for t in final_tasks if t.state == TaskState.COMPLETED]
+            failed_tasks = [t for t in final_tasks if t.state == TaskState.CANCELLED]
             
             stats = {
                 "status": "completed",
@@ -238,20 +273,52 @@ def run_bpmn(path: Path) -> Dict[str, Any]:
 
 
 def get_workflow_stats(wf: BpmnWorkflow) -> Dict[str, Any]:
-    """Get comprehensive statistics about a workflow instance."""
-    all_tasks = list(wf.get_tasks())
-    
-    stats = {
-        "total_tasks": len(all_tasks),
-        "completed_tasks": len(list(wf.get_completed_tasks())),
-        "ready_tasks": len(list(wf.get_ready_tasks())),
-        "waiting_tasks": len(list(wf.get_waiting_tasks())),
-        "cancelled_tasks": len([t for t in all_tasks if hasattr(t, 'state') and 'CANCELLED' in str(t.state)]),
-        "is_completed": wf.is_completed(),
-        "workflow_name": getattr(wf.spec, 'name', 'unknown'),
-    }
-    
-    return stats
+    """Get comprehensive statistics about a workflow instance with telemetry."""
+    with span("workflow.get_stats", workflow_id=str(id(wf))):
+        add_span_event("workflow.stats.collecting", {"workflow_id": str(id(wf))})
+        
+        start_time = time.time()
+        all_tasks = list(wf.get_tasks())
+        
+        # Import TaskState for proper state checking
+        from SpiffWorkflow.task import TaskState
+        
+        # Calculate stats with detailed breakdown
+        completed_tasks = [t for t in all_tasks if t.state == TaskState.COMPLETED]
+        ready_tasks = [t for t in all_tasks if t.state == TaskState.READY]
+        waiting_tasks = [t for t in all_tasks if t.state == TaskState.WAITING]
+        cancelled_tasks = [t for t in all_tasks if t.state == TaskState.CANCELLED]
+        
+        stats = {
+            "total_tasks": len(all_tasks),
+            "completed_tasks": len(completed_tasks),
+            "ready_tasks": len(ready_tasks),
+            "waiting_tasks": len(waiting_tasks),
+            "cancelled_tasks": len(cancelled_tasks),
+            "is_completed": wf.is_completed(),
+            "workflow_name": getattr(wf.spec, 'name', 'unknown'),
+        }
+        
+        duration = time.time() - start_time
+        
+        # Record metrics
+        metric_counter("workflow.stats.requests")(1)
+        metric_histogram("workflow.stats.collection_duration")(duration)
+        
+        add_span_attributes(**{
+            "workflow.name": stats["workflow_name"],
+            "workflow.total_tasks": stats["total_tasks"],
+            "workflow.completed_tasks": stats["completed_tasks"],
+            "workflow.is_completed": stats["is_completed"],
+            "workflow.stats_duration": duration,
+        })
+        
+        add_span_event("workflow.stats.collected", {
+            **stats,
+            "collection_duration": duration,
+        })
+        
+        return stats
 
 
 def validate_bpmn_file(path: Path) -> bool:

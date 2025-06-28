@@ -1,7 +1,3 @@
-Of course. Here is a completely rewritten `HOWTO.md` file, drafted from scratch to be accurate, comprehensive, and logically structured based on the provided source code.
-
----
-
 # uvmgr: A Comprehensive User Guide
 
 Welcome to the comprehensive user guide for `uvmgr`. This document provides in-depth information and practical examples for every feature, serving as a complete reference for the tool.
@@ -22,7 +18,15 @@ For a brief overview, please see the [README.md](README.md).
     *   [AI-Assisted Development](#41-ai-assisted-development)
     *   [Automation and Scheduling](#42-automation-and-scheduling)
     *   [Cache Management](#43-cache-management)
-5.  [A Note on Deprecated Commands](#5-a-note-on-deprecated-commands)
+5.  [Observability & Telemetry](#5-observability--telemetry)
+    *   [OpenTelemetry Integration](#51-opentelemetry-integration)
+    *   [Weaver Semantic Conventions](#52-weaver-semantic-conventions)
+6.  [Code Quality](#6-code-quality)
+    *   [Linting and Formatting](#61-linting-and-formatting)
+    *   [Development Server](#62-development-server)
+7.  [AI Integration](#7-ai-integration)
+    *   [MCP Server](#71-mcp-server)
+8.  [A Note on Deprecated Commands](#8-a-note-on-deprecated-commands)
 
 ## 1. Core Concepts
 
@@ -203,40 +207,290 @@ uvmgr ai ollama delete llama3
 ### 4.2. Automation and Scheduling (`uvmgr agent` & `uvmgr ap-scheduler`)
 
 #### BPMN Workflows (`agent`)
-Run business process workflows defined in `.bpmn` files.
+Run business process automation workflows using SpiffWorkflow.
 
 ```bash
-uvmgr agent run my_workflow.bpmn
+# Run a BPMN workflow file
+uvmgr agent run workflow.bpmn
+
+# Run with custom variables
+uvmgr agent run workflow.bpmn --var "input_file=data.csv" --var "output_dir=results"
 ```
 
-#### Scheduled Tasks (`ap-scheduler`)
-Schedule commands to run at specific intervals or on a cron schedule.
+#### Task Scheduling (`ap-scheduler`)
+Schedule recurring tasks using APScheduler.
 
 ```bash
-# Schedule a command to run every 10 minutes
-uvmgr ap-scheduler add --every 600 "backup-job" "python scripts/backup.py"
+# Start the scheduler daemon
+uvmgr ap-scheduler start
 
-# Schedule a command to run at midnight every day
-uvmgr ap-scheduler add --cron "0 0 * * *" "cleanup-job" "rm -rf /tmp/cache"
+# Add a scheduled task
+uvmgr ap-scheduler add "daily_backup" "0 2 * * *" "backup_script.py"
 
-# List all scheduled jobs
+# List scheduled tasks
 uvmgr ap-scheduler list
 
-# Remove a job
-uvmgr ap-scheduler remove "backup-job"
-
-# Start the scheduler in the foreground
-uvmgr ap-scheduler run
+# Remove a scheduled task
+uvmgr ap-scheduler remove "daily_backup"
 ```
 
 ### 4.3. Cache Management (`uvmgr cache`)
 
-Manage the `uv` package cache.
+Manage the `uv` cache to free up disk space or troubleshoot issues.
 
 ```bash
-# Show the location of the uv cache directory
-uvmgr cache dir
+# Show cache statistics
+uvmgr cache info
 
-# Prune (clean) the cache to remove unused packages
-uvmgr cache prune
+# Clear the entire cache
+uvmgr cache clear
+
+# Remove specific packages from cache
+uvmgr cache remove "requests" "pandas"
 ```
+
+## 5. Observability & Telemetry
+
+### 5.1. OpenTelemetry Integration (`uvmgr otel`)
+
+`uvmgr` includes comprehensive OpenTelemetry integration for observability, tracing, and metrics collection.
+
+#### Quick Start
+```bash
+# Start OTEL infrastructure
+docker-compose -f docker-compose.otel.yml up -d
+
+# Run commands with automatic telemetry
+uvmgr deps add requests
+uvmgr tests run
+
+# View traces in Jaeger (http://localhost:16686)
+# View metrics in Prometheus (http://localhost:9090)
+```
+
+#### Telemetry Coverage Analysis
+```bash
+# Analyze telemetry coverage across the codebase
+uvmgr otel coverage
+
+# Check coverage with custom threshold
+uvmgr otel coverage --threshold 90
+
+# Analyze specific layer
+uvmgr otel coverage --layer Command
+
+# Show detailed function analysis
+uvmgr otel coverage --detailed
+```
+
+#### Validation and Testing
+```bash
+# Run comprehensive OTEL validation
+uvmgr otel validate --comprehensive
+
+# Test telemetry functionality
+uvmgr otel test --iterations 10
+
+# Export validation results
+uvmgr otel validate --export --output validation.json
+```
+
+#### Semantic Conventions
+```bash
+# Validate semantic conventions
+uvmgr otel semconv --validate
+
+# Generate code from conventions
+uvmgr otel semconv --generate
+```
+
+#### Status and Demo
+```bash
+# Check OTEL status
+uvmgr otel status
+
+# Run OTEL demo features
+uvmgr otel demo
+
+# Export telemetry data
+uvmgr otel export --format json --output telemetry.json
+```
+
+### 5.2. Weaver Semantic Conventions (`uvmgr weaver`)
+
+Manage OpenTelemetry semantic conventions using the official Weaver tool.
+
+#### Installation
+```bash
+# Install Weaver
+uvmgr weaver install
+
+# Install specific version
+uvmgr weaver install --version v0.1.0
+
+# Force reinstall
+uvmgr weaver install --force
+```
+
+#### Registry Management
+```bash
+# Validate semantic convention registry
+uvmgr weaver check
+
+# Check with future validation rules
+uvmgr weaver check --future
+
+# Apply custom policy
+uvmgr weaver check --policy security-policy.rego
+```
+
+#### Code Generation
+```bash
+# Generate Python constants
+uvmgr weaver generate python --output src/telemetry/
+
+# Generate documentation
+uvmgr weaver generate markdown --output docs/semconv/
+
+# Generate with custom config
+uvmgr weaver generate python --config weaver.yaml
+```
+
+#### Registry Operations
+```bash
+# Resolve references and inheritance
+uvmgr weaver resolve --format json --output resolved.json
+
+# Search for attributes or metrics
+uvmgr weaver search "package" --type attribute
+
+# Show registry statistics
+uvmgr weaver stats
+
+# Compare registries
+uvmgr weaver diff old-registry/ new-registry/ --output changes.json
+```
+
+#### Documentation
+```bash
+# Generate comprehensive documentation
+uvmgr weaver docs --output ./docs/telemetry/ --format markdown
+
+# Check Weaver version
+uvmgr weaver version
+```
+
+## 6. Code Quality
+
+### 6.1. Linting and Formatting (`uvmgr lint`)
+
+Run code quality checks and formatting using Ruff.
+
+#### Linting
+```bash
+# Check code for violations
+uvmgr lint check
+
+# Check specific path
+uvmgr lint check src/
+
+# Auto-fix violations
+uvmgr lint check --fix
+
+# Show what would be fixed
+uvmgr lint check --show-fixes
+```
+
+#### Formatting
+```bash
+# Format code
+uvmgr lint format
+
+# Format specific path
+uvmgr lint format src/
+
+# Check formatting without changes
+uvmgr lint format --check
+```
+
+#### Auto-fix All Issues
+```bash
+# Fix all auto-fixable issues (linting + formatting)
+uvmgr lint fix
+
+# Fix specific path
+uvmgr lint fix src/
+```
+
+### 6.2. Development Server (`uvmgr serve`)
+
+Start a development server for your application.
+
+```bash
+# Start development server
+uvmgr serve
+
+# Start with custom host and port
+uvmgr serve --host 0.0.0.0 --port 8080
+
+# Start with reload enabled
+uvmgr serve --reload
+```
+
+## 7. AI Integration
+
+### 7.1. MCP Server (`uvmgr mcp`)
+
+Start a Model Context Protocol (MCP) server for AI assistant integration.
+
+#### Quick Start
+```bash
+# Start MCP server with stdio transport (for Claude Desktop)
+uvmgr mcp serve
+
+# Start SSE server for web clients
+uvmgr mcp serve --transport sse --port 3000
+
+# Start HTTP server with authentication
+uvmgr mcp serve --transport http --auth-token mytoken
+```
+
+#### Transport Options
+- **stdio**: Direct communication through standard I/O (best for Claude Desktop)
+- **sse**: Server-Sent Events for real-time streaming (good for web clients)
+- **http**: RESTful HTTP endpoints for traditional API access
+
+#### Claude Desktop Integration
+1. Open Claude Desktop settings
+2. Go to 'Developer' > 'Edit Config'
+3. Add to the 'mcpServers' section:
+   ```json
+   "uvmgr": {
+     "command": "python3.12",
+     "args": ["-m", "uvmgr", "mcp", "serve"]
+   }
+   ```
+
+#### Web Interface Integration
+For Claude.ai web interface:
+1. Click 'Add integration' in settings
+2. Integration name: uvmgr
+3. Integration URL: `http://localhost:8000/sse` (for SSE) or `http://localhost:8000/mcp` (for HTTP)
+
+## 8. A Note on Deprecated Commands
+
+Some commands have been deprecated in favor of more specific alternatives:
+
+- `uvmgr run` → Use `uvmgr exec` for script execution
+- `uvmgr install` → Use `uvmgr deps add` for dependency management
+- `uvmgr uninstall` → Use `uvmgr deps remove` for dependency removal
+
+These changes provide better organization and more intuitive command names.
+
+---
+
+For more detailed information about specific features, see the documentation in the `docs/` directory:
+
+- [Weaver Command Suite](docs/weaver-command-suite.md) - Complete Weaver documentation
+- [OpenTelemetry Integration](docs/otel-integration.md) - OTEL setup and usage guide
+- [MCP Documentation](docs/mcp/) - Model Context Protocol guides

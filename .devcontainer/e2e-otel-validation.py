@@ -82,7 +82,6 @@ class OTELValidator:
         print("🔍 Checking OTEL stack services...")
         
         services = [
-            ("OTEL Collector", self.collector_url + "/metrics"),
             ("Jaeger", self.jaeger_url + "/api/services"),
             ("Prometheus", self.prometheus_url + "/api/v1/status/config"),
         ]
@@ -99,6 +98,22 @@ class OTELValidator:
             except Exception as e:
                 print(f"❌ {name} not accessible: {e}")
                 all_ready = False
+        
+        # Check OTEL collector with simple port test
+        import socket
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            result = sock.connect_ex(('localhost', 14317))
+            sock.close()
+            if result == 0:
+                print(f"✅ OTEL Collector is ready (port 14317)")
+            else:
+                print(f"❌ OTEL Collector port 14317 not accessible")
+                all_ready = False
+        except Exception as e:
+            print(f"❌ OTEL Collector port check failed: {e}")
+            all_ready = False
         
         return all_ready
     
@@ -340,7 +355,7 @@ class OTELValidator:
             ]
         }
         
-        report_file = Path("/workspace/otel-validation-report.json")
+        report_file = Path("./otel-validation-report.json")
         with open(report_file, "w") as f:
             json.dump(report_data, f, indent=2)
         

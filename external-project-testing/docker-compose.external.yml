@@ -1,0 +1,159 @@
+version: '3.8'
+
+services:
+  # Main uvmgr testing environment with clean state
+  uvmgr-external:
+    build:
+      context: ..
+      dockerfile: external-project-testing/Dockerfile.external
+    container_name: uvmgr-external-test
+    volumes:
+      # Mount test workspace (isolated from main project)
+      - ./workspace:/workspace
+      - ./test-results:/test-results
+      # Mount scripts for execution
+      - ./test-lifecycle.py:/scripts/test-lifecycle.py
+      - ./run-lifecycle-tests.sh:/scripts/run-lifecycle-tests.sh
+    working_dir: /workspace
+    environment:
+      # OTEL Configuration
+      - OTEL_SERVICE_NAME=uvmgr-external-test
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=uvmgr-external,service.version=test,environment=external-testing
+      - OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SANITIZE_FIELDS=authorization,cookie
+      # Test Configuration
+      - UVMGR_TEST_MODE=external
+      - UVMGR_CACHE_DIR=/workspace/.uvmgr_cache
+      - PYTHONPATH=/workspace
+    depends_on:
+      - otel-collector
+    networks:
+      - uvmgr-external-net
+    command: >
+      bash -c "
+        echo 'Starting uvmgr external project testing...' &&
+        python /scripts/test-lifecycle.py --all-projects --validate-otel &&
+        tail -f /dev/null
+      "
+
+  # Copier template testing service
+  copier-test:
+    build:
+      context: ..
+      dockerfile: external-project-testing/Dockerfile.external
+    container_name: uvmgr-copier-test
+    volumes:
+      - ./workspace:/workspace
+      - ./test-results:/test-results
+      - ./copier-templates:/copier-templates
+    working_dir: /workspace
+    environment:
+      - OTEL_SERVICE_NAME=uvmgr-copier-test
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=uvmgr-copier,service.version=test,environment=copier-testing
+    depends_on:
+      - otel-collector
+    networks:
+      - uvmgr-external-net
+    profiles:
+      - copier
+    command: >
+      bash -c "
+        echo 'Testing uvmgr with Copier templates...' &&
+        /scripts/test-copier-integration.sh &&
+        tail -f /dev/null
+      "
+
+  # OpenTelemetry Collector
+  otel-collector:
+    image: otel/opentelemetry-collector:latest
+    container_name: uvmgr-external-otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ../otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+      - "8888:8888"   # Prometheus metrics
+      - "8889:8889"   # Prometheus exporter
+      - "13133:13133" # Health check
+    environment:
+      - LOG_LEVEL=debug
+    networks:
+      - uvmgr-external-net
+
+  # Jaeger for trace visualization
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: uvmgr-external-jaeger
+    ports:
+      - "16686:16686" # Jaeger UI
+      - "14250:14250" # gRPC
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    networks:
+      - uvmgr-external-net
+
+  # Prometheus for metrics
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: uvmgr-external-prometheus
+    volumes:
+      - ../prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - uvmgr-external-net
+
+  # Grafana for dashboards
+  grafana:
+    image: grafana/grafana:latest
+    container_name: uvmgr-external-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-external-storage:/var/lib/grafana
+    networks:
+      - uvmgr-external-net
+
+  # MCP Server Testing
+  mcp-test:
+    build:
+      context: ..
+      dockerfile: external-project-testing/Dockerfile.external
+    container_name: uvmgr-mcp-test
+    volumes:
+      - ./workspace:/workspace
+      - ./test-results:/test-results
+    working_dir: /workspace
+    environment:
+      - OTEL_SERVICE_NAME=uvmgr-mcp-test
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - UVMGR_MCP_HOST=0.0.0.0
+      - UVMGR_MCP_PORT=3001
+    ports:
+      - "3001:3001"
+    depends_on:
+      - otel-collector
+    networks:
+      - uvmgr-external-net
+    profiles:
+      - mcp
+    command: >
+      bash -c "
+        echo 'Starting MCP server for external testing...' &&
+        uvmgr serve start --host 0.0.0.0 --port 3001 &
+        sleep 5 &&
+        python /scripts/test-mcp-integration.py &&
+        tail -f /dev/null
+      "
+
+volumes:
+  grafana-external-storage:
+
+networks:
+  uvmgr-external-net:
+    driver: bridge

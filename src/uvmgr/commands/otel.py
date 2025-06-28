@@ -24,7 +24,7 @@ from rich.table import Table
 from uvmgr.core.instrumentation import instrument_command
 from uvmgr.core.semconv import CliAttributes, PackageAttributes
 from uvmgr.core.shell import colour
-from uvmgr.core.telemetry import get_current_span, metric_counter, span
+from uvmgr.core.telemetry import get_current_span, metric_counter, metric_histogram, span, record_exception
 
 console = Console()
 app = typer.Typer(help="OpenTelemetry validation and management")
@@ -312,7 +312,7 @@ def coverage(
 def validate_8020(
     comprehensive: bool = typer.Option(False, "--comprehensive", "-c", help="Run comprehensive validation"),
     export_results: bool = typer.Option(False, "--export", "-e", help="Export validation results"),
-    output: Optional[Path] = typer.Option(None, "--output", "-o", help="Output file for results"),
+    output: str = typer.Option("", "--output", "-o", help="Output file for results"),
     endpoint: str = typer.Option(
         os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317"),
         "--endpoint",
@@ -566,8 +566,8 @@ def status():
         console.print("  [green]✓[/green] Telemetry module loaded")
 
         # Check if OTEL is actually enabled
-        import opentelemetry
-        console.print(f"  [green]✓[/green] OpenTelemetry SDK v{opentelemetry.__version__}")
+        from opentelemetry import version
+        console.print(f"  [green]✓[/green] OpenTelemetry SDK v{version.__version__}")
     except ImportError:
         console.print("  [yellow]![/yellow] OpenTelemetry SDK not installed (telemetry disabled)")
 

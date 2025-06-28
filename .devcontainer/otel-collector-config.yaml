@@ -10,6 +10,7 @@ processors:
   batch:
   memory_limiter:
     limit_mib: 512
+    check_interval: 1s
   resource:
     attributes:
       - key: environment
@@ -17,8 +18,8 @@ processors:
         action: upsert
 
 exporters:
-  jaeger:
-    endpoint: jaeger:14250
+  otlp/jaeger:
+    endpoint: jaeger:4317
     tls:
       insecure: true
   
@@ -26,20 +27,20 @@ exporters:
     endpoint: "0.0.0.0:8889"
     namespace: uvmgr
     
-  logging:
-    loglevel: info
+  debug:
+    verbosity: normal
 
 service:
   pipelines:
     traces:
       receivers: [otlp]
       processors: [memory_limiter, resource, batch]
-      exporters: [jaeger, logging]
+      exporters: [otlp/jaeger, debug]
     
     metrics:
       receivers: [otlp]
       processors: [memory_limiter, resource, batch]
-      exporters: [prometheus, logging]
+      exporters: [prometheus, debug]
   
   extensions: []
   
@@ -47,4 +48,4 @@ service:
     logs:
       level: info
     metrics:
-      address: 0.0.0.0:8888
+      level: basic
