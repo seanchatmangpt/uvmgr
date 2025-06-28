@@ -1,0 +1,1 @@
+# Test external project for uvmgr validation
