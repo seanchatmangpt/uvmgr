@@ -35,13 +35,11 @@ from uvmgr.core.instrumentation import add_span_attributes, add_span_event, inst
 from uvmgr.core.semconv import RemoteAttributes, RemoteOperations
 from uvmgr.ops import remote as remote_ops
 
-from .. import main as cli_root
-
-remote_app = typer.Typer(help="(stub) remote runner")
-cli_root.app.add_typer(remote_app, name="remote")
+# Standard uvmgr command pattern
+app = typer.Typer(help="Remote execution and management for distributed development")
 
 
-@remote_app.command("run")
+@app.command("run")
 @instrument_command("remote_run", track_args=True)
 def _run(host: str, cmd: str):
     remote_ops.run(host, cmd)

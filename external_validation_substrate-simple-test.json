@@ -1,0 +1,59 @@
+{
+  "project_info": {
+    "name": "substrate-simple-test",
+    "path": "/tmp/substrate-simple/substrate-simple-test",
+    "language": "python",
+    "package_manager": "uv",
+    "has_tests": true,
+    "test_framework": "pytest",
+    "has_requirements": true,
+    "has_pyproject": true,
+    "dependencies": [],
+    "project_type": "library"
+  },
+  "validation_result": {
+    "success": false,
+    "workflow_name": "external_validation",
+    "duration_seconds": 9.287934064865112,
+    "validation_steps": [
+      "BPMN Validation",
+      "Workflow Execution",
+      "Test Step 1",
+      "Test Step 2",
+      "Test Step 3",
+      "Test Step 4",
+      "Test Step 5",
+      "Test Step 6",
+      "Test Step 7",
+      "Test Step 8",
+      "OTEL System Health"
+    ],
+    "metrics_validated": 3,
+    "spans_validated": 5,
+    "errors": [
+      "Test 7: \u256d\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 Traceback (most recent call last) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256e\n\u2502 /Users/sac/dev/uvmgr/src/uvmgr/core/instrumentation.py:191 in wrapper        \u2502\n\u2502                                     ",
+      "Test 8: \u256d\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 Traceback (most recent call last) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256e\n\u2502 /Users/sac/dev/uvmgr/src/uvmgr/core/instrumentation.py:191 in wrapper        \u2502\n\u2502                                     "
+    ],
+    "performance_data": {
+      "workflow_duration": 0.003668069839477539,
+      "workflow_steps": 1,
+      "test_1": 0.013588905334472656,
+      "test_2": 0.005658864974975586,
+      "test_3": 0.0066988468170166016
+    }
+  },
+  "installation_success": true,
+  "installation_time": 0.00041794776916503906,
+  "uvmgr_integration_success": false,
+  "original_dependencies_preserved": true,
+  "cleanup_success": true,
+  "recommendations": [
+    "Add OTEL instrumentation to critical code paths",
+    "Configure OpenTelemetry collector for observability",
+    "Implement structured logging with OTEL correlation",
+    "Increase metrics collection for better observability",
+    "Add more span instrumentation for distributed tracing",
+    "Review and fix OTEL validation errors"
+  ],
+  "generated_at": "2025-06-28T00:00:00Z"
+}

@@ -94,6 +94,7 @@ __all__ = [
     "progress_bar",
     "rich_table",
     "timed",
+    "run_cmd",
 ]
 
 # One global console instance – reuse it everywhere
@@ -299,3 +300,74 @@ def progress_bar(total: int):
             return self._p.__exit__(exc_type, exc, tb)
 
     return _Ctx()
+
+
+# --------------------------------------------------------------------------- #
+# Command execution
+# --------------------------------------------------------------------------- #
+async def run_cmd(command: str, capture: bool = True, check: bool = True) -> str:
+    """
+    Execute a shell command asynchronously.
+    
+    Args:
+        command: Shell command to execute
+        capture: Whether to capture and return output
+        check: Whether to raise exception on non-zero exit code
+        
+    Returns:
+        Command output if capture=True, empty string otherwise
+        
+    Raises:
+        RuntimeError: If command fails and check=True
+    """
+    import asyncio
+    import shlex
+    
+    with span("shell.run_cmd", command=command):
+        add_span_event("shell.command.started", {"command": command})
+        
+        try:
+            # Split command into args for asyncio
+            args = shlex.split(command)
+            
+            if capture:
+                proc = await asyncio.create_subprocess_exec(
+                    *args,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.STDOUT
+                )
+                stdout, _ = await proc.communicate()
+                output = stdout.decode().strip()
+            else:
+                proc = await asyncio.create_subprocess_exec(*args)
+                await proc.wait()
+                output = ""
+            
+            # Record metrics
+            metric_counter("shell.run_cmd.executions")(1)
+            
+            if proc.returncode == 0:
+                metric_counter("shell.run_cmd.success")(1)
+                add_span_event("shell.command.completed", {
+                    "returncode": proc.returncode,
+                    "success": True
+                })
+                return output
+            else:
+                metric_counter("shell.run_cmd.failed")(1)
+                add_span_event("shell.command.failed", {
+                    "returncode": proc.returncode,
+                    "output": output
+                })
+                
+                if check:
+                    raise RuntimeError(f"Command failed (exit {proc.returncode}): {command}\nOutput: {output}")
+                return output
+                
+        except Exception as e:
+            metric_counter("shell.run_cmd.errors")(1)
+            add_span_event("shell.command.error", {"error": str(e)})
+            
+            if check:
+                raise
+            return str(e)

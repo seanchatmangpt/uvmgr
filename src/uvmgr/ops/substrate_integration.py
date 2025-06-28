@@ -62,8 +62,10 @@ def create_substrate_test_project(
                 "--data", f"project_description=OTEL validation test project for {project_name}",
                 "--data", "author_name=uvmgr",
                 "--data", "author_email=test@uvmgr.com",
-                "--data", "python_version=3.11",
+                "--data", f"project_url=https://github.com/uvmgr/{project_name}",
+                "--data", "python_version=3.12",
                 "--data", "license=MIT",
+                "--data", "development_status=Planning",
                 "gh:superlinear-ai/substrate",
                 str(project_path)
             ]
@@ -125,7 +127,7 @@ def validate_substrate_project(
         
         # Add OTEL-specific tests
         test_commands.extend([
-            "python -c 'from uvmgr.core.telemetry import span; print(\"OTEL OK\")'",
+            "python -c \"from uvmgr.core.telemetry import span; print('OTEL OK')\"",
             "echo 'Substrate OTEL validation complete'"
         ])
         

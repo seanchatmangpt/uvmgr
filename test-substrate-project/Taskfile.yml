@@ -1,0 +1,47 @@
+version: '3'
+
+tasks:
+  install:
+    desc: Install dependencies
+    cmds:
+      - uv pip install -e ".[dev]"
+
+  test:
+    desc: Run tests
+    cmds:
+      - pytest
+
+  test-cov:
+    desc: Run tests with coverage
+    cmds:
+      - pytest --cov --cov-report=html
+
+  lint:
+    desc: Lint code
+    cmds:
+      - ruff check .
+
+  format:
+    desc: Format code
+    cmds:
+      - ruff format .
+
+  type-check:
+    desc: Type check
+    cmds:
+      - mypy src
+
+  all-checks:
+    desc: Run all checks
+    deps: [lint, format, type-check, test]
+
+  clean:
+    desc: Clean build artifacts
+    cmds:
+      - rm -rf build/ dist/ *.egg-info/
+      - rm -rf .pytest_cache/ .coverage htmlcov/
+
+  build:
+    desc: Build package
+    cmds:
+      - python -m build

@@ -4,6 +4,7 @@
 - [Getting Started](getting-started.md)
 - [Core Concepts](core-concepts.md)
 - [Command Reference](command-reference.md)
+    - [GitHub Actions API](actions.md)
     - [Project Scaffolding](project-scaffolding.md)
     - [Dependency Management](dependency-management.md)
     - [Testing & Coverage](testing-coverage.md)

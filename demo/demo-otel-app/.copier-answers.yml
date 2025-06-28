@@ -1,0 +1,12 @@
+_commit: v1.5.1
+_src_path: gh:superlinear-ai/substrate
+author_email: test@uvmgr.com
+author_name: uvmgr
+project_description: OTEL validation test project for demo-otel-app
+project_name: demo-otel-app
+project_type: package
+project_url: https://github.com/uvmgr/demo-otel-app
+python_version: '3.12'
+typing: optional
+with_conventional_commits: true
+with_typer_cli: false

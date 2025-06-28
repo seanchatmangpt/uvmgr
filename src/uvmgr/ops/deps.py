@@ -23,7 +23,7 @@ def add(pkgs: list[str], *, dev: bool = False) -> dict:
 
     with span("deps.add",
               **{PackageAttributes.OPERATION: PackageOperations.ADD,
-                 PackageAttributes.NAME: " ".join(pkgs),
+                 PackageAttributes.PACKAGE_NAME: " ".join(pkgs),
                  PackageAttributes.DEV_DEPENDENCY: dev,
                  "package.count": len(pkgs)}) as current_span:
 
@@ -83,3 +83,56 @@ def list_pkgs() -> list[str]:
     txt = _rt.list_pkgs()
     _log.debug("Listed %d packages", len(txt.splitlines()))
     return txt.splitlines()
+
+
+@timed
+def lock(*, verbose: bool = False) -> dict:
+    """Generate or update the lock file."""
+    start_time = time.time()
+    
+    with span("deps.lock", verbose=verbose) as current_span:
+        # Record operation start
+        metric_counter("deps.operations")(1, {
+            "operation": "lock",
+            "verbose": str(verbose)
+        })
+        
+        try:
+            cmd = ["uv", "lock"]
+            if verbose:
+                cmd.append("--verbose")
+            
+            from uvmgr.core.process import run_logged
+            result = run_logged(cmd, capture=True)
+            
+            # Record success metrics
+            duration = time.time() - start_time
+            metric_histogram("deps.operation.duration")(duration, {
+                "operation": "lock",
+                "success": "true"
+            })
+            
+            current_span.set_attribute("operation.success", True)
+            current_span.set_attribute("operation.duration", duration)
+            
+            _log.debug("Locked dependencies successfully")
+            return {
+                "status": "success",
+                "duration": duration,
+                "output": result if verbose else None
+            }
+            
+        except Exception as e:
+            # Record failure metrics
+            duration = time.time() - start_time
+            metric_counter("deps.errors")(1, {"operation": "lock"})
+            metric_histogram("deps.operation.duration")(duration, {
+                "operation": "lock",
+                "success": "false"
+            })
+            
+            current_span.set_attribute("operation.success", False)
+            current_span.set_attribute("operation.error", str(e))
+            
+            _log.error("Failed to lock dependencies: %s", e)
+            raise

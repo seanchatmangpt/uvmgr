@@ -1015,9 +1015,83 @@ class LogSearchEngine:
     
     def follow_logs(self, config: Dict[str, Any], callback: Callable[[Dict[str, Any]], None]):
         """Follow logs in real-time."""
-        # This would implement real-time log following
-        # For now, just call the callback with some sample data
-        pass
+        import time
+        import threading
+        from pathlib import Path
+        
+        log_paths = config.get("log_paths", [])
+        if not log_paths:
+            # Default uvmgr log locations
+            log_paths = [
+                Path.home() / ".uvmgr" / "logs",
+                Path("/var/log"),
+                Path.cwd() / "logs",
+            ]
+        
+        def watch_file(file_path: Path):
+            """Watch a single file for changes."""
+            try:
+                if not file_path.exists():
+                    return
+                    
+                # Get initial file size
+                last_size = file_path.stat().st_size
+                
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    # Seek to end of file
+                    f.seek(last_size)
+                    
+                    while True:
+                        line = f.readline()
+                        if line:
+                            # New content found
+                            log_entry = {
+                                "file": str(file_path),
+                                "timestamp": time.time(),
+                                "message": line.rstrip(),
+                                "type": "live"
+                            }
+                            callback(log_entry)
+                        else:
+                            # No new content, wait briefly
+                            time.sleep(0.1)
+                            
+            except Exception as e:
+                callback({
+                    "file": str(file_path),
+                    "timestamp": time.time(),
+                    "message": f"Error watching file: {e}",
+                    "type": "error"
+                })
+        
+        # Start watching threads for each log file
+        threads = []
+        for log_path in log_paths:
+            if log_path.is_file():
+                thread = threading.Thread(target=watch_file, args=(log_path,))
+                thread.daemon = True
+                thread.start()
+                threads.append(thread)
+            elif log_path.is_dir():
+                # Watch all log files in directory
+                for log_file in log_path.glob("*.log"):
+                    thread = threading.Thread(target=watch_file, args=(log_file,))
+                    thread.daemon = True
+                    thread.start()
+                    threads.append(thread)
+        
+        # Keep main thread alive
+        try:
+            while threads:
+                time.sleep(1)
+                # Remove finished threads
+                threads = [t for t in threads if t.is_alive()]
+        except KeyboardInterrupt:
+            callback({
+                "timestamp": time.time(),
+                "message": "Log following stopped",
+                "type": "info"
+            })
     
     def _get_uvmgr_logs(self, config: Dict[str, Any]) -> Tuple[List[Dict[str, Any]], int]:
         """Get uvmgr-specific logs."""

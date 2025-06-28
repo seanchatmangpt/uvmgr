@@ -32,6 +32,16 @@ dependencies = [
   "transformers>=4.48.2",
   "typer>=0.15.1",
   "zstandard>=0.23.0",
+  # Critical runtime dependencies (80/20 fixes)
+  "requests>=2.31.0",    # HTTP client for AI APIs - CRITICAL
+  "aiohttp>=3.9.0",      # Async HTTP for better performance
+  "scikit-learn>=1.3.0", # ML capabilities for semantic search
+  "build>=1.0.0",        # Python package building
+  "twine>=4.0.0",        # PyPI uploads
+  "watchdog>=3.0.0",     # File system monitoring
+  "gitpython>=3.1.0",    # Enhanced git integration
+  "psutil>=5.9.0",       # System monitoring
+  "safety>=2.3.0",       # Vulnerability scanning
 ]
 
 [project.scripts] # https://docs.astral.sh/uv/concepts/projects/config/#command-line-interfaces
@@ -68,6 +78,59 @@ ci = ["pip-audit (>=2.9.0)"]
 
 docs = ["mkdocs (>=1.5.0)", "mkdocs-material (>=9.5.0)"]
 
+# 80/20 Enhanced Capability Groups
+automation = [
+  "watchdog>=3.0.0",  # File system monitoring (already in main)
+  "gitpython>=3.1.0", # Enhanced git integration (already in main)
+]
+
+web = [
+  "aiohttp>=3.9.0",     # High-performance HTTP client (already in main)
+  "httpx>=0.25.0",      # Modern async HTTP client
+  "websockets>=11.0.0", # WebSocket support for real-time features
+]
+
+data = [
+  "pandas>=2.1.0",  # Data analysis for metrics
+  "plotly>=5.17.0", # Interactive visualizations
+  "jupyter>=1.0.0", # Notebook integration
+]
+
+cloud = [
+  "boto3>=1.34.0",            # AWS integration
+  "azure-identity>=1.15.0",   # Azure authentication
+  "google-cloud-core>=2.4.0", # Google Cloud integration
+]
+
+containers = [
+  "docker>=6.1.0",      # Container management
+  "kubernetes>=28.1.0", # K8s integration
+]
+
+monitoring = [
+  "psutil>=5.9.0",             # System monitoring (already in main)
+  "prometheus-client>=0.19.0", # Metrics export
+]
+
+security = [
+  "cryptography>=41.0.0", # Cryptographic operations
+  "safety>=2.3.0",        # Vulnerability scanning (already in main)
+  "bandit>=1.7.5",        # Security linting
+]
+
+# Convenience groups
+full = [
+  "httpx>=0.25.0",
+  "websockets>=11.0.0",
+  "pandas>=2.1.0",
+  "plotly>=5.17.0",
+  "jupyter>=1.0.0",
+  "docker>=6.1.0",
+  "prometheus-client>=0.19.0",
+  "cryptography>=41.0.0",
+  "bandit>=1.7.5",
+]
+
 [tool.commitizen] # https://commitizen-tools.github.io/commitizen/config/
 bump_message = "bump: v$current_version → v$new_version"
 tag_format = "v$version"
@@ -101,12 +164,23 @@ warn_unreachable = true
 addopts = "--color=yes --exitfirst --failed-first --verbosity=2 --junitxml=reports/pytest.xml"
 testpaths = ["src", "tests"]
 xfail_strict = true
-norecursedirs = ["tests/e2e/fixtures", "build", "dist", ".git", "__pycache__", "*.egg", ".eggs", ".tox", ".venv", "venv"]
+norecursedirs = [
+  "tests/e2e/fixtures",
+  "build",
+  "dist",
+  ".git",
+  "__pycache__",
+  "*.egg",
+  ".eggs",
+  ".tox",
+  ".venv",
+  "venv",
+]
 markers = [
-    "asyncio: async test function",
-    "integration: integration tests",
-    "slow: slow running tests",
-    "e2e: end-to-end tests"
+  "asyncio: async test function",
+  "integration: integration tests",
+  "slow: slow running tests",
+  "e2e: end-to-end tests",
 ]
 
 [tool.ruff] # https://docs.astral.sh/ruff/settings/

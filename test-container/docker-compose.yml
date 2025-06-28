@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  uvmgr-test:
+    build:
+      context: ..
+      dockerfile: test-container/Dockerfile
+    container_name: uvmgr-substrate-test
+    volumes:
+      # Mount the test script
+      - ./test-substrate-build.sh:/test-substrate-build.sh
+      # Mount output directory for built projects
+      - ./output:/output
+    working_dir: /test-projects
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: /bin/bash /test-substrate-build.sh

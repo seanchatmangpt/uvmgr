@@ -3,6 +3,7 @@ Tests for the lint command.
 """
 
 import json
+import subprocess
 from unittest.mock import patch
 
 import pytest
@@ -16,8 +17,8 @@ runner = CliRunner()
 @pytest.fixture
 def mock_ruff():
     """Mock Ruff subprocess calls."""
-    with patch("subprocess.run") as mock_run:
-        mock_run.return_value.returncode = 0
+    with patch("uvmgr.core.process.run") as mock_run:
+        mock_run.return_value = None  # run() doesn't return anything on success
         yield mock_run
 
 
@@ -32,26 +33,26 @@ def test_lint_check_with_fix(mock_ruff):
     """Test lint check with --fix flag."""
     result = runner.invoke(app, ["lint", "check", "--fix"])
     assert result.exit_code == 0
-    mock_ruff.assert_called_with(["ruff", "check", "--fix", "."], check=False)
+    mock_ruff.assert_called_with(["ruff", "check", "--fix", "."])
 
 
 def test_lint_check_with_show_fixes(mock_ruff):
     """Test lint check with --show-fixes flag."""
     result = runner.invoke(app, ["lint", "check", "--show-fixes"])
     assert result.exit_code == 0
-    mock_ruff.assert_called_with(["ruff", "check", "--show-fixes", "."], check=False)
+    mock_ruff.assert_called_with(["ruff", "check", "--show-fixes", "."])
 
 
 def test_lint_check_with_path(mock_ruff):
     """Test lint check with specific path."""
     result = runner.invoke(app, ["lint", "check", "src/"])
     assert result.exit_code == 0
-    mock_ruff.assert_called_with(["ruff", "check", "src"], check=False)
+    mock_ruff.assert_called_with(["ruff", "check", "src"])
 
 
 def test_lint_check_failure(mock_ruff):
     """Test lint check with violations."""
-    mock_ruff.return_value.returncode = 1
+    mock_ruff.side_effect = subprocess.CalledProcessError(1, ["ruff", "check"])
     result = runner.invoke(app, ["lint", "check"])
     assert result.exit_code == 1
     assert "❌ Ruff violations found" in result.stdout
@@ -62,19 +63,19 @@ def test_lint_format_success(mock_ruff):
     result = runner.invoke(app, ["lint", "format"])
     assert result.exit_code == 0
     assert "✅ Code formatted successfully" in result.stdout
-    mock_ruff.assert_called_with(["ruff", "format", "."], check=False)
+    mock_ruff.assert_called_with(["ruff", "format", "."])
 
 
 def test_lint_format_check(mock_ruff):
     """Test format check without making changes."""
     result = runner.invoke(app, ["lint", "format", "--check"])
     assert result.exit_code == 0
-    mock_ruff.assert_called_with(["ruff", "format", "--check", "."], check=False)
+    mock_ruff.assert_called_with(["ruff", "format", "--check", "."])
 
 
 def test_lint_format_failure(mock_ruff):
     """Test formatting with issues."""
-    mock_ruff.return_value.returncode = 1
+    mock_ruff.side_effect = subprocess.CalledProcessError(1, ["ruff", "format"])
     result = runner.invoke(app, ["lint", "format"])
     assert result.exit_code == 1
     assert "❌ Formatting issues found" in result.stdout
@@ -86,13 +87,13 @@ def test_lint_fix_success(mock_ruff):
     assert result.exit_code == 0
     assert "✅ All issues fixed successfully" in result.stdout
     assert mock_ruff.call_count == 2
-    mock_ruff.assert_any_call(["ruff", "format", "."], check=False)
-    mock_ruff.assert_any_call(["ruff", "check", "--fix", "."], check=False)
+    mock_ruff.assert_any_call(["ruff", "format", "."])
+    mock_ruff.assert_any_call(["ruff", "check", "--fix", "."])
 
 
 def test_lint_fix_format_failure(mock_ruff):
     """Test fix command with formatting failure."""
-    mock_ruff.return_value.returncode = 1
+    mock_ruff.side_effect = subprocess.CalledProcessError(1, ["ruff", "format"])
     result = runner.invoke(app, ["lint", "fix"])
     assert result.exit_code == 1
     assert "❌ Formatting failed" in result.stdout
@@ -102,8 +103,8 @@ def test_lint_fix_format_failure(mock_ruff):
 def test_lint_fix_check_failure(mock_ruff):
     """Test fix command with check failure."""
     mock_ruff.side_effect = [
-        type("MockResult", (), {"returncode": 0})(),  # format succeeds
-        type("MockResult", (), {"returncode": 1})(),  # check fails
+        None,  # format succeeds
+        subprocess.CalledProcessError(1, ["ruff", "check", "--fix"]),  # check fails
     ]
     result = runner.invoke(app, ["lint", "fix"])
     assert result.exit_code == 1
@@ -114,7 +115,6 @@ def test_lint_fix_check_failure(mock_ruff):
 def test_lint_json_output(mock_ruff):
     """Test JSON output for all commands."""
     # Test check command
-    mock_ruff.return_value.returncode = 0
     result = runner.invoke(app, ["--json", "lint", "check"])
     assert result.exit_code == 0
     assert json.loads(result.stdout) == {

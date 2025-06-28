@@ -8,7 +8,7 @@ from typing import Dict, List
 
 import pytest
 
-from .conftest import assert_command_success, timer
+from tests.e2e.conftest import assert_command_success, timer
 
 
 class TestPerformanceBenchmarks:

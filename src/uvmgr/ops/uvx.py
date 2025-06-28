@@ -25,7 +25,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from uvmgr.core.instrumentation import add_span_attributes, add_span_event
-from uvmgr.core.semconv import ToolAttributes, ToolOperations, UvxAttributes
+from uvmgr.core.semconv import ToolAttributes, ToolOperations, UvxAttributes, UvxOperations
 from uvmgr.core.shell import colour
 from uvmgr.core.telemetry import span
 
@@ -362,15 +362,3 @@ def health_check() -> Dict[str, Any]:
     })
     
     return health
-
-
-# Create operation class for easy access
-class UvxOperations:
-    """uvx operation types for semantic conventions."""
-    INSTALL = "install"
-    RUN = "run" 
-    LIST = "list"
-    UNINSTALL = "uninstall"
-    UPGRADE = "upgrade"
-    RECOMMEND = "recommend"
-    HEALTH_CHECK = "health_check"

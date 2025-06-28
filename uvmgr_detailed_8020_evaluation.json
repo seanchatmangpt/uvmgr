@@ -1,0 +1,450 @@
+{
+  "timestamp": "2025-06-28 10:39:48.622292",
+  "command_inventory": {
+    "agent": {
+      "commands": [
+        "coordinate_agents",
+        "parse_workflow",
+        "run_8020_validation",
+        "run_bpmn_workflow",
+        "span",
+        "test_workflow",
+        "validate_otel_integration",
+        "validate_workflow",
+        "workflow_stats"
+      ],
+      "count": 9,
+      "coverage": 70.0,
+      "telemetry_ok": true,
+      "gaps": [
+        "Guide fetching",
+        "Guide caching",
+        "Version pinning"
+      ]
+    },
+    "ai": {
+      "commands": [
+        "ask",
+        "delete_model",
+        "fix_tests",
+        "list_models",
+        "plan"
+      ],
+      "count": 5,
+      "coverage": 0.0,
+      "telemetry_ok": true,
+      "gaps": []
+    },
+    "build": {
+      "commands": [
+        "dist",
+        "dogfood",
+        "exe",
+        "spec"
+      ],
+      "count": 4,
+      "coverage": 80.0,
+      "telemetry_ok": true,
+      "gaps": [
+        "Cross-platform builds",
+        "Signed binaries"
+      ]
+    },
+    "cache": {
+      "commands": [
+        "_dir",
+        "_prune"
+      ],
+      "count": 2,
+      "coverage": 0.0,
+      "telemetry_ok": true,
+      "gaps": []
+    },
+    "claude": {
+      "commands": [
+        "analyze",
+        "create_command",
+        "debate",
+        "export_resume",
+        "init_project",
+        "list_commands",
+        "multi_mind",
+        "project",
+        "quick_search",
+        "recent",
+        "resume",
+        "search",
+        "search_project",
+        "stats",
+        "workflow"
+      ],
+      "count": 15,
+      "coverage": 80.0,
+      "telemetry_ok": true,
+      "gaps": [
+        "Guide auto-update",
+        "Guide validation"
+      ]
+    },
+    "deps": {
+      "commands": [
+        "_list",
+        "add",
+        "remove",
+        "upgrade"
+      ],
+      "count": 4,
+      "coverage": 90.0,
+      "telemetry_ok": true,
+      "gaps": [
+        "Lock file validation",
+        "Dependency security scanning"
+      ]
+    },
+    "exec": {
+      "commands": [
+        "fallback",
+        "script"
+      ],
+      "count": 2,
+      "coverage": 0.0,
+      "telemetry_ok": true,
+      "gaps": []
+    },
+    "forge": {
+      "commands": [
+        "generate",
+        "init_forge",
+        "span",
+        "status",
+        "test",
+        "validate",
+        "workflow"
+      ],
+      "count": 7,
+      "coverage": 50.0,
+      "telemetry_ok": true,
+      "gaps": [
+        "Automatic span generation",
+        "Schema validation"
+      ]
+    },
+    "history": {
+      "commands": [
+        "clear_cmd",
+        "export",
+        "log_cmd",
+        "show",
+        "stats"
+      ],
+      "count": 5,
+      "coverage": 0.0,
+      "telemetry_ok": true,
+      "gaps": []
+    },
+    "index": {
+      "commands": [
+        "_add",
+        "_list"
+      ],
+      "count": 2,
+      "coverage": 0.0,
+      "telemetry_ok": true,
+      "gaps": []
+    },
+    "lint": {
+      "commands": [
+        "check",
+        "fix",
+        "format"
+      ],
+      "count": 3,
+      "coverage": 0.0,
+      "telemetry_ok": true,
+      "gaps": []
+    },
+    "otel": {
+      "commands": [
+        "coverage",
+        "demo_otel_features",
+        "export",
+        "semconv",
+        "span",
+        "status",
+        "test",
+        "validate_8020",
+        "workflow_validate"
+      ],
+      "count": 9,
+      "coverage": 70.0,
+      "telemetry_ok": true,
+      "gaps": [
+        "OTLP exporter config",
+        "Real-time alerts",
+        "Span diff"
+      ]
+    },
+    "project": {
+      "commands": [
+        "new",
+        "status",
+        "substrate_project"
+      ],
+      "count": 3,
+      "coverage": 60.0,
+      "telemetry_ok": true,
+      "gaps": [
+        "Domain pack integration",
+        "Template versioning"
+      ]
+    },
+    "release": {
+      "commands": [
+        "_bump",
+        "_changelog"
+      ],
+      "count": 2,
+      "coverage": 0.0,
+      "telemetry_ok": true,
+      "gaps": []
+    },
+    "remote": {
+      "commands": [
+        "_run"
+      ],
+      "count": 1,
+      "coverage": 20.0,
+      "telemetry_ok": true,
+      "gaps": [
+        "Isolation guarantees",
+        "Resource quotas",
+        "TTL management"
+      ]
+    },
+    "search": {
+      "commands": [
+        "search_all",
+        "search_code",
+        "search_deps",
+        "search_files",
+        "search_logs",
+        "search_semantic"
+      ],
+      "count": 6,
+      "coverage": 0.0,
+      "telemetry_ok": true,
+      "gaps": []
+    },
+    "serve": {
+      "commands": [
+        "serve"
+      ],
+      "count": 1,
+      "coverage": 40.0,
+      "telemetry_ok": true,
+      "gaps": [
+        "RBAC hooks",
+        "SSO integration",
+        "Policy gating"
+      ]
+    },
+    "shell": {
+      "commands": [
+        "open_"
+      ],
+      "count": 1,
+      "coverage": 0.0,
+      "telemetry_ok": true,
+      "gaps": []
+    },
+    "spiff-otel": {
+      "commands": [
+        "batch_validate_external_projects_cmd",
+        "create_workflow",
+        "discover_external_projects_cmd",
+        "run_workflow",
+        "span",
+        "validate_8020",
+        "validate_8020_external",
+        "validate_external_project",
+        "validate_otel"
+      ],
+      "count": 9,
+      "coverage": 80.0,
+      "telemetry_ok": false,
+      "gaps": [
+        "Meta-span generation",
+        "Workflow optimization"
+      ]
+    },
+    "substrate": {
+      "commands": [
+        "batch_test",
+        "create_project",
+        "customize",
+        "generate_template",
+        "validate_project"
+      ],
+      "count": 5,
+      "coverage": 0.0,
+      "telemetry_ok": true,
+      "gaps": []
+    },
+    "tests": {
+      "commands": [
+        "ci_quick",
+        "ci_run",
+        "ci_verify",
+        "run_coverage",
+        "run_tests"
+      ],
+      "count": 5,
+      "coverage": 0.0,
+      "telemetry_ok": true,
+      "gaps": []
+    },
+    "tool": {
+      "commands": [
+        "dir_",
+        "health",
+        "install",
+        "recommend",
+        "run",
+        "sync",
+        "uvx_install",
+        "uvx_list",
+        "uvx_run",
+        "uvx_uninstall",
+        "uvx_upgrade"
+      ],
+      "count": 11,
+      "coverage": 0.0,
+      "telemetry_ok": true,
+      "gaps": []
+    },
+    "weaver": {
+      "commands": [
+        "check",
+        "diff",
+        "docs",
+        "generate",
+        "init",
+        "install",
+        "resolve",
+        "search",
+        "stats",
+        "version"
+      ],
+      "count": 10,
+      "coverage": 0.0,
+      "telemetry_ok": true,
+      "gaps": []
+    },
+    "workflow": {
+      "commands": [
+        "analyze_workflow",
+        "benchmark_workflow",
+        "span",
+        "test_workflow",
+        "validate_workflow"
+      ],
+      "count": 5,
+      "coverage": 30.0,
+      "telemetry_ok": true,
+      "gaps": [
+        "PR auto-generation",
+        "Merge voting",
+        "CI span integration"
+      ]
+    }
+  },
+  "telemetry_health": {
+    "agent": true,
+    "ai": true,
+    "build": true,
+    "cache": true,
+    "claude": true,
+    "deps": true,
+    "exec": true,
+    "forge": true,
+    "history": true,
+    "index": true,
+    "lint": true,
+    "otel": true,
+    "project": true,
+    "release": true,
+    "remote": true,
+    "search": true,
+    "serve": true,
+    "shell": true,
+    "spiff-otel": false,
+    "substrate": true,
+    "tests": true,
+    "tool": true,
+    "weaver": true,
+    "workflow": true
+  },
+  "feature_coverage": {},
+  "8020_priorities": [
+    [
+      "OTLP exporter config",
+      64.00000000000001,
+      "Quick win for observability"
+    ],
+    [
+      "Git worktree isolation",
+      59.5,
+      "Essential for multi-project work"
+    ],
+    [
+      "Grafana dashboards",
+      55.99999999999999,
+      "Visual monitoring quick win"
+    ],
+    [
+      "Guide catalog CLI",
+      51.0,
+      "Core to agent value proposition"
+    ],
+    [
+      "Domain-Pack loader",
+      45.0,
+      "Enables agent-guides ecosystem"
+    ],
+    [
+      "PR auto-generation",
+      32.5,
+      "GitOps automation"
+    ],
+    [
+      "Generated span builders",
+      30.000000000000004,
+      "Automates observability"
+    ],
+    [
+      "Clean-Room engine",
+      28.500000000000004,
+      "Critical for security and isolation"
+    ],
+    [
+      "RBAC / SSO hooks",
+      18.000000000000004,
+      "Enterprise requirement"
+    ],
+    [
+      "Level-0 Reactive AGI",
+      9.999999999999998,
+      "Future-looking capability"
+    ]
+  ],
+  "recommendations": [
+    "\ud83d\udd27 Fix telemetry gaps in command groups without instrumentation",
+    "\ud83c\udfd7\ufe0f Prioritize Clean-Room engine for security isolation",
+    "\ud83d\udce6 Implement Domain-Pack loader to enable agent ecosystem",
+    "\ud83d\udd0d Add OTLP exporter configuration for production observability",
+    "\ud83d\udcca Create Grafana dashboards for quick monitoring wins",
+    "\ud83e\udd16 Focus on agent-guides integration before AGI features",
+    "\ud83d\udd10 Defer enterprise features until core is stable",
+    "\u26a1 Use 80/20 rule: Complete high-impact, low-effort items first"
+  ]
+}

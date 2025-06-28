@@ -85,7 +85,7 @@ from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
-from uvmgr.core.instrumentation import instrument_command
+from uvmgr.core.instrumentation import add_span_attributes, add_span_event, instrument_command
 from uvmgr.core.semconv import CliAttributes, PackageAttributes
 from uvmgr.core.shell import colour
 from uvmgr.core.telemetry import (
@@ -550,48 +550,47 @@ def semconv(
     validate: bool = typer.Option(False, "--validate", "-v", help="Validate semantic conventions"),
     generate: bool = typer.Option(False, "--generate", "-g", help="Generate code from conventions"),
 ):
-    """Manage semantic conventions with Weaver."""
-    weaver_path = Path(__file__).parent.parent.parent.parent / "tools" / "weaver"
-    registry_path = Path(__file__).parent.parent.parent.parent / "weaver-forge" / "registry"
+    """Manage semantic conventions for OpenTelemetry."""
+    add_span_attributes(**{
+        "otel.operation": "semconv",
+        "otel.validate": validate,
+        "otel.generate": generate,
+    })
+    
+    try:
+        from uvmgr.ops import otel as otel_ops
+        
+        if validate or (not validate and not generate):
+            console.print("[bold]Validating semantic conventions...[/bold]")
+            
+            result = otel_ops.validate_semantic_conventions()
+            
+            if result["status"] == "success":
+                console.print(f"[green]✓ {result['message']}[/green]")
+            else:
+                console.print(f"[red]✗ {result['message']}[/red]")
+                if result.get("output"):
+                    console.print(result["output"])
+                raise typer.Exit(1)
 
-    if not weaver_path.exists():
-        console.print("[red]Weaver not found. Please install it first.[/red]")
+        if generate:
+            console.print("\n[bold]Generating code from conventions...[/bold]")
+            
+            result = otel_ops.generate_code_from_conventions()
+            
+            if result["status"] == "success":
+                console.print(f"[green]✓ {result['message']}[/green]")
+                if result.get("output"):
+                    console.print(result["output"])
+            else:
+                console.print(f"[red]✗ {result['message']}[/red]")
+                if result.get("output"):
+                    console.print(result["output"])
+                raise typer.Exit(1)
+                
+    except Exception as e:
+        console.print(f"[red]✗ Failed: {e}[/red]")
         raise typer.Exit(1)
-
-    if validate or (not validate and not generate):
-        console.print("[bold]Validating semantic conventions...[/bold]")
-
-        result = subprocess.run(
-            [str(weaver_path), "registry", "check", "-r", str(registry_path), "--future"],
-            capture_output=True,
-            text=True, check=False
-        )
-
-        if result.returncode == 0:
-            console.print("[green]✓ Semantic conventions are valid![/green]")
-        else:
-            console.print("[red]✗ Validation failed:[/red]")
-            console.print(result.stderr)
-            raise typer.Exit(1)
-
-    if generate:
-        console.print("\n[bold]Generating code from conventions...[/bold]")
-
-        # Run the validation script which handles generation
-        script_path = registry_path.parent / "validate_semconv.py"
-        result = subprocess.run(
-            ["python", str(script_path)],
-            capture_output=True,
-            text=True, check=False
-        )
-
-        if result.returncode == 0:
-            console.print("[green]✓ Code generation completed![/green]")
-            console.print(result.stdout)
-        else:
-            console.print("[red]✗ Generation failed:[/red]")
-            console.print(result.stderr)
-            raise typer.Exit(1)
 
 
 @app.command("status")
@@ -1369,3 +1368,505 @@ def export(
         console.print(f"[green]✓ Configuration exported to {output}[/green]")
     else:
         console.print(output_text)
+
+
+@app.command("dashboard")
+@instrument_command("otel_dashboard", track_args=True)
+def dashboard(
+    ctx: typer.Context,
+    action: str = typer.Argument("setup", help="Action: setup, start, stop, status"),
+    grafana_url: str = typer.Option("http://localhost:3000", "--grafana-url", help="Grafana URL"),
+    prometheus_url: str = typer.Option("http://localhost:9090", "--prometheus-url", help="Prometheus URL"),
+    jaeger_url: str = typer.Option("http://localhost:16686", "--jaeger-url", help="Jaeger URL"),
+):
+    """Manage OTEL dashboard stack (Grafana, Prometheus, Jaeger)."""
+    add_span_attributes(**{
+        "otel.operation": "dashboard",
+        "otel.action": action,
+        "otel.grafana_url": grafana_url,
+        "otel.prometheus_url": prometheus_url,
+        "otel.jaeger_url": jaeger_url,
+    })
+    
+    try:
+        from uvmgr.ops import otel as otel_ops
+        
+        if action == "setup":
+            console.print("[bold]Setting up OTEL dashboard stack...[/bold]")
+            result = otel_ops.setup_dashboard_stack()
+            console.print(f"[green]✓ {result['message']}[/green]")
+            console.print("\nDashboard URLs:")
+            for service, url in result["urls"].items():
+                console.print(f"  • {service.title()}: {url}")
+                
+        elif action == "start":
+            console.print("[bold]Starting OTEL dashboard stack...[/bold]")
+            result = otel_ops.start_dashboard_stack()
+            console.print(f"[green]✓ {result['message']}[/green]")
+            
+        elif action == "stop":
+            console.print("[bold]Stopping OTEL dashboard stack...[/bold]")
+            result = otel_ops.stop_dashboard_stack()
+            console.print(f"[green]✓ {result['message']}[/green]")
+            
+        elif action == "status":
+            console.print("[bold]Checking OTEL dashboard stack status...[/bold]")
+            result = otel_ops.check_dashboard_status(grafana_url, prometheus_url, jaeger_url)
+            
+            console.print("\nService Status:")
+            for service, status in result["services"].items():
+                status_icon = "✓" if status == "running" else "✗" if status == "stopped" else "?"
+                status_color = "green" if status == "running" else "red" if status == "stopped" else "yellow"
+                console.print(f"  [{status_color}]{status_icon}[/{status_color}] {service.title()}: {status}")
+            
+            console.print("\nDashboard URLs:")
+            for service, url in result["urls"].items():
+                console.print(f"  • {service.title()}: {url}")
+                
+        else:
+            console.print(f"[red]Unknown action: {action}[/red]")
+            console.print("Available actions: setup, start, stop, status")
+            raise typer.Exit(1)
+            
+        maybe_json(ctx, result, exit_code=0)
+        
+    except Exception as e:
+        console.print(f"[red]✗ Failed: {e}[/red]")
+        maybe_json(ctx, {"error": str(e)}, exit_code=1)
+        raise typer.Exit(1)
+
+
+def _setup_dashboard(grafana_url: str, prometheus_url: str, jaeger_url: str) -> None:
+    """Setup Grafana dashboards using existing configuration."""
+    from pathlib import Path
+    import subprocess
+    
+    # Find the dashboard setup script
+    project_root = Path(__file__).parent.parent.parent.parent
+    setup_script = project_root / "external-project-testing" / "otel-dashboard-setup.py"
+    dashboard_config = project_root / "external-project-testing" / "grafana-dashboard-config.json"
+    
+    if not setup_script.exists():
+        console.print(f"[red]Dashboard setup script not found at: {setup_script}[/red]")
+        raise typer.Exit(1)
+        
+    if not dashboard_config.exists():
+        console.print(f"[red]Dashboard config not found at: {dashboard_config}[/red]")
+        raise typer.Exit(1)
+    
+    console.print("[cyan]🚀 Setting up OTEL Grafana dashboards...[/cyan]")
+    
+    try:
+        # Run the dashboard setup script
+        result = subprocess.run([
+            "python", str(setup_script),
+            "--grafana-url", grafana_url,
+            "--prometheus-url", prometheus_url, 
+            "--jaeger-url", jaeger_url
+        ], capture_output=True, text=True, check=True)
+        
+        console.print("[green]✅ Dashboard setup completed successfully![/green]")
+        console.print(f"[blue]📊 Access your dashboards at: {grafana_url}[/blue]")
+        console.print(f"[blue]📈 Prometheus metrics at: {prometheus_url}[/blue]")
+        console.print(f"[blue]🔍 Jaeger tracing at: {jaeger_url}[/blue]")
+        
+        if result.stdout:
+            console.print("\n[dim]Setup output:[/dim]")
+            console.print(result.stdout)
+            
+    except subprocess.CalledProcessError as e:
+        console.print(f"[red]Dashboard setup failed: {e}[/red]")
+        if e.stderr:
+            console.print(f"[red]Error: {e.stderr}[/red]")
+        raise typer.Exit(1)
+
+
+def _start_dashboard_stack() -> None:
+    """Start the OTEL monitoring stack using Docker Compose."""
+    from pathlib import Path
+    import subprocess
+    
+    project_root = Path(__file__).parent.parent.parent.parent
+    compose_file = project_root / "docker-compose.otel.yml"
+    
+    if not compose_file.exists():
+        console.print(f"[red]Docker compose file not found at: {compose_file}[/red]")
+        console.print("[yellow]💡 Run 'uvmgr otel dashboard setup' first[/yellow]")
+        raise typer.Exit(1)
+    
+    console.print("[cyan]🚀 Starting OTEL monitoring stack...[/cyan]")
+    
+    try:
+        subprocess.run([
+            "docker-compose", "-f", str(compose_file), "up", "-d"
+        ], check=True)
+        
+        console.print("[green]✅ OTEL monitoring stack started![/green]")
+        console.print("[blue]📊 Grafana: http://localhost:3000[/blue]")
+        console.print("[blue]📈 Prometheus: http://localhost:9090[/blue]") 
+        console.print("[blue]🔍 Jaeger: http://localhost:16686[/blue]")
+        
+    except subprocess.CalledProcessError as e:
+        console.print(f"[red]Failed to start monitoring stack: {e}[/red]")
+        raise typer.Exit(1)
+
+
+def _stop_dashboard_stack() -> None:
+    """Stop the OTEL monitoring stack."""
+    from pathlib import Path
+    import subprocess
+    
+    project_root = Path(__file__).parent.parent.parent.parent
+    compose_file = project_root / "docker-compose.otel.yml"
+    
+    if not compose_file.exists():
+        console.print("[yellow]No monitoring stack found to stop[/yellow]")
+        return
+    
+    console.print("[cyan]🛑 Stopping OTEL monitoring stack...[/cyan]")
+    
+    try:
+        subprocess.run([
+            "docker-compose", "-f", str(compose_file), "down"
+        ], check=True)
+        
+        console.print("[green]✅ OTEL monitoring stack stopped[/green]")
+        
+    except subprocess.CalledProcessError as e:
+        console.print(f"[red]Failed to stop monitoring stack: {e}[/red]")
+        raise typer.Exit(1)
+
+
+def _check_dashboard_status(grafana_url: str, prometheus_url: str, jaeger_url: str) -> None:
+    """Check the status of dashboard services."""
+    import requests
+    from rich.table import Table
+    
+    table = Table(title="OTEL Dashboard Status")
+    table.add_column("Service", style="cyan")
+    table.add_column("URL", style="blue") 
+    table.add_column("Status", style="green")
+    table.add_column("Response Time", style="yellow")
+    
+    services = [
+        ("Grafana", grafana_url),
+        ("Prometheus", prometheus_url),
+        ("Jaeger", jaeger_url)
+    ]
+    
+    for service, url in services:
+        try:
+            import time
+            start_time = time.time()
+            response = requests.get(f"{url}/api/health" if "grafana" in url else url, timeout=5)
+            response_time = (time.time() - start_time) * 1000
+            
+            if response.status_code == 200:
+                status = "✅ Online"
+            else:
+                status = f"⚠️ HTTP {response.status_code}"
+                
+        except requests.exceptions.RequestException:
+            status = "❌ Offline"
+            response_time = "N/A"
+            
+        table.add_row(service, url, status, response_time)
+    
+    console.print(table)
+    console.print("\n[dim]💡 Use 'uvmgr otel dashboard start' to launch the monitoring stack[/dim]")
+
+
+@app.command("config")
+@instrument_command("otel_config", track_args=True)
+def config(
+    ctx: typer.Context,
+    action: str = typer.Argument("show", help="Action: show, set, validate, export"),
+    endpoint: Optional[str] = typer.Option(None, "--endpoint", "-e", help="OTLP endpoint URL"),
+    service_name: Optional[str] = typer.Option(None, "--service-name", "-s", help="Service name"),
+    headers: Optional[str] = typer.Option(None, "--headers", "-h", help="OTLP headers (key=value,key=value)"),
+    compression: Optional[str] = typer.Option(None, "--compression", "-c", help="Compression: gzip, none"),
+    timeout: Optional[int] = typer.Option(None, "--timeout", "-t", help="Timeout in seconds"),
+    insecure: bool = typer.Option(False, "--insecure", help="Use insecure connection"),
+    protocol: Optional[str] = typer.Option(None, "--protocol", "-p", help="Protocol: grpc, http/protobuf"),
+):
+    """
+    Manage OTLP exporter configuration.
+    
+    Advanced OTLP configuration for production monitoring with support for
+    multiple endpoints, authentication, compression, and retry policies.
+    """
+    add_span_attributes(**{
+        "otel.config.action": action,
+        "otel.config.endpoint": endpoint or "not_provided",
+        "otel.config.service_name": service_name or "not_provided",
+        "otel.config.compression": compression or "not_provided",
+        "otel.config.protocol": protocol or "not_provided",
+    })
+    
+    try:
+        if action == "show":
+            _show_otlp_config()
+        elif action == "set":
+            _set_otlp_config(endpoint, service_name, headers, compression, timeout, insecure, protocol)
+        elif action == "validate":
+            _validate_otlp_config()
+        elif action == "export":
+            _export_otlp_config()
+        else:
+            console.print(f"[red]Unknown action: {action}[/red]")
+            console.print("Available actions: show, set, validate, export")
+            raise typer.Exit(1)
+            
+    except Exception as e:
+        console.print(f"[red]OTLP config operation failed: {e}[/red]")
+        add_span_event("otel.config.error", {"error": str(e)})
+        raise typer.Exit(1)
+
+
+def _show_otlp_config() -> None:
+    """Show current OTLP configuration."""
+    from rich.table import Table
+    
+    table = Table(title="OTLP Exporter Configuration")
+    table.add_column("Setting", style="cyan")
+    table.add_column("Value", style="green")
+    table.add_column("Source", style="yellow")
+    table.add_column("Status", style="blue")
+    
+    config_items = [
+        ("OTEL_EXPORTER_OTLP_ENDPOINT", os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", ""), "Environment"),
+        ("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", os.getenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", ""), "Environment"),
+        ("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", os.getenv("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", ""), "Environment"),
+        ("OTEL_EXPORTER_OTLP_HEADERS", os.getenv("OTEL_EXPORTER_OTLP_HEADERS", ""), "Environment"),
+        ("OTEL_EXPORTER_OTLP_COMPRESSION", os.getenv("OTEL_EXPORTER_OTLP_COMPRESSION", "gzip"), "Environment"),
+        ("OTEL_EXPORTER_OTLP_TIMEOUT", os.getenv("OTEL_EXPORTER_OTLP_TIMEOUT", "10"), "Environment"),
+        ("OTEL_EXPORTER_OTLP_PROTOCOL", os.getenv("OTEL_EXPORTER_OTLP_PROTOCOL", "grpc"), "Environment"),
+        ("OTEL_SERVICE_NAME", os.getenv("OTEL_SERVICE_NAME", "uvmgr"), "Environment"),
+        ("OTEL_SERVICE_VERSION", os.getenv("OTEL_SERVICE_VERSION", ""), "Environment"),
+        ("OTEL_RESOURCE_ATTRIBUTES", os.getenv("OTEL_RESOURCE_ATTRIBUTES", ""), "Environment"),
+    ]
+    
+    for setting, value, source, in [(s, v, src) for s, v, src in config_items]:
+        if value:
+            status = "✅ Set"
+            display_value = value if not setting.endswith("HEADERS") else "***hidden***"
+        else:
+            status = "❌ Not Set"
+            display_value = "[dim]not configured[/dim]"
+            
+        table.add_row(setting, display_value, source, status)
+    
+    console.print(table)
+    
+    # Show validation status
+    validation_status = _get_otlp_validation_status()
+    if validation_status["valid"]:
+        console.print("\n[green]✅ Configuration is valid and ready for production[/green]")
+    else:
+        console.print(f"\n[red]❌ Configuration issues: {validation_status['issues']}[/red]")
+        console.print("[yellow]💡 Use 'uvmgr otel config validate' for detailed validation[/yellow]")
+
+
+def _set_otlp_config(endpoint: Optional[str], service_name: Optional[str], headers: Optional[str], 
+                     compression: Optional[str], timeout: Optional[int], insecure: bool, 
+                     protocol: Optional[str]) -> None:
+    """Set OTLP configuration in environment."""
+    from pathlib import Path
+    
+    console.print("[cyan]🔧 Updating OTLP configuration...[/cyan]")
+    
+    # Read or create .env file
+    env_file = Path(".env")
+    env_vars = {}
+    
+    if env_file.exists():
+        for line in env_file.read_text().splitlines():
+            if "=" in line and not line.startswith("#"):
+                key, value = line.split("=", 1)
+                env_vars[key.strip()] = value.strip()
+    
+    # Update configuration
+    updates = []
+    if endpoint:
+        env_vars["OTEL_EXPORTER_OTLP_ENDPOINT"] = endpoint
+        updates.append(f"Endpoint: {endpoint}")
+    
+    if service_name:
+        env_vars["OTEL_SERVICE_NAME"] = service_name
+        updates.append(f"Service: {service_name}")
+        
+    if headers:
+        env_vars["OTEL_EXPORTER_OTLP_HEADERS"] = headers
+        updates.append("Headers: ***configured***")
+        
+    if compression:
+        env_vars["OTEL_EXPORTER_OTLP_COMPRESSION"] = compression
+        updates.append(f"Compression: {compression}")
+        
+    if timeout:
+        env_vars["OTEL_EXPORTER_OTLP_TIMEOUT"] = str(timeout)
+        updates.append(f"Timeout: {timeout}s")
+        
+    if protocol:
+        env_vars["OTEL_EXPORTER_OTLP_PROTOCOL"] = protocol
+        updates.append(f"Protocol: {protocol}")
+        
+    if insecure:
+        env_vars["OTEL_EXPORTER_OTLP_INSECURE"] = "true"
+        updates.append("Insecure: enabled")
+    
+    # Write updated .env file
+    env_content = "\n".join([f"{k}={v}" for k, v in sorted(env_vars.items())])
+    env_file.write_text(env_content + "\n")
+    
+    console.print("[green]✅ Configuration updated successfully![/green]")
+    for update in updates:
+        console.print(f"  • {update}")
+        
+    console.print(f"\n[blue]📄 Configuration saved to: {env_file.absolute()}[/blue]")
+    console.print("[yellow]💡 Restart uvmgr to apply the new configuration[/yellow]")
+
+
+def _validate_otlp_config() -> None:
+    """Validate OTLP configuration and test connectivity."""
+    console.print("[cyan]🔍 Validating OTLP configuration...[/cyan]")
+    
+    validation = _get_otlp_validation_status()
+    
+    from rich.table import Table
+    
+    table = Table(title="OTLP Configuration Validation")
+    table.add_column("Check", style="cyan")
+    table.add_column("Status", style="green")
+    table.add_column("Details", style="white")
+    
+    for check, result in validation["checks"].items():
+        status = "✅ PASS" if result["passed"] else "❌ FAIL"
+        table.add_row(check, status, result["message"])
+    
+    console.print(table)
+    
+    if validation["valid"]:
+        console.print("\n[green]✅ All validation checks passed![/green]")
+        console.print("[blue]🚀 Your OTLP configuration is production-ready[/blue]")
+        
+        # Test connectivity
+        console.print("\n[cyan]🌐 Testing connectivity...[/cyan]")
+        _test_otlp_connectivity()
+    else:
+        console.print(f"\n[red]❌ Validation failed: {validation['issues']}[/red]")
+        console.print("[yellow]💡 Use 'uvmgr otel config set' to fix configuration issues[/yellow]")
+
+
+def _export_otlp_config() -> None:
+    """Export OTLP configuration for deployment."""
+    config = {
+        "version": "1.0",
+        "otlp_exporter": {
+            "endpoint": os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", ""),
+            "traces_endpoint": os.getenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", ""),
+            "metrics_endpoint": os.getenv("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", ""),
+            "compression": os.getenv("OTEL_EXPORTER_OTLP_COMPRESSION", "gzip"),
+            "timeout": int(os.getenv("OTEL_EXPORTER_OTLP_TIMEOUT", "10")),
+            "protocol": os.getenv("OTEL_EXPORTER_OTLP_PROTOCOL", "grpc"),
+            "insecure": os.getenv("OTEL_EXPORTER_OTLP_INSECURE", "false").lower() == "true"
+        },
+        "service": {
+            "name": os.getenv("OTEL_SERVICE_NAME", "uvmgr"),
+            "version": os.getenv("OTEL_SERVICE_VERSION", ""),
+        },
+        "resource_attributes": os.getenv("OTEL_RESOURCE_ATTRIBUTES", "")
+    }
+    
+    console.print(json.dumps(config, indent=2))
+
+
+def _get_otlp_validation_status() -> dict:
+    """Get OTLP configuration validation status."""
+    checks = {}
+    issues = []
+    
+    # Check endpoint configuration
+    endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
+    if endpoint:
+        checks["Endpoint"] = {"passed": True, "message": f"Configured: {endpoint}"}
+    else:
+        checks["Endpoint"] = {"passed": False, "message": "No endpoint configured"}
+        issues.append("Missing OTLP endpoint")
+    
+    # Check service name
+    service_name = os.getenv("OTEL_SERVICE_NAME", "uvmgr")
+    if service_name:
+        checks["Service Name"] = {"passed": True, "message": f"Service: {service_name}"}
+    else:
+        checks["Service Name"] = {"passed": False, "message": "No service name"}
+        issues.append("Missing service name")
+    
+    # Check protocol
+    protocol = os.getenv("OTEL_EXPORTER_OTLP_PROTOCOL", "grpc")
+    if protocol in ["grpc", "http/protobuf"]:
+        checks["Protocol"] = {"passed": True, "message": f"Valid protocol: {protocol}"}
+    else:
+        checks["Protocol"] = {"passed": False, "message": f"Invalid protocol: {protocol}"}
+        issues.append("Invalid protocol")
+    
+    # Check compression
+    compression = os.getenv("OTEL_EXPORTER_OTLP_COMPRESSION", "gzip")
+    if compression in ["gzip", "none"]:
+        checks["Compression"] = {"passed": True, "message": f"Valid compression: {compression}"}
+    else:
+        checks["Compression"] = {"passed": False, "message": f"Invalid compression: {compression}"}
+        issues.append("Invalid compression")
+    
+    # Check timeout
+    try:
+        timeout = int(os.getenv("OTEL_EXPORTER_OTLP_TIMEOUT", "10"))
+        if 1 <= timeout <= 300:
+            checks["Timeout"] = {"passed": True, "message": f"Valid timeout: {timeout}s"}
+        else:
+            checks["Timeout"] = {"passed": False, "message": f"Timeout out of range: {timeout}s"}
+            issues.append("Timeout out of range (1-300s)")
+    except ValueError:
+        checks["Timeout"] = {"passed": False, "message": "Invalid timeout value"}
+        issues.append("Invalid timeout value")
+    
+    return {
+        "valid": len(issues) == 0,
+        "issues": ", ".join(issues),
+        "checks": checks
+    }
+
+
+def _test_otlp_connectivity() -> None:
+    """Test OTLP endpoint connectivity."""
+    endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
+    if not endpoint:
+        console.print("[red]❌ No endpoint configured for connectivity test[/red]")
+        return
+    
+    try:
+        import requests
+        import time
+        
+        # Parse endpoint to get base URL for health check
+        if endpoint.startswith("http"):
+            base_url = endpoint.rsplit("/", 1)[0] if endpoint.endswith("/") else endpoint
+        else:
+            console.print("[yellow]⚠️ Cannot test gRPC endpoint connectivity directly[/yellow]")
+            return
+        
+        start_time = time.time()
+        response = requests.get(f"{base_url}/health", timeout=5)
+        response_time = (time.time() - start_time) * 1000
+        
+        if response.status_code == 200:
+            console.print(f"[green]✅ Connectivity test passed ({response_time:.0f}ms)[/green]")
+        else:
+            console.print(f"[yellow]⚠️ Endpoint reachable but returned {response.status_code}[/yellow]")
+            
+    except requests.exceptions.Timeout:
+        console.print("[red]❌ Connection timeout - check endpoint URL[/red]")
+    except requests.exceptions.ConnectionError:
+        console.print("[red]❌ Connection failed - check if endpoint is running[/red]")
+    except Exception as e:
+        console.print(f"[red]❌ Connectivity test failed: {e}[/red]")

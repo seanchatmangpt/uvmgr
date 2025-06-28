@@ -48,6 +48,42 @@ class PackageAttributes:
     PACKAGE_OPERATION: Final[str] = "package.operation"  # The type of package operation
     
     OPERATION: Final[str] = "package.operation"  # Alias for PACKAGE_OPERATION
+
+
+# Security operation attributes
+class SecurityAttributes:
+    """Security operation attributes"""
+    
+    OPERATION: Final[str] = "security.operation"  # The type of security operation
+    
+    PROJECT_PATH: Final[str] = "security.project_path"  # Path being scanned
+    
+    SEVERITY_THRESHOLD: Final[str] = "security.severity_threshold"  # Minimum severity level
+    
+    SCAN_TYPE: Final[str] = "security.scan_type"  # Type of security scan
+    
+    VULNERABILITY_COUNT: Final[str] = "security.vulnerability_count"  # Number of vulnerabilities found
+    
+    ISSUES_FOUND: Final[str] = "security.issues_found"  # Total security issues detected
+    
+    SCAN_DURATION: Final[str] = "security.scan_duration"  # Time taken for security scan
+
+
+# Security operation values
+class SecurityOperations:
+    """Standard security operation values"""
+    
+    SCAN: Final[str] = "scan"  # Comprehensive security scan
+    
+    AUDIT: Final[str] = "audit"  # Dependency vulnerability audit
+    
+    SECRETS: Final[str] = "secrets"  # Secret detection scan
+    
+    CODE: Final[str] = "code"  # Code security analysis
+    
+    CONFIG: Final[str] = "config"  # Security configuration review
+    
+    FIX: Final[str] = "fix"  # Vulnerability remediation
     
     DEV_DEPENDENCY: Final[str] = "package.dev_dependency"  # Whether it's a dev dependency
     
@@ -110,8 +146,81 @@ class TestAttributes:
     FAILED: Final[str] = "test.failed"  # Number of tests failed
     
     SKIPPED: Final[str] = "test.skipped"  # Number of tests skipped
+
+
+# Tool integration attributes
+class ToolAttributes:
+    """Tool integration attributes"""
+    
+    TOOL_NAME: Final[str] = "tool.name"  # Name of the integrated tool
+    
+    TOOL_CATEGORY: Final[str] = "tool.category"  # Category of the tool
+    
+    TOOL_VERSION: Final[str] = "tool.version"  # Version of the tool
+    
+    TOOL_STATUS: Final[str] = "tool.status"  # Status of the tool (available, not_found, etc.)
+    
+    OPERATION: Final[str] = "tool.operation"  # Operation being performed with the tool
+    
+    INTEGRATION_ENGINE: Final[str] = "tool.integration_engine"  # Tool integration engine name
+    
+    CAPABILITIES: Final[str] = "tool.capabilities"  # Tool capabilities
+
+
+# Tool operation types
+class ToolOperations:
+    """Tool operation types"""
+    
+    DISCOVER: Final[str] = "discover"  # Tool discovery operation
+    
+    EXECUTE: Final[str] = "execute"  # Tool execution operation
+    
+    HEALTH_CHECK: Final[str] = "health_check"  # Tool health check operation
+    
+    ROUTE: Final[str] = "route"  # Tool routing operation
+
+
+# Test coverage attributes (continuation of TestAttributes)  
+class TestCoverageAttributes:
+    """Test coverage attributes"""
     
     COVERAGE_PERCENTAGE: Final[str] = "test.coverage_percentage"  # Test coverage percentage
+
+
+# Plugin system attributes
+class PluginAttributes:
+    """Plugin system attributes"""
+    
+    PLUGIN_NAME: Final[str] = "plugin.name"  # Name of the plugin
+    
+    PLUGIN_VERSION: Final[str] = "plugin.version"  # Version of the plugin
+    
+    PLUGIN_TYPE: Final[str] = "plugin.type"  # Type of plugin (command, tool_adapter, etc.)
+    
+    PLUGIN_STATUS: Final[str] = "plugin.status"  # Status of the plugin
+    
+    PLUGIN_SYSTEM: Final[str] = "plugin.system"  # Plugin system name
+    
+    HOOK_TYPE: Final[str] = "plugin.hook_type"  # Type of hook being executed
+    
+    MARKETPLACE_SOURCE: Final[str] = "plugin.marketplace_source"  # Source of plugin
+
+
+# Plugin operation types
+class PluginOperations:
+    """Plugin operation types"""
+    
+    DISCOVER: Final[str] = "discover"  # Plugin discovery operation
+    
+    LOAD: Final[str] = "load"  # Plugin load operation
+    
+    UNLOAD: Final[str] = "unload"  # Plugin unload operation
+    
+    INSTALL: Final[str] = "install"  # Plugin install operation
+    
+    UNINSTALL: Final[str] = "uninstall"  # Plugin uninstall operation
+    
+    EXECUTE_HOOK: Final[str] = "execute_hook"  # Hook execution operation
 
 
 # Build operation attributes
@@ -322,6 +431,25 @@ class UvxAttributes:
     HEALTH_STATUS: Final[str] = "uvx.health_status"  # Health status
 
 
+# uvx operations
+class UvxOperations:
+    """Standard uvx operation values"""
+    
+    INSTALL: Final[str] = "install"
+    
+    RUN: Final[str] = "run"
+    
+    LIST: Final[str] = "list"
+    
+    UNINSTALL: Final[str] = "uninstall"
+    
+    UPGRADE: Final[str] = "upgrade"
+    
+    RECOMMEND: Final[str] = "recommend"
+    
+    HEALTH_CHECK: Final[str] = "health_check"
+
+
 # Cache management attributes
 class CacheAttributes:
     """Cache management attributes"""
@@ -490,6 +618,19 @@ class McpOperations:
     LIST_RESOURCES: Final[str] = "list_resources"
 
 
+# GitHub-specific attributes
+class GitHubAttributes:
+    """GitHub-specific semantic convention attributes."""
+    OWNER = "github.owner"
+    REPOSITORY = "github.repository"
+    WORKFLOW_NAME = "github.workflow.name"
+    WORKFLOW_RUN_ID = "github.workflow.run_id"
+    WORKFLOW_STATUS = "github.workflow.status"
+    WORKFLOW_CONCLUSION = "github.workflow.conclusion"
+    WORKFLOW_EVENT = "github.workflow.event"
+    WORKFLOW_BRANCH = "github.workflow.branch"
+
+
 # Export all classes for convenient importing
 __all__ = [
     "CliAttributes",
@@ -505,6 +646,7 @@ __all__ = [
     "ToolAttributes",
     "ToolOperations",
     "UvxAttributes",
+    "UvxOperations",
     "CacheAttributes",
     "CacheOperations",
     "IndexAttributes", 
@@ -525,4 +667,5 @@ __all__ = [
     "WorkflowAttributes",
     "WorkflowOperations",
     "validate_attribute",
+    "GitHubAttributes",
 ]

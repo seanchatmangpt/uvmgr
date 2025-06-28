@@ -320,14 +320,8 @@ def lock_dependencies(
     """
     add_span_event("deps.lock.started", {"verbose": verbose})
     
-    import subprocess
-    
     try:
-        cmd = ["uv", "lock"]
-        if verbose:
-            cmd.append("--verbose")
-        
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        result = deps_ops.lock(verbose=verbose)
         
         add_span_attributes(**{
             PackageAttributes.OPERATION: "lock",
@@ -336,16 +330,13 @@ def lock_dependencies(
         
         add_span_event("deps.lock.completed", {"success": True})
         
-        if verbose and result.stdout:
-            typer.echo(result.stdout)
+        if verbose and result.get("output"):
+            typer.echo(result["output"])
         
         typer.echo("✅ Dependencies locked successfully")
+        _maybe_json(ctx, result)
         
-    except subprocess.CalledProcessError as e:
-        add_span_event("deps.lock.failed", {"error": str(e), "exit_code": e.returncode})
-        typer.echo(f"❌ Failed to lock dependencies: {e.stderr}", err=True)
-        raise typer.Exit(e.returncode)
-    except FileNotFoundError:
-        add_span_event("deps.lock.failed", {"error": "uv not found"})
-        typer.echo("❌ uv command not found. Please install uv first.", err=True)
+    except Exception as e:
+        add_span_event("deps.lock.failed", {"error": str(e)})
+        typer.echo(f"❌ Failed to lock dependencies: {e}", err=True)
         raise typer.Exit(1)

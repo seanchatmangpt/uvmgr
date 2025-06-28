@@ -1,0 +1,136 @@
+[build-system]
+requires = [ "hatchling>=1.27.0",]
+build-backend = "hatchling.build"
+
+[project]
+name = "demo-otel-app"
+version = "0.0.0"
+description = "OTEL validation test project for demo-otel-app"
+readme = "README.md"
+requires-python = ">=3.12,<4.0"
+dependencies = [ "opentelemetry-api>=1.20.0", "opentelemetry-sdk>=1.20.0", "opentelemetry-instrumentation>=0.41b0", "opentelemetry-exporter-otlp>=1.20.0",]
+[[project.authors]]
+name = "uvmgr"
+email = "test@uvmgr.com"
+
+[dependency-groups]
+dev = [ "commitizen (>=4.3.0)", "coverage[toml] (>=7.6.10)", "ipykernel (>=6.29.4)", "ipython (>=8.18.0)", "ipywidgets (>=8.1.2)", "mypy (>=1.14.1)", "pdoc (>=15.0.1)", "poethepoet (>=0.32.1)", "pre-commit (>=4.0.1)", "pytest (>=8.3.4)", "pytest-mock (>=3.14.0)", "pytest-xdist (>=3.6.1)", "ruff (>=0.9.2)",]
+otel = [ "opentelemetry-instrumentation-pytest>=0.41b0", "opentelemetry-instrumentation-logging>=0.41b0", "opentelemetry-instrumentation-system-metrics>=0.41b0",]
+
+[project.urls]
+homepage = "https://github.com/uvmgr/demo-otel-app"
+source = "https://github.com/uvmgr/demo-otel-app"
+changelog = "https://github.com/uvmgr/demo-otel-app/blob/main/CHANGELOG.md"
+releasenotes = "https://github.com/uvmgr/demo-otel-app/releases"
+documentation = "https://github.com/uvmgr/demo-otel-app"
+issues = "https://github.com/uvmgr/demo-otel-app/issues"
+
+[tool.commitizen]
+bump_message = "bump: v$current_version → v$new_version"
+tag_format = "v$version"
+update_changelog_on_bump = true
+version_provider = "uv"
+
+[tool.mypy]
+junit_xml = "reports/mypy.xml"
+ignore_missing_imports = true
+pretty = true
+show_column_numbers = true
+show_error_codes = true
+show_error_context = true
+warn_unreachable = true
+
+[tool.ruff]
+fix = true
+line-length = 100
+src = [ "src", "tests",]
+target-version = "py312"
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint]
+select = [ "A", "ASYNC", "B", "C4", "C90", "D", "DTZ", "E", "F", "FLY", "FURB", "I", "ISC", "LOG", "N", "NPY", "PERF", "PGH", "PIE", "PL", "PT", "Q", "RET", "RUF", "RSE", "SIM", "TID", "UP", "W", "YTT",]
+ignore = [ "D203", "D213", "E501", "PGH002", "PGH003", "RET504", "S101", "S307",]
+unfixable = [ "F401", "F841",]
+
+[tool.coverage.report]
+precision = 1
+show_missing = true
+skip_covered = true
+
+[tool.coverage.run]
+branch = true
+command_line = "--module pytest"
+data_file = "reports/.coverage"
+source = [ "src",]
+
+[tool.coverage.xml]
+output = "reports/coverage.xml"
+
+[tool.pytest.ini_options]
+addopts = "--color=yes --doctest-modules --exitfirst --failed-first --verbosity=2 --junitxml=reports/pytest.xml"
+testpaths = [ "src", "tests",]
+xfail_strict = true
+
+[tool.poe.executor]
+type = "simple"
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.lint.pycodestyle]
+max-doc-length = 100
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.poe.tasks.docs]
+help = "Generate this package's docs"
+cmd = "    pdoc\n      --docformat $docformat\n      --output-directory $outputdirectory\n      demo-otel-app\n    "
+[[tool.poe.tasks.docs.args]]
+help = "The docstring style (default: numpy)"
+name = "docformat"
+options = [ "--docformat",]
+default = "numpy"
+
+[[tool.poe.tasks.docs.args]]
+help = "The output directory (default: docs)"
+name = "outputdirectory"
+options = [ "--output-directory",]
+default = "docs"
+
+[tool.poe.tasks.lint]
+help = "Lint this package"
+cmd = "    pre-commit run\n      --all-files\n      --color always\n    "
+
+[tool.poe.tasks.test]
+help = "Test this package"
+[[tool.poe.tasks.test.sequence]]
+cmd = "coverage run"
+
+[[tool.poe.tasks.test.sequence]]
+cmd = "coverage report"
+
+[[tool.poe.tasks.test.sequence]]
+cmd = "coverage xml"
+
+[tool.poe.tasks.otel-validate]
+help = "Validate OTEL instrumentation"
+cmd = "uvmgr otel validate"
+
+[tool.poe.tasks.otel-coverage]
+help = "Check OTEL coverage"
+cmd = "uvmgr otel coverage --threshold 80"
+
+[tool.poe.tasks.spiff-validate]
+help = "Run SpiffWorkflow OTEL validation"
+cmd = "uvmgr spiff-otel external-validate . --mode 8020"
+
+[tool.poe.tasks.substrate-sync]
+help = "Sync with latest Substrate template"
+cmd = "uvx copier update --trust"
+
+[tool.poe.tasks.telemetry-test]
+help = "Test telemetry configuration"
+cmd = "python -c 'from src.* import tracer, meter; print(\"✅ Telemetry OK\")'"

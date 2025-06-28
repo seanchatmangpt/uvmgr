@@ -913,48 +913,41 @@ def resume(
     session_id: Optional[str] = typer.Argument(None, help="Session ID to resume (partial match)"),
     last: bool = typer.Option(False, "--last", "-l", help="Resume most recent conversation"),
 ):
-    """
-    Resume a Claude conversation (80/20).
-    
-    Common use case: Continue where you left off.
-    """
-    if last and not session_id:
-        # Get most recent session
-        if CLAUDE_DB.exists():
-            conn = sqlite3.connect(CLAUDE_DB)
-            cursor = conn.cursor()
-            result = cursor.execute("""
-                SELECT session_id, cwd 
-                FROM base_messages 
-                ORDER BY timestamp DESC 
-                LIMIT 1
-            """).fetchone()
-            conn.close()
-            
-            if result:
-                session_id = result[0]
-                console.print(f"[green]Resuming most recent session: {session_id[:8]}[/green]")
-    
-    if not session_id:
-        # Show recent sessions to choose from
-        console.print("[yellow]Recent sessions to resume:[/yellow]")
-        recent(days=7, limit=10)
-        return
-    
-    # Launch Claude with resume
-    import subprocess
-    cmd = ["claude", "--resume", session_id]
-    console.print(f"[cyan]Resuming session {session_id}...[/cyan]")
+    """Resume a previous Claude conversation."""
+    add_span_attributes(**{
+        AIAttributes.OPERATION: "conversation_resume",
+        "ai.resume_method": "last" if last else "manual",
+    })
     
     try:
-        subprocess.run(cmd)
+        if last:
+            # Get most recent session
+            recent_sessions = claude_ops.search_conversations("", days_back=7, limit=1)
+            if not recent_sessions:
+                console.print("[red]❌ No recent conversations found[/red]")
+                raise typer.Exit(1)
+            
+            session_id = recent_sessions[0]["session_id"]
+            console.print(f"[cyan]Resuming most recent session: {session_id}[/cyan]")
+        
+        if not session_id:
+            console.print("[yellow]Recent sessions to resume:[/yellow]")
+            recent(days=7, limit=10)
+            return
+        
+        # Resume session using ops layer
+        result = claude_ops.resume_session(session_id)
+        console.print(f"[green]✓ {result['message']}[/green]")
+        
+        add_span_event("conversation_resumed", {
+            "session_id": session_id,
+            "method": "last" if last else "manual",
+        })
+        
     except Exception as e:
-        console.print(f"[red]Failed to resume session: {e}[/red]")
-    
-    add_span_event("conversation_resumed", {
-        "session_id": session_id,
-        "method": "last" if last else "manual",
-    })
+        add_span_event("conversation_resume_failed", {"error": str(e)})
+        console.print(f"[red]❌ Failed to resume session: {e}[/red]")
+        raise typer.Exit(1)
 
 
 @app.command("export-resume")

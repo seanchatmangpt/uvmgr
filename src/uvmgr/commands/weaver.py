@@ -71,10 +71,7 @@ See Also
 
 from __future__ import annotations
 
-import json
-import os
-import shutil
-import subprocess
+import sys
 from pathlib import Path
 from typing import Optional
 
@@ -85,8 +82,19 @@ from rich.syntax import Syntax
 from rich.table import Table
 from rich.tree import Tree
 
-from uvmgr.core.instrumentation import instrument_command
-from uvmgr.core.shell import colour
+from uvmgr.cli_utils import handle_cli_exception, maybe_json
+from uvmgr.core.instrumentation import add_span_attributes, add_span_event, instrument_command
+from uvmgr.ops.weaver import (
+    check_registry,
+    diff_registries,
+    generate_code,
+    generate_docs,
+    get_registry_stats,
+    init_registry,
+    install_weaver,
+    resolve_registry,
+    search_registry,
+)
 
 from .. import main as cli_root
 
@@ -95,590 +103,349 @@ app = typer.Typer(help="OpenTelemetry Weaver semantic convention tools")
 cli_root.app.add_typer(app, name="weaver")
 
 # Paths
-WEAVER_PATH = Path(__file__).parent.parent.parent.parent / "tools" / "weaver"
 REGISTRY_PATH = Path(__file__).parent.parent.parent.parent / "weaver-forge" / "registry"
-WEAVER_URL = "https://github.com/open-telemetry/weaver/releases/latest"
 
 
 @app.command("install")
-@instrument_command("weaver_install")
+@instrument_command("weaver_install", track_args=True)
 def install(
+    ctx: typer.Context,
     version: str = typer.Option("latest", "--version", "-v", help="Weaver version to install"),
     force: bool = typer.Option(False, "--force", "-f", help="Force reinstall"),
 ):
     """Install or update OpenTelemetry Weaver."""
+    add_span_attributes(**{
+        "weaver.operation": "install",
+        "weaver.version": version,
+        "weaver.force": force,
+    })
+    add_span_event("weaver.install.started", {"version": version})
+    
     console.print("[bold]Installing OpenTelemetry Weaver...[/bold]\n")
-
-    # Check if already installed
-    if WEAVER_PATH.exists() and not force:
-        # Check version
-        result = subprocess.run(
-            [str(WEAVER_PATH), "--version"],
-            capture_output=True,
-            text=True,
-            check=False
-        )
-        if result.returncode == 0:
-            current_version = result.stdout.strip()
-            console.print(f"[green]✓ Weaver already installed: {current_version}[/green]")
+    
+    try:
+        result = install_weaver(version=version, force=force)
+        
+        if result["status"] == "already_installed":
+            console.print(f"[green]✓ {result['message']}[/green]")
             if not typer.confirm("Reinstall?"):
                 raise typer.Exit()
-
-    # Detect platform
-    import platform
-    system = platform.system().lower()
-    machine = platform.machine().lower()
-
-    if system == "darwin":
-        if machine == "arm64":
-            artifact = "weaver-aarch64-apple-darwin"
-        else:
-            artifact = "weaver-x86_64-apple-darwin"
-    elif system == "linux":
-        if machine == "aarch64":
-            artifact = "weaver-aarch64-unknown-linux-gnu"
-        else:
-            artifact = "weaver-x86_64-unknown-linux-gnu"
-    elif system == "windows":
-        artifact = "weaver-x86_64-pc-windows-msvc"
-    else:
-        console.print(f"[red]Unsupported platform: {system}/{machine}[/red]")
-        raise typer.Exit(1)
-
-    # Get download URL
-    if version == "latest":
-        api_url = "https://api.github.com/repos/open-telemetry/weaver/releases/latest"
-        result = subprocess.run(
-            ["curl", "-s", api_url],
-            capture_output=True,
-            text=True,
-            check=False
-        )
-        if result.returncode == 0:
-            release_data = json.loads(result.stdout)
-            version = release_data["tag_name"]
-
-    download_url = f"https://github.com/open-telemetry/weaver/releases/download/{version}/{artifact}.tar.xz"
-
-    console.print(f"Platform: {system}/{machine}")
-    console.print(f"Artifact: {artifact}")
-    console.print(f"Version: {version}")
-    console.print(f"URL: {download_url}\n")
-
-    # Create tools directory
-    tools_dir = WEAVER_PATH.parent
-    tools_dir.mkdir(exist_ok=True)
-
-    # Download and extract
-    with console.status("Downloading Weaver..."):
-        subprocess.run(
-            ["curl", "-L", "-o", "weaver.tar.xz", download_url],
-            cwd=tools_dir,
-            check=True
-        )
-
-    with console.status("Extracting..."):
-        subprocess.run(
-            ["tar", "-xf", "weaver.tar.xz"],
-            cwd=tools_dir,
-            check=True
-        )
-        (tools_dir / "weaver.tar.xz").unlink()
-
-    # Make executable
-    weaver_bin = tools_dir / artifact / "weaver"
-    if weaver_bin.exists():
-        weaver_bin.chmod(0o755)
-        # Create symlink
-        if WEAVER_PATH.exists():
-            WEAVER_PATH.unlink()
-        WEAVER_PATH.symlink_to(f"{artifact}/weaver")
-
-    # Verify installation
-    result = subprocess.run(
-        [str(WEAVER_PATH), "--version"],
-        capture_output=True,
-        text=True,
-        check=False
-    )
-
-    if result.returncode == 0:
-        console.print(f"\n[green]✓ Weaver {result.stdout.strip()} installed successfully![/green]")
-    else:
-        console.print("\n[red]✗ Installation failed[/red]")
-        raise typer.Exit(1)
+            # Force reinstall
+            result = install_weaver(version=version, force=True)
+        
+        console.print(f"[green]✓ {result['message']}[/green]")
+        maybe_json(ctx, result, exit_code=0)
+        
+    except Exception as e:
+        if isinstance(e, typer.Exit):
+            raise
+        handle_cli_exception(e, exit_code=1)
 
 
 @app.command("check")
-@instrument_command("weaver_check")
+@instrument_command("weaver_check", track_args=True)
 def check(
+    ctx: typer.Context,
     registry: Path = typer.Option(REGISTRY_PATH, "--registry", "-r", help="Registry path"),
     future: bool = typer.Option(True, "--future", help="Enable latest validation rules"),
     policy: Path | None = typer.Option(None, "--policy", "-p", help="Rego policy file"),
 ):
     """Validate semantic convention registry."""
-    if not WEAVER_PATH.exists():
-        console.print("[red]Weaver not installed. Run: uvmgr weaver install[/red]")
-        raise typer.Exit(1)
-
+    add_span_attributes(**{
+        "weaver.operation": "check",
+        "weaver.registry_path": str(registry),
+        "weaver.future": future,
+        "weaver.policy": str(policy) if policy else None,
+    })
+    add_span_event("weaver.check.started", {"registry": str(registry)})
+    
     console.print(f"[bold]Checking registry: {registry}[/bold]\n")
-
-    cmd = [str(WEAVER_PATH), "registry", "check", "-r", str(registry)]
-    if future:
-        cmd.append("--future")
-    if policy:
-        cmd.extend(["-p", str(policy)])
-
-    result = subprocess.run(cmd, capture_output=True, text=True, check=False)
-
-    if result.returncode == 0:
-        console.print("[green]✓ Registry validation passed![/green]")
-        if result.stdout:
-            console.print(result.stdout)
-    else:
-        console.print("[red]✗ Registry validation failed:[/red]")
-        console.print(result.stderr)
-        raise typer.Exit(1)
+    
+    try:
+        result = check_registry(registry=registry, future=future, policy=policy)
+        
+        console.print(f"[green]✓ {result['message']}[/green]")
+        if result.get("output"):
+            console.print(result["output"])
+        
+        maybe_json(ctx, result, exit_code=0)
+        
+    except Exception as e:
+        if isinstance(e, typer.Exit):
+            raise
+        handle_cli_exception(e, exit_code=1)
 
 
 @app.command("generate")
-@instrument_command("weaver_generate")
+@instrument_command("weaver_generate", track_args=True)
 def generate(
+    ctx: typer.Context,
     template: str = typer.Argument(..., help="Template type (e.g., python, markdown, go)"),
     output: Path = typer.Option(Path("."), "--output", "-o", help="Output directory"),
     registry: Path = typer.Option(REGISTRY_PATH, "--registry", "-r", help="Registry path"),
     config: Path | None = typer.Option(None, "--config", "-c", help="Weaver config file"),
 ):
     """Generate code from semantic conventions."""
-    if not WEAVER_PATH.exists():
-        console.print("[red]Weaver not installed. Run: uvmgr weaver install[/red]")
-        raise typer.Exit(1)
-
+    add_span_attributes(**{
+        "weaver.operation": "generate",
+        "weaver.template": template,
+        "weaver.output_path": str(output),
+        "weaver.registry_path": str(registry),
+        "weaver.config": str(config) if config else None,
+    })
+    add_span_event("weaver.generate.started", {
+        "template": template,
+        "registry": str(registry)
+    })
+    
     console.print(f"[bold]Generating {template} from {registry}[/bold]\n")
-
-    # For now, use our custom Python generator
-    if template == "python":
-        from weaver_forge.validate_semconv import generate_python_constants
-        generate_python_constants()
-        console.print("[green]✓ Python constants generated![/green]")
-        return
-
-    # For other templates, try Weaver's built-in generators
-    cmd = [
-        str(WEAVER_PATH), "registry", "generate",
-        "-r", str(registry),
-        "-t", template,
-        str(output)
-    ]
-
-    if config:
-        cmd.extend(["-c", str(config)])
-
-    result = subprocess.run(cmd, capture_output=True, text=True, check=False)
-
-    if result.returncode == 0:
-        console.print(f"[green]✓ Generated {template} in {output}[/green]")
-    else:
-        console.print("[red]✗ Generation failed:[/red]")
-        console.print(result.stderr)
-        raise typer.Exit(1)
+    
+    try:
+        result = generate_code(
+            template=template,
+            output=output,
+            registry=registry,
+            config=config
+        )
+        
+        console.print(f"[green]✓ {result['message']}[/green]")
+        maybe_json(ctx, result, exit_code=0)
+        
+    except Exception as e:
+        if isinstance(e, typer.Exit):
+            raise
+        handle_cli_exception(e, exit_code=1)
 
 
 @app.command("resolve")
-@instrument_command("weaver_resolve")
+@instrument_command("weaver_resolve", track_args=True)
 def resolve(
+    ctx: typer.Context,
     registry: Path = typer.Option(REGISTRY_PATH, "--registry", "-r", help="Registry path"),
     output: Path | None = typer.Option(None, "--output", "-o", help="Output file"),
     format: str = typer.Option("json", "--format", "-f", help="Output format (json, yaml)"),
 ):
     """Resolve semantic convention references and inheritance."""
-    if not WEAVER_PATH.exists():
-        console.print("[red]Weaver not installed. Run: uvmgr weaver install[/red]")
-        raise typer.Exit(1)
-
+    add_span_attributes(**{
+        "weaver.operation": "resolve",
+        "weaver.registry_path": str(registry),
+        "weaver.format": format,
+        "weaver.output": str(output) if output else None,
+    })
+    add_span_event("weaver.resolve.started", {"registry": str(registry)})
+    
     console.print(f"[bold]Resolving registry: {registry}[/bold]\n")
-
-    cmd = [
-        str(WEAVER_PATH), "registry", "resolve",
-        "-r", str(registry),
-        "-f", format
-    ]
-
-    if output:
-        cmd.extend(["-o", str(output)])
-
-    result = subprocess.run(cmd, capture_output=True, text=True, check=False)
-
-    if result.returncode == 0:
-        if output:
-            console.print(f"[green]✓ Resolved registry saved to {output}[/green]")
-        # Pretty print the output
-        elif format == "json":
-            data = json.loads(result.stdout)
-            console.print(json.dumps(data, indent=2))
-        else:
-            console.print(result.stdout)
-    else:
-        console.print("[red]✗ Resolution failed:[/red]")
-        console.print(result.stderr)
-        raise typer.Exit(1)
+    
+    try:
+        result = resolve_registry(registry=registry, output=output, format=format)
+        
+        console.print(f"[green]✓ {result['message']}[/green]")
+        if result.get("output"):
+            console.print(result["output"])
+        
+        maybe_json(ctx, result, exit_code=0)
+        
+    except Exception as e:
+        if isinstance(e, typer.Exit):
+            raise
+        handle_cli_exception(e, exit_code=1)
 
 
 @app.command("search")
-@instrument_command("weaver_search")
+@instrument_command("weaver_search", track_args=True)
 def search(
+    ctx: typer.Context,
     query: str = typer.Argument(..., help="Search query (regex supported)"),
     registry: Path = typer.Option(REGISTRY_PATH, "--registry", "-r", help="Registry path"),
     type: str | None = typer.Option(None, "--type", "-t", help="Filter by type (attribute, metric, etc)"),
 ):
-    """Search semantic conventions."""
-    if not WEAVER_PATH.exists():
-        console.print("[red]Weaver not installed. Run: uvmgr weaver install[/red]")
-        raise typer.Exit(1)
-
-    console.print(f"[bold]Searching for: {query}[/bold]\n")
-
-    cmd = [
-        str(WEAVER_PATH), "registry", "search",
-        "-r", str(registry),
-        query
-    ]
-
-    if type:
-        cmd.extend(["--type", type])
-
-    result = subprocess.run(cmd, capture_output=True, text=True, check=False)
-
-    if result.returncode == 0:
-        if result.stdout.strip():
-            console.print(result.stdout)
-        else:
-            console.print("[yellow]No matches found[/yellow]")
-    else:
-        console.print("[red]✗ Search failed:[/red]")
-        console.print(result.stderr)
-        raise typer.Exit(1)
+    """Search for semantic conventions in registry."""
+    add_span_attributes(**{
+        "weaver.operation": "search",
+        "weaver.query": query,
+        "weaver.registry_path": str(registry),
+        "weaver.search_type": type,
+    })
+    add_span_event("weaver.search.started", {"query": query})
+    
+    console.print(f"[bold]Searching for '{query}' in {registry}[/bold]\n")
+    
+    try:
+        result = search_registry(query=query, registry=registry, type=type)
+        
+        console.print(f"[green]✓ {result['message']}[/green]")
+        if result.get("results"):
+            console.print(result["results"])
+        
+        maybe_json(ctx, result, exit_code=0)
+        
+    except Exception as e:
+        if isinstance(e, typer.Exit):
+            raise
+        handle_cli_exception(e, exit_code=1)
 
 
 @app.command("stats")
-@instrument_command("weaver_stats")
+@instrument_command("weaver_stats", track_args=True)
 def stats(
+    ctx: typer.Context,
     registry: Path = typer.Option(REGISTRY_PATH, "--registry", "-r", help="Registry path"),
 ):
     """Show registry statistics."""
-    if not WEAVER_PATH.exists():
-        console.print("[red]Weaver not installed. Run: uvmgr weaver install[/red]")
-        raise typer.Exit(1)
-
-    console.print(f"[bold]Registry Statistics: {registry}[/bold]\n")
-
-    # Get registry stats using resolve
-    cmd = [
-        str(WEAVER_PATH), "registry", "resolve",
-        "-r", str(registry),
-        "-f", "json"
-    ]
-
-    result = subprocess.run(cmd, capture_output=True, text=True, check=False)
-
-    if result.returncode == 0:
-        data = json.loads(result.stdout)
-
-        # Count different types
-        stats = {
-            "groups": 0,
-            "attributes": 0,
-            "metrics": 0,
-            "spans": 0,
-            "events": 0,
-        }
-
-        if "groups" in data:
-            for group in data["groups"]:
-                stats["groups"] += 1
-                if "attributes" in group:
-                    stats["attributes"] += len(group["attributes"])
-                if group.get("type") == "span":
-                    stats["spans"] += 1
-                elif group.get("type") == "event":
-                    stats["events"] += 1
-
-        if "metrics" in data:
-            stats["metrics"] = len(data["metrics"])
-
-        # Display stats
-        table = Table(title="Registry Statistics")
-        table.add_column("Type", style="cyan")
-        table.add_column("Count", style="green")
-
-        for type_name, count in stats.items():
-            if count > 0:
-                table.add_row(type_name.capitalize(), str(count))
-
-        console.print(table)
-    else:
-        console.print("[red]✗ Failed to get statistics:[/red]")
-        console.print(result.stderr)
-        raise typer.Exit(1)
+    add_span_attributes(**{
+        "weaver.operation": "stats",
+        "weaver.registry_path": str(registry),
+    })
+    add_span_event("weaver.stats.started", {"registry": str(registry)})
+    
+    console.print(f"[bold]Registry statistics: {registry}[/bold]\n")
+    
+    try:
+        result = get_registry_stats(registry=registry)
+        
+        console.print(f"[green]✓ {result['message']}[/green]")
+        if result.get("stats"):
+            console.print(result["stats"])
+        
+        maybe_json(ctx, result, exit_code=0)
+        
+    except Exception as e:
+        if isinstance(e, typer.Exit):
+            raise
+        handle_cli_exception(e, exit_code=1)
 
 
 @app.command("diff")
-@instrument_command("weaver_diff")
+@instrument_command("weaver_diff", track_args=True)
 def diff(
+    ctx: typer.Context,
     registry1: Path = typer.Argument(..., help="First registry to compare"),
     registry2: Path = typer.Argument(..., help="Second registry to compare"),
     output: Path | None = typer.Option(None, "--output", "-o", help="Output diff to file"),
 ):
-    """Compare two semantic convention registries."""
-    if not WEAVER_PATH.exists():
-        console.print("[red]Weaver not installed. Run: uvmgr weaver install[/red]")
-        raise typer.Exit(1)
-
-    console.print("[bold]Comparing registries:[/bold]")
-    console.print(f"  Registry 1: {registry1}")
-    console.print(f"  Registry 2: {registry2}\n")
-
-    # Resolve both registries
-    cmd1 = [str(WEAVER_PATH), "registry", "resolve", "-r", str(registry1), "-f", "json"]
-    cmd2 = [str(WEAVER_PATH), "registry", "resolve", "-r", str(registry2), "-f", "json"]
-
-    result1 = subprocess.run(cmd1, capture_output=True, text=True, check=False)
-    result2 = subprocess.run(cmd2, capture_output=True, text=True, check=False)
-
-    if result1.returncode != 0 or result2.returncode != 0:
-        console.print("[red]✗ Failed to resolve registries[/red]")
-        raise typer.Exit(1)
-
-    data1 = json.loads(result1.stdout)
-    data2 = json.loads(result2.stdout)
-
-    # Simple diff implementation
-    diff_results = {
-        "added": [],
-        "removed": [],
-        "modified": []
-    }
-
-    # Compare groups
-    groups1 = {g["id"]: g for g in data1.get("groups", [])}
-    groups2 = {g["id"]: g for g in data2.get("groups", [])}
-
-    for id in set(groups1.keys()) | set(groups2.keys()):
-        if id in groups1 and id not in groups2:
-            diff_results["removed"].append(f"Group: {id}")
-        elif id not in groups1 and id in groups2:
-            diff_results["added"].append(f"Group: {id}")
-        elif groups1.get(id) != groups2.get(id):
-            diff_results["modified"].append(f"Group: {id}")
-
-    # Display diff
-    if any(diff_results.values()):
-        if diff_results["added"]:
-            console.print("[green]Added:[/green]")
-            for item in diff_results["added"]:
-                console.print(f"  + {item}")
-
-        if diff_results["removed"]:
-            console.print("\n[red]Removed:[/red]")
-            for item in diff_results["removed"]:
-                console.print(f"  - {item}")
-
-        if diff_results["modified"]:
-            console.print("\n[yellow]Modified:[/yellow]")
-            for item in diff_results["modified"]:
-                console.print(f"  ~ {item}")
-    else:
-        console.print("[green]✓ No differences found[/green]")
-
-    # Save diff to file if requested
-    if output:
-        output.write_text(json.dumps(diff_results, indent=2))
-        console.print(f"\n[green]✓ Diff saved to {output}[/green]")
+    """Compare two registries and show differences."""
+    add_span_attributes(**{
+        "weaver.operation": "diff",
+        "weaver.registry1": str(registry1),
+        "weaver.registry2": str(registry2),
+        "weaver.output": str(output) if output else None,
+    })
+    add_span_event("weaver.diff.started", {
+        "registry1": str(registry1),
+        "registry2": str(registry2)
+    })
+    
+    console.print(f"[bold]Comparing registries:[/bold]")
+    console.print(f"  {registry1}")
+    console.print(f"  {registry2}\n")
+    
+    try:
+        result = diff_registries(registry1=registry1, registry2=registry2, output=output)
+        
+        console.print(f"[green]✓ {result['message']}[/green]")
+        if result.get("diff"):
+            console.print(result["diff"])
+        
+        maybe_json(ctx, result, exit_code=0)
+        
+    except Exception as e:
+        if isinstance(e, typer.Exit):
+            raise
+        handle_cli_exception(e, exit_code=1)
 
 
 @app.command("init")
-@instrument_command("weaver_init")
+@instrument_command("weaver_init", track_args=True)
 def init(
+    ctx: typer.Context,
     name: str = typer.Option("myproject", "--name", "-n", help="Registry name"),
     path: Path = typer.Option(Path("."), "--path", "-p", help="Registry path"),
     force: bool = typer.Option(False, "--force", "-f", help="Overwrite existing registry"),
 ):
     """Initialize a new semantic convention registry."""
-    registry_path = path / "registry"
-
-    if registry_path.exists() and not force:
-        console.print(f"[red]Registry already exists at {registry_path}[/red]")
-        if not typer.confirm("Overwrite?"):
-            raise typer.Exit()
-
-    console.print(f"[bold]Initializing semantic convention registry: {name}[/bold]\n")
-
-    # Create directory structure
-    registry_path.mkdir(parents=True, exist_ok=True)
-    models_path = registry_path / "models"
-    models_path.mkdir(exist_ok=True)
-
-    # Create registry manifest
-    manifest = {
-        "name": name,
-        "description": f"Semantic conventions for {name}",
-        "version": "1.0.0",
-        "semconv_version": "1.26.0",
-        "schema_base_url": f"https://example.com/schemas/{name}",
-        "models": [
-            {
-                "path": "models/common.yaml",
-                "description": "Common attributes and conventions"
-            }
-        ]
-    }
-
-    manifest_path = registry_path / "registry_manifest.yaml"
-    import yaml
-    manifest_path.write_text(yaml.dump(manifest, default_flow_style=False))
-
-    # Create example model
-    example_model = """groups:
-  - id: example
-    type: attribute_group
-    brief: 'Example attribute group'
-    attributes:
-      - id: name
-        type: string
-        brief: 'Example name attribute'
-        note: 'This is an example attribute'
-        examples: ['foo', 'bar']
-        requirement_level: required
-        stability: stable
+    add_span_attributes(**{
+        "weaver.operation": "init",
+        "weaver.name": name,
+        "weaver.path": str(path),
+        "weaver.force": force,
+    })
+    add_span_event("weaver.init.started", {"name": name, "path": str(path)})
+    
+    console.print(f"[bold]Initializing registry '{name}' at {path}[/bold]\n")
+    
+    try:
+        result = init_registry(name=name, path=path, force=force)
         
-      - id: count
-        type: int
-        brief: 'Example count attribute'
-        note: 'Number of items'
-        requirement_level: recommended
-        stability: stable
-"""
-
-    model_path = models_path / "common.yaml"
-    model_path.write_text(example_model)
-
-    # Create .gitignore
-    gitignore = """# Generated files
-/docs/
-*.pyc
-__pycache__/
-.DS_Store
-"""
-    (registry_path / ".gitignore").write_text(gitignore)
-
-    # Display created structure
-    tree = Tree(f"[bold]{registry_path}[/bold]")
-    tree.add("registry_manifest.yaml")
-    models_tree = tree.add("models/")
-    models_tree.add("common.yaml")
-    tree.add(".gitignore")
-
-    console.print(tree)
-    console.print(f"\n[green]✓ Registry '{name}' initialized successfully![/green]")
-    console.print("\nNext steps:")
-    console.print("  1. Edit models/common.yaml to define your conventions")
-    console.print("  2. Run 'uvmgr weaver check' to validate")
-    console.print("  3. Run 'uvmgr weaver generate python' to generate code")
+        console.print(f"[green]✓ {result['message']}[/green]")
+        if result.get("output"):
+            console.print(result["output"])
+        
+        maybe_json(ctx, result, exit_code=0)
+        
+    except Exception as e:
+        if isinstance(e, typer.Exit):
+            raise
+        handle_cli_exception(e, exit_code=1)
 
 
 @app.command("docs")
-@instrument_command("weaver_docs")
+@instrument_command("weaver_docs", track_args=True)
 def docs(
+    ctx: typer.Context,
     registry: Path = typer.Option(REGISTRY_PATH, "--registry", "-r", help="Registry path"),
     output: Path = typer.Option(Path("docs"), "--output", "-o", help="Output directory"),
     format: str = typer.Option("markdown", "--format", "-f", help="Documentation format"),
 ):
     """Generate documentation from semantic conventions."""
-    if not WEAVER_PATH.exists():
-        console.print("[red]Weaver not installed. Run: uvmgr weaver install[/red]")
-        raise typer.Exit(1)
-
-    console.print(f"[bold]Generating {format} documentation[/bold]\n")
-
-    # For now, manually create markdown docs
-    if format == "markdown":
-        output.mkdir(parents=True, exist_ok=True)
-
-        # Resolve registry to get all data
-        cmd = [
-            str(WEAVER_PATH), "registry", "resolve",
-            "-r", str(registry),
-            "-f", "json"
-        ]
-
-        result = subprocess.run(cmd, capture_output=True, text=True, check=False)
-
-        if result.returncode == 0:
-            data = json.loads(result.stdout)
-
-            # Generate index
-            index_content = "# Semantic Conventions Documentation\n\n"
-            index_content += "## Attribute Groups\n\n"
-
-            for group in data.get("groups", []):
-                group_file = output / f"{group['id']}.md"
-                index_content += f"- [{group['id']}]({group['id']}.md) - {group.get('brief', '')}\n"
-
-                # Generate group documentation
-                group_content = f"# {group['id']} Attributes\n\n"
-                group_content += f"{group.get('brief', '')}\n\n"
-
-                if "attributes" in group:
-                    group_content += "## Attributes\n\n"
-                    group_content += "| Attribute | Type | Description | Requirement Level |\n"
-                    group_content += "|-----------|------|-------------|------------------|\n"
-
-                    for attr in group["attributes"]:
-                        req_level = attr.get("requirement_level", "optional")
-                        group_content += f"| `{attr['id']}` | {attr.get('type', 'string')} | {attr.get('brief', '')} | {req_level} |\n"
-
-                group_file.write_text(group_content)
-
-            # Write index
-            index_file = output / "index.md"
-            index_file.write_text(index_content)
-
-            console.print(f"[green]✓ Documentation generated in {output}[/green]")
-        else:
-            console.print("[red]✗ Failed to generate documentation[/red]")
-            raise typer.Exit(1)
-    else:
-        console.print(f"[red]Format '{format}' not yet supported[/red]")
-        raise typer.Exit(1)
+    add_span_attributes(**{
+        "weaver.operation": "docs",
+        "weaver.registry_path": str(registry),
+        "weaver.output_path": str(output),
+        "weaver.format": format,
+    })
+    add_span_event("weaver.docs.started", {
+        "registry": str(registry),
+        "format": format
+    })
+    
+    console.print(f"[bold]Generating {format} documentation from {registry}[/bold]\n")
+    
+    try:
+        result = generate_docs(registry=registry, output=output, format=format)
+        
+        console.print(f"[green]✓ {result['message']}[/green]")
+        if result.get("output"):
+            console.print(result["output"])
+        
+        maybe_json(ctx, result, exit_code=0)
+        
+    except Exception as e:
+        if isinstance(e, typer.Exit):
+            raise
+        handle_cli_exception(e, exit_code=1)
 
 
 @app.command("version")
 @instrument_command("weaver_version")
-def version():
-    """Show Weaver version information."""
-    if not WEAVER_PATH.exists():
-        console.print("[red]Weaver not installed. Run: uvmgr weaver install[/red]")
-        raise typer.Exit(1)
-
-    result = subprocess.run(
-        [str(WEAVER_PATH), "--version"],
-        capture_output=True,
-        text=True,
-        check=False
-    )
-
-    if result.returncode == 0:
-        version_info = result.stdout.strip()
-
-        # Create a nice panel
-        panel = Panel(
-            f"[green]{version_info}[/green]\n\n"
-            f"Path: {WEAVER_PATH}\n"
-            f"Registry: {REGISTRY_PATH}",
-            title="OpenTelemetry Weaver",
-            border_style="green"
-        )
-        console.print(panel)
-    else:
-        console.print("[red]✗ Failed to get version[/red]")
-        raise typer.Exit(1)
+def version(ctx: typer.Context):
+    """Show Weaver version."""
+    add_span_attributes(**{
+        "weaver.operation": "version",
+    })
+    add_span_event("weaver.version.started")
+    
+    try:
+        from uvmgr.ops.weaver import get_weaver_version
+        
+        version = get_weaver_version()
+        if version:
+            console.print(f"[green]Weaver version: {version}[/green]")
+            maybe_json(ctx, {"version": version}, exit_code=0)
+        else:
+            console.print("[red]Weaver not installed[/red]")
+            maybe_json(ctx, {"error": "Weaver not installed"}, exit_code=1)
+            
+    except Exception as e:
+        if isinstance(e, typer.Exit):
+            raise
+        handle_cli_exception(e, exit_code=1)

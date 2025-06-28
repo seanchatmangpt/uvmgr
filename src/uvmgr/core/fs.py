@@ -31,14 +31,21 @@ Examples
     >>> from uvmgr.core.fs import hash_file, safe_write, atomic_copy
     >>> from pathlib import Path
     >>> 
-    >>> # Hash a file
-    >>> file_hash = hash_file(Path("requirements.txt"))
+    >>> # Import functions for demonstration
+    >>> from uvmgr.core.fs import hash_file, safe_write
+    >>> import tempfile
     >>> 
-    >>> # Safe atomic write
-    >>> safe_write(Path("config.json"), '{"key": "value"}')
+    >>> # Create a temporary file for testing
+    >>> import tempfile
+    >>> with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+    ...     f.write("test content")
+    ...     temp_path = Path(f.name)
+    12
     >>> 
-    >>> # Atomic copy with telemetry
-    >>> atomic_copy(Path("source.txt"), Path("dest.txt"))
+    >>> # Hash the file
+    >>> file_hash = hash_file(temp_path)
+    >>> len(file_hash)  # SHA-1 hash length
+    40
 
 See Also
 --------

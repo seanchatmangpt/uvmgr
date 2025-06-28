@@ -1,0 +1,75 @@
+ai_config:
+  autonomous_suggestions: true
+  code_understanding: true
+  knowledge_base_enabled: true
+  learning_enabled: true
+command_defaults:
+  ai:
+    model: groq/llama-3.2-90b-text-preview
+    temperature: 0.1
+  build:
+    include_source: true
+    optimize: false
+  lint:
+    auto_fix: true
+    strict: false
+  tests:
+    coverage: true
+    verbose: false
+created_at: '2025-06-28T11:00:00.828429'
+default_environment: development
+environments:
+  development:
+    ai_settings:
+      model: groq/llama-3.2-90b-text-preview
+      temperature: 0.1
+    build_settings: {}
+    dependencies: {}
+    deployment_target: null
+    environment_variables:
+      DEBUG: 'true'
+    name: development
+    python_version: 3.11+
+    test_settings:
+      coverage: true
+      verbose: true
+  production:
+    ai_settings: {}
+    build_settings:
+      minify: true
+      optimize: true
+    dependencies: {}
+    deployment_target: production
+    environment_variables:
+      DEBUG: 'false'
+    name: production
+    python_version: 3.11+
+    test_settings:
+      coverage: true
+      verbose: false
+  staging:
+    ai_settings: {}
+    build_settings: {}
+    dependencies: {}
+    deployment_target: staging
+    environment_variables:
+      DEBUG: 'false'
+    name: staging
+    python_version: 3.11+
+    test_settings:
+      coverage: true
+      verbose: false
+global_settings:
+  auto_format: true
+  auto_install_deps: true
+  auto_test: false
+  telemetry_enabled: true
+project_name: demo-project
+project_type: fastapi
+project_version: 0.1.0
+updated_at: '2025-06-28T11:00:00.828466'
+workflow_settings:
+  auto_workflows: true
+  max_retries: 3
+  parallel_execution: false
+  retry_on_failure: true

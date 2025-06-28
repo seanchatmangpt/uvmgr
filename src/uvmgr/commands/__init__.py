@@ -86,6 +86,12 @@ __all__: Final[list[str]] = [
     "weaver",  # OpenTelemetry Weaver semantic convention tools
     "forge",  # 8020 Weaver Forge automation and development workflows
     "history",  # Command history tracking
+    "workspace",  # Workspace and environment management
+    "search",    # Advanced search capabilities (code, deps, files, semantic)
+    "workflow",  # Workflow orchestration and automation
+    "knowledge", # AI-powered knowledge management
+    "performance", # Performance profiling and optimization (80/20 implementation)
+    # "security",  # Security scanning and vulnerability management (80/20 implementation) - TEMPORARILY DISABLED DUE TO IMPORT ISSUE
     # advanced / optional
     "ai",
     "claude",  # Claude AI integration
@@ -94,6 +100,7 @@ __all__: Final[list[str]] = [
     "remote",
     "agent",
     "ap_scheduler",
+    "actions",
 ]
 
 _PACKAGE_PREFIX = __name__ + "."

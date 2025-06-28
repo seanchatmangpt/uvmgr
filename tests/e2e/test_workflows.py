@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from .conftest import (
+from tests.e2e.conftest import (
     assert_command_success,
     assert_output_contains,
     create_sample_module,

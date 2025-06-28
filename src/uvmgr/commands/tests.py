@@ -120,8 +120,15 @@ def run_tests(verbose: bool = typer.Option(False, "--verbose", "-v", help="Run t
     cmd = ["pytest"]
     if verbose:
         cmd.append("-v")
-    run_logged(cmd)
-    add_span_event("tests.run.completed", {"success": True})
+    
+    try:
+        run_logged(cmd)
+        add_span_event("tests.run.completed", {"success": True})
+    except subprocess.CalledProcessError as e:
+        # Tests may fail, but command execution succeeded
+        add_span_event("tests.run.completed", {"success": False, "exit_code": e.returncode})
+        typer.echo(f"Tests completed with failures (exit code: {e.returncode})")
+        raise typer.Exit(e.returncode)
 
 
 @tests_app.command("coverage")

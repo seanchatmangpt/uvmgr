@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "${{ github.workspace }}/.local/bin" >> $GITHUB_PATH
+        
+    - name: Install dependencies
+      run: uv pip install -e ".[dev]" --system
+      
+    - name: Lint with Ruff
+      run: ruff check .
+      
+    - name: Type check with MyPy
+      run: mypy src
+      
+    - name: Test with pytest
+      run: pytest --cov --cov-report=xml
+      
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+        
+    - name: Install dependencies
+      run: |
+        pip install commitizen
+        
+    - name: Bump version and create changelog
+      run: |
+        cz bump --changelog
+        git push --follow-tags

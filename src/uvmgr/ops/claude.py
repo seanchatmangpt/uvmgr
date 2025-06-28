@@ -623,21 +623,47 @@ def get_session(session_id: str) -> Optional[Dict[str, Any]]:
 
 
 def set_active_session(session_id: str) -> None:
-    """Set the active conversation session for resumption."""
+    """Set the active session for resumption."""
     with span("claude.set_active_session", session_id=session_id):
-        # Store in appropriate location for Claude to resume
-        session_file = Path.home() / ".claude" / "active_session.json"
-        session_file.parent.mkdir(exist_ok=True)
+        add_span_attributes(**{
+            AIAttributes.OPERATION: "set_active_session",
+            "ai.session_id": session_id,
+        })
         
-        session_data = {
-            "session_id": session_id,
-            "activated_at": datetime.now().isoformat(),
-        }
-        
-        with open(session_file, "w") as f:
-            json.dump(session_data, f)
-        
+        # This would typically set environment variables or create a marker file
+        # For now, we'll just log the action
         add_span_event("session_activated", {"session_id": session_id})
+
+
+def resume_session(session_id: str) -> Dict[str, Any]:
+    """Resume a Claude session by launching the claude CLI."""
+    with span("claude.resume_session", session_id=session_id):
+        add_span_attributes(**{
+            AIAttributes.OPERATION: "resume_session",
+            "ai.session_id": session_id,
+        })
+        add_span_event("session_resume_started", {"session_id": session_id})
+        
+        try:
+            from uvmgr.core.process import run_logged
+            
+            cmd = ["claude", "--resume", session_id]
+            result = run_logged(cmd, capture=False)  # Don't capture output for interactive sessions
+            
+            add_span_event("session_resume_completed", {"session_id": session_id})
+            
+            return {
+                "status": "success",
+                "session_id": session_id,
+                "message": f"Session {session_id} resumed successfully"
+            }
+            
+        except Exception as e:
+            add_span_event("session_resume_failed", {
+                "session_id": session_id,
+                "error": str(e)
+            })
+            raise RuntimeError(f"Failed to resume session {session_id}: {e}")
 
 
 # ──────────────────────────────────────────────────────────────────────────────

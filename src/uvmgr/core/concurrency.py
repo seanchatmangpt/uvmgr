@@ -26,14 +26,16 @@ Examples
     >>> 
     >>> # Concurrent function execution
     >>> def fetch_data(id):
-    >>>     return f"data_{id}"
+    ...     return f"data_{id}"
     >>> 
     >>> results = run_wave([lambda: fetch_data(i) for i in range(5)])
+    >>> len(results)
+    5
     >>> 
     >>> # Async execution
     >>> async def async_task():
-    >>>     await asyncio.sleep(1)
-    >>>     return "completed"
+    ...     await asyncio.sleep(0.01)  # Short sleep for testing
+    ...     return "completed"
     >>> 
     >>> result = aio_run(async_task())
 

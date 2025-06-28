@@ -1,0 +1,51 @@
+name: OTEL Validation
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+        
+      - name: Install dependencies
+        run: |
+          uv sync --all-extras
+          uv tool install uvmgr
+          
+      - name: Validate OTEL Integration
+        run: |
+          uvmgr spiff-otel external-validate . --mode comprehensive
+          
+      - name: Check OTEL Coverage
+        run: |
+          uvmgr otel coverage --threshold 80
+          
+      - name: Run Telemetry Tests
+        run: |
+          uv run poe telemetry-test
+          
+      - name: Upload OTEL Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: otel-results-${{ matrix.python-version }}
+          path: |
+            **/otel-validation-results.json
+            **/coverage.xml

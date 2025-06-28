@@ -51,13 +51,13 @@ Tools
 
 Example
 -------
-    >>> from uvmgr.mcp import mcp
-    >>> # Start MCP server
-    >>> mcp.run(transport="stdio")
+    Start MCP server:
+        from uvmgr.mcp import mcp
+        mcp.run(transport="stdio")
     
-    >>> # Use tools programmatically
-    >>> from uvmgr.mcp import create_project, add_dependency
-    >>> result = create_project("my-project", template="basic")
+    Use tools programmatically:
+        from uvmgr.mcp import create_project, add_dependency
+        result = create_project("my-project", template="basic")
 
 See Also
 --------

@@ -35,11 +35,10 @@ Examples
     >>> # Check if command was previously executed
     >>> cmd = "python --version"
     >>> if cache_hit(cmd):
-    >>>     print("Command was cached")
-    >>> else:
-    >>>     # Execute command and store result
-    >>>     result = run(cmd)
-    >>>     store_result(cmd)
+    ...     print("Command was cached")
+    ... else:
+    ...     print("Command not cached")
+    ...     # store_result(cmd, "Python 3.12.0")
 
 See Also
 --------

@@ -87,7 +87,11 @@ def _root(
 commands_pkg = importlib.import_module("uvmgr.commands")
 
 for verb in commands_pkg.__all__:
-    mod = importlib.import_module(f"uvmgr.commands.{verb}")
+    try:
+        mod = importlib.import_module(f"uvmgr.commands.{verb}")
+    except ImportError:
+        # Skip commands that have missing dependencies (e.g., AI modules in frozen executables)
+        continue
 
     # Expect exactly one typer.Typer object in the module's globals ------------
     sub_app = next(

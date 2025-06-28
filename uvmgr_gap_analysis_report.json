@@ -1,0 +1,147 @@
+{
+  "existing_commands": {
+    "agent": [],
+    "ai": [],
+    "build": [],
+    "cache": [],
+    "claude": [],
+    "deps": [],
+    "exec": [],
+    "forge": [],
+    "history": [],
+    "index": [],
+    "lint": [],
+    "otel": [],
+    "project": [],
+    "release": [],
+    "remote": [],
+    "serve": [],
+    "shell": [],
+    "spiff-otel": [],
+    "substrate": [],
+    "tests": [],
+    "tool": [],
+    "weaver": []
+  },
+  "total_commands": 0,
+  "phase_coverage": {
+    "0_FOUNDATIONAL": {
+      "name": "Foundational Infrastructure",
+      "coverage_percent": 42.857142857142854,
+      "covered_features": [
+        "Core CLI (Typer)",
+        "Virtualenv / uv lock",
+        "Packaging (PyInstaller)"
+      ],
+      "missing_features": [
+        "Clean-Room engine",
+        "Domain-Pack loader",
+        "Git worktree isolation",
+        "DevContainer & Codespaces"
+      ],
+      "total_features": 7
+    },
+    "1_AGENT_GUIDES": {
+      "name": "Agent-Guides Integration",
+      "coverage_percent": 62.5,
+      "covered_features": [
+        "Guide catalog CLI",
+        "Guide-aware templates",
+        "Guide scaffolding (init)",
+        "OTEL semconv extension",
+        "Validation pipeline update"
+      ],
+      "missing_features": [
+        "Fetch & cache guides pack",
+        "Guides version pinning",
+        "Guides auto-update command"
+      ],
+      "total_features": 8
+    },
+    "2_OBSERVABILITY": {
+      "name": "Observability & OTEL",
+      "coverage_percent": 33.33333333333333,
+      "covered_features": [
+        "Span decorators (core)",
+        "Span-driven branching (meta)"
+      ],
+      "missing_features": [
+        "Generated span builders",
+        "OTLP exporter config",
+        "Grafana dashboards",
+        "Real-time span diff alerts"
+      ],
+      "total_features": 6
+    },
+    "3_AGI_MATURITY": {
+      "name": "AGI Maturity Ladders",
+      "coverage_percent": 0.0,
+      "covered_features": [],
+      "missing_features": [
+        "Level-0 Reactive",
+        "Level-1 Deliberative",
+        "Level-2 Meta-Cognitive",
+        "Level-3 Reflective Learning",
+        "Level-4 Autonomous Gov",
+        "Level-5 Self-Improving AGI"
+      ],
+      "total_features": 6
+    },
+    "4_ENTERPRISE": {
+      "name": "Enterprise Hardening",
+      "coverage_percent": 16.666666666666664,
+      "covered_features": [
+        "CI/CD bootstrap templates"
+      ],
+      "missing_features": [
+        "RBAC / SSO hooks",
+        "Vault secret injection",
+        "Policy-as-code gating",
+        "Artifact registry push",
+        "Clean-room quotas & TTL"
+      ],
+      "total_features": 6
+    },
+    "5_GITOPS": {
+      "name": "GitOps & DevOps",
+      "coverage_percent": 0.0,
+      "covered_features": [],
+      "missing_features": [
+        "PR auto-generation",
+        "MergeOracle federated votes",
+        "Liquid democracy graph",
+        "Git-linked deployment hooks",
+        "Trace-linked CI span glue"
+      ],
+      "total_features": 5
+    }
+  },
+  "critical_gaps": [
+    "Clean-Room engine",
+    "Domain-Pack loader",
+    "Git worktree isolation",
+    "DevContainer & Codespaces",
+    "Fetch & cache guides pack",
+    "Guides version pinning",
+    "Guides auto-update command",
+    "Generated span builders",
+    "OTLP exporter config",
+    "Grafana dashboards",
+    "Real-time span diff alerts"
+  ],
+  "implemented_features": [],
+  "8020_analysis": {
+    "high_value_commands": [
+      "otel",
+      "agent",
+      "project",
+      "build",
+      "spiff-otel",
+      "deps",
+      "forge"
+    ],
+    "high_value_coverage": 7,
+    "total_high_value": 7,
+    "recommendation": "Focus on completing high-value command features first"
+  }
+}

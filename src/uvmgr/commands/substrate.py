@@ -60,6 +60,7 @@ from uvmgr.ops.substrate_integration import (
     batch_validate_substrate_variants,
     generate_substrate_otel_template
 )
+from uvmgr.ops.substrate_customizer import customize_substrate_project
 
 app = typer.Typer(help="Substrate project integration and validation")
 console = Console()
@@ -69,13 +70,16 @@ console = Console()
 @instrument_command("substrate_create", track_args=True)
 def create_project(
     project_name: str = typer.Argument(..., help="Name of the project to create"),
-    project_type: str = typer.Option("package", "--type", "-t", help="Project type"),
+    project_type: str = typer.Option("package", "--type", "-t", help="Project type (package, cli, web, data)"),
     output_dir: Optional[Path] = typer.Option(None, "--output", "-o", help="Output directory"),
+    with_otel: bool = typer.Option(True, "--with-otel/--no-otel", help="Include OTEL instrumentation"),
+    customize: bool = typer.Option(True, "--customize/--no-customize", help="Apply uvmgr customizations"),
 ):
-    """Create a Substrate-based test project."""
+    """Create a Substrate-based test project with optional OTEL instrumentation."""
     
     console.print(Panel(
-        f"🚀 Creating Substrate Project: [bold]{project_name}[/bold]",
+        f"🚀 Creating Substrate Project: [bold]{project_name}[/bold]\n" +
+        f"Type: {project_type} | OTEL: {'✅' if with_otel else '❌'}",
         title="Substrate Project Generator"
     ))
     
@@ -89,11 +93,35 @@ def create_project(
         
         console.print(f"✅ Project created successfully at: [green]{project_path}[/green]")
         
+        # Apply customizations if requested
+        if customize and with_otel:
+            console.print("\n[bold]Applying uvmgr customizations...[/bold]")
+            with console.status("Customizing project..."):
+                package_name = project_name.replace("-", "_")
+                results = customize_substrate_project(
+                    project_path=project_path,
+                    package_name=package_name,
+                    project_type=project_type,
+                    include_ci=True
+                )
+            
+            if results["success"]:
+                console.print("✅ Customizations applied successfully!")
+                console.print(f"  Steps completed: {', '.join(results['steps_completed'])}")
+            else:
+                console.print("[red]⚠️ Some customizations failed:[/red]")
+                for error in results["errors"]:
+                    console.print(f"  • {error}")
+        
         # Show next steps
         console.print("\n[bold]Next Steps:[/bold]")
         console.print(f"1. cd {project_path}")
-        console.print("2. uv sync")
-        console.print("3. uvmgr substrate validate .")
+        console.print("2. uv sync" + (" --all-extras" if with_otel else ""))
+        if with_otel:
+            console.print("3. uv run poe otel-validate")
+            console.print("4. uv run poe telemetry-test")
+        else:
+            console.print("3. uvmgr substrate validate .")
         
     except Exception as e:
         console.print(f"[red]❌ Failed to create project: {e}[/red]")
@@ -245,6 +273,74 @@ def generate_template(
     console.print("2. Create the _otel.py module in your package")
     console.print("3. Initialize telemetry in your main entry point")
     console.print("4. Use spans to instrument your critical code paths")
+
+
+@app.command("customize")
+@instrument_command("substrate_customize", track_args=True)
+def customize(
+    project_path: Path = typer.Argument(..., help="Path to existing Substrate project"),
+    project_type: str = typer.Option("package", "--type", "-t", help="Project type for customization"),
+    include_ci: bool = typer.Option(True, "--ci/--no-ci", help="Include CI/CD configuration"),
+):
+    """Apply uvmgr customizations to an existing Substrate project."""
+    
+    if not project_path.exists():
+        console.print(f"[red]❌ Project path not found: {project_path}[/red]")
+        raise typer.Exit(1)
+    
+    console.print(Panel(
+        f"🔧 Customizing Substrate Project\n📁 Path: {project_path}",
+        title="Substrate Customization"
+    ))
+    
+    try:
+        with console.status("Applying customizations..."):
+            results = customize_substrate_project(
+                project_path=project_path,
+                project_type=project_type,
+                include_ci=include_ci
+            )
+        
+        if results["success"]:
+            console.print("✅ [green]All customizations applied successfully![/green]")
+            
+            # Show what was added
+            table = Table(title="Customizations Applied")
+            table.add_column("Component", style="cyan")
+            table.add_column("Status", style="green")
+            
+            customization_map = {
+                "otel_dependencies": "OTEL Dependencies",
+                "telemetry_module": "Telemetry Module",
+                "uvmgr_tasks": "uvmgr Poe Tasks",
+                "github_workflow": "GitHub Actions Workflow",
+                "cli_examples": "CLI Examples",
+                "web_instrumentation": "Web Instrumentation"
+            }
+            
+            for step in results["steps_completed"]:
+                table.add_row(customization_map.get(step, step), "✅ Added")
+            
+            console.print(table)
+            
+            # Show next steps
+            console.print("\n[bold]Next Steps:[/bold]")
+            console.print("1. uv sync --all-extras")
+            console.print("2. uv run poe otel-validate")
+            console.print("3. uv run poe telemetry-test")
+            console.print("4. Review _telemetry.py module for configuration options")
+            
+        else:
+            console.print("[red]❌ Some customizations failed[/red]")
+            for error in results["errors"]:
+                console.print(f"  • {error}")
+            
+            if results["steps_completed"]:
+                console.print(f"\n[yellow]Completed steps: {', '.join(results['steps_completed'])}[/yellow]")
+    
+    except Exception as e:
+        console.print(f"[red]❌ Customization failed: {e}[/red]")
+        raise typer.Exit(1)
 
 
 if __name__ == "__main__":

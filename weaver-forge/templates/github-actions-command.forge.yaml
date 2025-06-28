@@ -1,0 +1,115 @@
+name: github_actions_command
+description: Generate GitHub Actions commands with Weaver OTEL instrumentation
+inputs:
+  - command_name: string
+  - command_description: string
+  - parameters: list
+  - api_endpoint: string
+
+outputs:
+  - command_file: string
+  - ops_file: string
+  - runtime_file: string
+
+template: |
+  # Command Layer
+  import typer
+  from uvmgr.core.instrumentation import instrument_command, add_span_attributes
+  from uvmgr.core.semconv import CliAttributes, GitHubAttributes
+  from uvmgr.ops import actions as actions_ops
+
+  app = typer.Typer(help="{{ command_description }}")
+
+  @app.command("{{ command_name }}")
+  @instrument_command("actions_{{ command_name }}", track_args=True)
+  def {{ command_name }}(
+      {% for param in parameters %}
+      {{ param.name }}: {{ param.type }} = typer.Option({{ param.default }}, help="{{ param.help }}"),
+      {% endfor %}
+  ):
+      """{{ command_description }}"""
+      # Add Weaver semantic convention attributes
+      add_span_attributes(
+          **{
+              GitHubAttributes.OWNER: owner,
+              GitHubAttributes.REPOSITORY: repo,
+              {% for param in parameters %}
+              "github.actions.{{ param.name }}": {{ param.name }},
+              {% endfor %}
+          }
+      )
+      
+      result = actions_ops.{{ command_name }}({% for param in parameters %}{{ param.name }}{% if not loop.last %}, {% endif %}{% endfor %})
+      
+      # Add result metrics
+      add_span_attributes(
+          **{
+              "github.actions.result_count": len(result) if isinstance(result, list) else 1,
+          }
+      )
+      
+      return result
+
+  # Ops Layer
+  from uvmgr.core.telemetry import span, metric_counter
+  from uvmgr.runtime import actions as runtime_actions
+
+  def {{ command_name }}({% for param in parameters %}{{ param.name }}: {{ param.type }}{% if not loop.last %}, {% endif %}{% endfor %}):
+      """{{ command_description }} with Weaver instrumentation."""
+      with span("actions.{{ command_name }}", 
+                {% for param in parameters %}
+                {{ param.name }}={{ param.name }}{% if not loop.last %}, {% endif %}
+                {% endfor %}):
+          
+          # Record operation metric
+          metric_counter("github.actions.api.calls")(1, {"operation": "{{ command_name }}"})
+          
+          result = runtime_actions.{{ command_name }}({% for param in parameters %}{{ param.name }}{% if not loop.last %}, {% endif %}{% endfor %})
+          
+          return result
+
+  # Runtime Layer
+  import requests
+  from uvmgr.core.telemetry import span, record_exception, metric_histogram
+  from uvmgr.core.semconv import GitHubAttributes
+
+  def {{ command_name }}({% for param in parameters %}{{ param.name }}{% if not loop.last %}, {% endif %}{% endfor %}):
+      """{{ command_description }} from GitHub API with Weaver instrumentation."""
+      with span("github.api.request",
+                {% for param in parameters %}
+                {{ param.name }}={{ param.name }}{% if not loop.last %}, {% endif %}
+                {% endfor %}
+                endpoint="{{ api_endpoint }}"):
+          
+          url = f"{{ api_endpoint }}"
+          headers = {"Accept": "application/vnd.github+json"}
+          if token:
+              headers["Authorization"] = f"token {token}"
+          
+          try:
+              duration_histogram = metric_histogram("github.api.request.duration", unit="ms")
+              
+              resp = requests.get(url, headers=headers, timeout=10)
+              resp.raise_for_status()
+              
+              duration_histogram(0)  # Placeholder
+              
+              data = resp.json()
+              return data
+              
+          except requests.exceptions.RequestException as e:
+              record_exception(e, attributes={
+                  "github.api.endpoint": url,
+                  {% for param in parameters %}
+                  "github.api.{{ param.name }}": {{ param.name }}{% if not loop.last %}, {% endif %}
+                  {% endfor %}
+              })
+              return []
+          except Exception as e:
+              record_exception(e, attributes={
+                  "github.api.endpoint": url,
+                  {% for param in parameters %}
+                  "github.api.{{ param.name }}": {{ param.name }}{% if not loop.last %}, {% endif %}
+                  {% endfor %}
+              })
+              return [] 

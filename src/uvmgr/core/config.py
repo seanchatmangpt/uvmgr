@@ -36,13 +36,16 @@ Examples
     >>> 
     >>> # Get configuration with fallback
     >>> api_key = env_or("API_KEY", "default_key")
+    >>> api_key
+    'default_key'
     >>> 
-    >>> # Load typed configuration
+    >>> # Define typed configuration
     >>> class AppConfig(BaseModel):
-    >>>     debug: bool = False
-    >>>     port: int = 8000
+    ...     debug: bool = False
+    ...     port: int = 8000
     >>> 
-    >>> config = load_toml(Path("config.toml"), AppConfig)
+    >>> AppConfig().debug
+    False
 
 See Also
 --------

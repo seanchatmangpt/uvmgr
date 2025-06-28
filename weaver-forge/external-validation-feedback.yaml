@@ -1,0 +1,206 @@
+weaver:
+  id: "external-project-validation-loop"
+  version: "1.0.0"
+  description: "Semantic feedback loop for external project 8020 validation"
+  
+  # Strategic Intent Layer
+  intent:
+    goal: "Validate uvmgr integration with external Python projects"
+    success_criteria:
+      - "80% success rate across project types"
+      - "OTEL telemetry captures all integration points"
+      - "SpiffWorkflow BPMN orchestrates validation flow"
+    
+    agents:
+      - name: "ExternalProjectValidator"
+        role: "Create and test external projects"
+        capabilities: ["project_generation", "dependency_installation", "test_execution"]
+      
+      - name: "OTELAnalyzer" 
+        role: "Analyze telemetry for patterns"
+        capabilities: ["span_analysis", "failure_detection", "sla_validation"]
+      
+      - name: "BPMNCoordinator"
+        role: "Orchestrate validation workflow"
+        capabilities: ["workflow_execution", "parallel_processing", "state_management"]
+  
+  # Telemetry Bindings
+  telemetry:
+    traces:
+      - name: "external_project.validate"
+        attributes:
+          project_type: "{{ project.type }}"
+          project_name: "{{ project.name }}"
+          uvmgr_version: "{{ uvmgr.version }}"
+          success_rate: "{{ validation.success_rate }}"
+        
+        child_spans:
+          - name: "project.create"
+            attributes:
+              template_type: "{{ template.type }}"
+              dependencies: "{{ template.dependencies }}"
+          
+          - name: "uvmgr.install"
+            attributes:
+              install_method: "editable"
+              source_path: "{{ uvmgr.source }}"
+              
+          - name: "tests.execute"
+            attributes:
+              test_commands: "{{ tests.commands }}"
+              passed_count: "{{ tests.passed }}"
+              failed_count: "{{ tests.failed }}"
+    
+    metrics:
+      - name: "external_project_success_rate"
+        type: "gauge"
+        unit: "percentage"
+        description: "Success rate for external project validation"
+      
+      - name: "uvmgr_installation_duration"
+        type: "histogram"
+        unit: "seconds"
+        description: "Time to install uvmgr in external projects"
+        
+      - name: "test_execution_time"
+        type: "histogram"
+        unit: "milliseconds"
+        description: "Time to run validation tests"
+  
+  # Forge Change Tracking
+  forge:
+    change_patterns:
+      - pattern: "project_template_update"
+        trigger: "failure_rate > 20%"
+        action: "refine_project_generator"
+        metadata:
+          affected_files: ["test-external-projects.py"]
+          validation_required: true
+      
+      - pattern: "test_command_fix"
+        trigger: "command_not_found_error"
+        action: "update_test_commands"
+        metadata:
+          affected_files: ["auto-install-uvmgr.sh", "test-external-projects.py"]
+          
+      - pattern: "dependency_resolution"
+        trigger: "package_conflict"
+        action: "adjust_dependency_specs"
+        metadata:
+          affected_files: ["pyproject.toml templates"]
+    
+    rollback_triggers:
+      - condition: "success_rate < 50%"
+        action: "revert_to_last_working_state"
+      
+      - condition: "installation_failures > 3"
+        action: "rollback_installer_changes"
+  
+  # Feedback Analysis Rules
+  feedback_rules:
+    - rule: "performance_degradation"
+      condition: |
+        current_metrics.installation_time > baseline_metrics.installation_time * 1.5
+      action:
+        type: "alert"
+        template: "weaver://alerts/performance-degradation"
+        
+    - rule: "pattern_discovery"
+      condition: |
+        failure_patterns.count() > 3 AND failure_patterns.similarity() > 0.8
+      action:
+        type: "template_generation"
+        template: "weaver://generators/failure-fix"
+        
+    - rule: "success_improvement"
+      condition: |
+        current_metrics.success_rate > previous_metrics.success_rate + 0.1
+      action:
+        type: "promote_changes"
+        template: "weaver://promotion/validated-improvement"
+  
+  # Lifecycle Hooks
+  lifecycle:
+    pre_execution:
+      - validate_environment:
+          required: ["uv", "python>=3.11", "git"]
+      - check_otel_collector:
+          endpoint: "http://localhost:4318"
+      - verify_bpmn_workflow:
+          file: "workflows/8020-external-project-validation.bpmn"
+    
+    post_execution:
+      - analyze_spans:
+          query: "service.name='uvmgr-external-test' AND status='ERROR'"
+      - generate_report:
+          format: "markdown"
+          include_telemetry: true
+      - update_weaver_template:
+          based_on: "execution_results"
+    
+    on_failure:
+      - capture_diagnostics:
+          include: ["logs", "spans", "system_state"]
+      - create_issue:
+          template: "github://issues/validation-failure"
+      - notify_agents:
+          channels: ["slack", "email"]
+
+# Self-Evolution Triggers
+evolution:
+  triggers:
+    - name: "template_optimization"
+      condition: "execution_count > 100"
+      action: |
+        1. Analyze all execution spans
+        2. Identify common patterns
+        3. Generate optimized template
+        4. Test in sandbox
+        5. Deploy if improvement > 10%
+    
+    - name: "test_coverage_expansion"
+      condition: "uncovered_scenarios > 0"
+      action: |
+        1. Identify gaps in test coverage
+        2. Generate new test cases
+        3. Add to validation suite
+        4. Update BPMN workflow
+    
+    - name: "failure_remediation"
+      condition: "repeated_failures > threshold"
+      action: |
+        1. Analyze failure patterns
+        2. Generate fix candidates
+        3. Test fixes in isolation
+        4. Apply validated fixes
+        5. Update knowledge base
+
+# Integration Points
+integrations:
+  spiffworkflow:
+    workflow_path: "workflows/8020-external-project-validation.bpmn"
+    task_handlers:
+      setup_environment: "uvmgr.runtime.agent.bpmn_8020_executor:setup_environment"
+      generate_project: "uvmgr.runtime.agent.bpmn_8020_executor:generate_project"
+      validate_project: "uvmgr.runtime.agent.bpmn_8020_executor:validate_project"
+  
+  opentelemetry:
+    exporter: "otlp"
+    endpoint: "http://localhost:4318"
+    service_name: "uvmgr-semantic-loop"
+    resource_attributes:
+      environment: "validation"
+      version: "{{ git.commit_sha }}"
+      
+  git:
+    track_changes: true
+    auto_commit: false
+    branch_pattern: "semantic-loop/{{ timestamp }}"
+    commit_message_template: |
+      feat(semantic-loop): {{ change.description }}
+      
+      Triggered by: {{ trigger.rule }}
+      Success rate: {{ metrics.success_rate }}%
+      
+      OTEL span: {{ span.id }}
+      Weaver template: {{ weaver.id }}

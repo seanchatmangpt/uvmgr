@@ -47,23 +47,22 @@ Advanced Filters
 
 Examples
 --------
-    >>> # Search for function definitions
-    >>> uvmgr search code "def.*async.*" --type function --files "*.py"
-    >>> 
-    >>> # Find dependency usage
-    >>> uvmgr search deps "requests" --show-usage --show-versions
-    >>> 
-    >>> # Search file contents with filters
-    >>> uvmgr search files "TODO" --modified-since "1 week ago" --exclude tests
-    >>> 
-    >>> # Search logs and traces
-    >>> uvmgr search logs "error" --level error --since "24h" --format json
-    >>> 
-    >>> # Semantic search with AI
-    >>> uvmgr search semantic "authentication middleware patterns"
-    >>> 
-    >>> # Multi-faceted search
-    >>> uvmgr search all "database" --include-docs --include-code --include-deps
+    Search for function definitions:
+        uvmgr search code "def.*async.*" --type function --files "*.py"
+    
+    Find dependency usage:
+        uvmgr search deps "requests" --show-usage --show-versions
+    
+    Search file contents with filters:
+        uvmgr search files "TODO" --modified-since "1 week ago" --exclude tests
+    
+        uvmgr search logs "error" --level error --since "24h" --format json
+    
+    Semantic search with AI:
+        uvmgr search semantic "authentication middleware patterns"
+    
+    Multi-faceted search:
+        uvmgr search all "database" --include-docs --include-code --include-deps
 
 Performance Features
 -------------------
@@ -102,13 +101,11 @@ from uvmgr.core.semconv import SearchAttributes, SearchOperations
 from uvmgr.core.shell import colour, dump_json
 from uvmgr.ops import search as search_ops
 
-from .. import main as cli_root
-
-search_app = typer.Typer(help="Advanced search across code, dependencies, files, and logs")
-cli_root.app.add_typer(search_app, name="search")
+# Standard uvmgr command pattern
+app = typer.Typer(help="Advanced search across code, dependencies, files, and logs")
 
 
-@search_app.command("code")
+@app.command("code")
 @instrument_command("search_code", track_args=True)
 def search_code(
     ctx: typer.Context,
@@ -217,7 +214,7 @@ def search_code(
         raise typer.Exit(code=1)
 
 
-@search_app.command("deps")
+@app.command("deps")
 @instrument_command("search_deps", track_args=True)
 def search_deps(
     ctx: typer.Context,
@@ -292,7 +289,7 @@ def search_deps(
         raise typer.Exit(code=1)
 
 
-@search_app.command("files")
+@app.command("files")
 @instrument_command("search_files", track_args=True)
 def search_files(
     ctx: typer.Context,
@@ -371,7 +368,7 @@ def search_files(
         raise typer.Exit(code=1)
 
 
-@search_app.command("logs")
+@app.command("logs")
 @instrument_command("search_logs", track_args=True)
 def search_logs(
     ctx: typer.Context,
@@ -445,7 +442,7 @@ def search_logs(
         raise typer.Exit(code=1)
 
 
-@search_app.command("semantic")
+@app.command("semantic")
 @instrument_command("search_semantic", track_args=True)
 def search_semantic(
     ctx: typer.Context,
@@ -512,7 +509,7 @@ def search_semantic(
         raise typer.Exit(code=1)
 
 
-@search_app.command("all")
+@app.command("all")
 @instrument_command("search_all", track_args=True)
 def search_all(
     ctx: typer.Context,
