@@ -91,6 +91,7 @@ __all__: Final[list[str]] = [
     "workflow",  # Workflow orchestration and automation
     "knowledge", # AI-powered knowledge management
     "performance", # Performance profiling and optimization (80/20 implementation)
+    "aggregate", # Command aggregation with 8020 implementation using Spiff and Weaver
     # "security",  # Security scanning and vulnerability management (80/20 implementation) - TEMPORARILY DISABLED DUE TO IMPORT ISSUE
     # advanced / optional
     "ai",

@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="CommandAggregation" name="Command Aggregation Workflow" isExecutable="true">
+    
+    <bpmn:startEvent id="start" name="Start Aggregation">
+      <bpmn:outgoing>Flow_0</bpmn:outgoing>
+    </bpmn:startEvent>
+    
+
+    <bpmn:task id="Task_deps" name="Execute deps">
+      <bpmn:incoming>Flow_0</bpmn:incoming>
+      <bpmn:outgoing>Flow_1</bpmn:outgoing>
+      <bpmn:script>
+        print(f"Executing {cmd}...")
+        import subprocess
+        import sys
+        
+        # Execute uvmgr command
+        result = subprocess.run([
+            sys.executable, "-m", "uvmgr.commands.deps"
+        ], capture_output=True, text=True, cwd=os.getcwd())
+        
+        # Store result
+        task.workflow.data["deps_result"] = {
+            "success": result.returncode == 0,
+            "output": result.stdout,
+            "error": result.stderr,
+            "returncode": result.returncode
+        }
+        
+        # Track execution
+        if "commands_executed" not in task.workflow.data:
+            task.workflow.data["commands_executed"] = []
+        task.workflow.data["commands_executed"].append("deps")
+        
+        if result.returncode == 0:
+            if "commands_successful" not in task.workflow.data:
+                task.workflow.data["commands_successful"] = []
+            task.workflow.data["commands_successful"].append("deps")
+        else:
+            if "commands_failed" not in task.workflow.data:
+                task.workflow.data["commands_failed"] = []
+            task.workflow.data["commands_failed"].append("deps")
+        
+        print(f"{cmd} completed with return code: {result.returncode}")
+      </bpmn:script>
+    </bpmn:task>
+    <bpmn:task id="Task_test" name="Execute test">
+      <bpmn:incoming>Flow_1</bpmn:incoming>
+      <bpmn:outgoing>Flow_2</bpmn:outgoing>
+      <bpmn:script>
+        print(f"Executing {cmd}...")
+        import subprocess
+        import sys
+        
+        # Execute uvmgr command
+        result = subprocess.run([
+            sys.executable, "-m", "uvmgr.commands.test"
+        ], capture_output=True, text=True, cwd=os.getcwd())
+        
+        # Store result
+        task.workflow.data["test_result"] = {
+            "success": result.returncode == 0,
+            "output": result.stdout,
+            "error": result.stderr,
+            "returncode": result.returncode
+        }
+        
+        # Track execution
+        if "commands_executed" not in task.workflow.data:
+            task.workflow.data["commands_executed"] = []
+        task.workflow.data["commands_executed"].append("test")
+        
+        if result.returncode == 0:
+            if "commands_successful" not in task.workflow.data:
+                task.workflow.data["commands_successful"] = []
+            task.workflow.data["commands_successful"].append("test")
+        else:
+            if "commands_failed" not in task.workflow.data:
+                task.workflow.data["commands_failed"] = []
+            task.workflow.data["commands_failed"].append("test")
+        
+        print(f"{cmd} completed with return code: {result.returncode}")
+      </bpmn:script>
+    </bpmn:task>
+    <bpmn:task id="Task_build" name="Execute build">
+      <bpmn:incoming>Flow_2</bpmn:incoming>
+      <bpmn:outgoing>Flow_3</bpmn:outgoing>
+      <bpmn:script>
+        print(f"Executing {cmd}...")
+        import subprocess
+        import sys
+        
+        # Execute uvmgr command
+        result = subprocess.run([
+            sys.executable, "-m", "uvmgr.commands.build"
+        ], capture_output=True, text=True, cwd=os.getcwd())
+        
+        # Store result
+        task.workflow.data["build_result"] = {
+            "success": result.returncode == 0,
+            "output": result.stdout,
+            "error": result.stderr,
+            "returncode": result.returncode
+        }
+        
+        # Track execution
+        if "commands_executed" not in task.workflow.data:
+            task.workflow.data["commands_executed"] = []
+        task.workflow.data["commands_executed"].append("build")
+        
+        if result.returncode == 0:
+            if "commands_successful" not in task.workflow.data:
+                task.workflow.data["commands_successful"] = []
+            task.workflow.data["commands_successful"].append("build")
+        else:
+            if "commands_failed" not in task.workflow.data:
+                task.workflow.data["commands_failed"] = []
+            task.workflow.data["commands_failed"].append("build")
+        
+        print(f"{cmd} completed with return code: {result.returncode}")
+      </bpmn:script>
+    </bpmn:task>
+    <bpmn:task id="Task_weaver_validation" name="Weaver Semantic Convention Validation">
+      <bpmn:incoming>Flow_weaver</bpmn:incoming>
+      <bpmn:outgoing>Flow_end</bpmn:outgoing>
+      <bpmn:script>
+        print("Validating Weaver semantic conventions...")
+        import subprocess
+        import sys
+        
+        # Run Weaver validation
+        result = subprocess.run([
+            sys.executable, "-m", "uvmgr.commands.weaver", "check"
+        ], capture_output=True, text=True, cwd=os.getcwd())
+        
+        task.workflow.data["weaver_validation"] = {
+            "success": result.returncode == 0,
+            "output": result.stdout,
+            "error": result.stderr
+        }
+        
+        print(f"Weaver validation completed: {'SUCCESS' if result.returncode == 0 else 'FAILED'}")
+      </bpmn:script>
+    </bpmn:task>
+    
+    <bpmn:endEvent id="end" name="Aggregation Complete">
+      <bpmn:incoming>Flow_end</bpmn:incoming>
+    </bpmn:endEvent>
+    
+
+    <bpmn:sequenceFlow id="Flow_0" sourceRef="start" targetRef="Task_deps" />
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="Task_deps" targetRef="Task_test" />
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_test" targetRef="Task_build" />
+    <bpmn:sequenceFlow id="Flow_weaver" sourceRef="Task_build" targetRef="Task_weaver_validation" />
+    <bpmn:sequenceFlow id="Flow_end" sourceRef="Task_weaver_validation" targetRef="end" />
+    
+  </bpmn:process>
+</bpmn:definitions>
