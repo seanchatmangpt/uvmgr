@@ -36,30 +36,30 @@ def ensure_dirs() -> None:
     """Ensure uvmgr directories exist with telemetry tracking."""
     with span("paths.ensure_dirs"):
         start_time = time.time()
-        
+
         add_span_event("paths.ensure_dirs.starting", {
             "config_dir": str(CONFIG_DIR),
             "cache_dir": str(CACHE_DIR),
         })
-        
+
         # Create directories
         config_existed = CONFIG_DIR.exists()
         cache_existed = CACHE_DIR.exists()
-        
+
         CONFIG_DIR.mkdir(parents=True, exist_ok=True)
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
-        
+
         duration = time.time() - start_time
-        
+
         # Record metrics
         metric_counter("paths.ensure_dirs.calls")(1)
         metric_histogram("paths.ensure_dirs.duration")(duration)
-        
+
         if not config_existed:
             metric_counter("paths.config_dir.created")(1)
         if not cache_existed:
             metric_counter("paths.cache_dir.created")(1)
-        
+
         add_span_attributes(**{
             "paths.config_dir": str(CONFIG_DIR),
             "paths.cache_dir": str(CACHE_DIR),
@@ -67,7 +67,7 @@ def ensure_dirs() -> None:
             "paths.cache_existed": cache_existed,
             "paths.duration": duration,
         })
-        
+
         add_span_event("paths.ensure_dirs.completed", {
             "config_created": not config_existed,
             "cache_created": not cache_existed,
@@ -84,7 +84,7 @@ def project_root() -> Path:
     # Add minimal telemetry for cached function
     metric_counter("paths.project_root.calls")(1)
     result = Path.cwd()
-    
+
     # Record path info (only on cache miss)
     try:
         add_span_event("paths.project_root.resolved", {
@@ -94,16 +94,16 @@ def project_root() -> Path:
     except:
         # Avoid breaking on telemetry issues
         pass
-    
+
     return result
 
 
-@cache  
+@cache
 def venv_path() -> Path:
     """Get virtual environment path with caching and telemetry."""
     metric_counter("paths.venv_path.calls")(1)
     result = (project_root() / VENV_DIR).resolve()
-    
+
     try:
         add_span_event("paths.venv_path.resolved", {
             "path": str(result),
@@ -112,7 +112,7 @@ def venv_path() -> Path:
         })
     except:
         pass
-    
+
     return result
 
 
@@ -122,23 +122,23 @@ def bin_dir() -> Path:
         is_windows = sys.platform.startswith("win")
         subdir = "Scripts" if is_windows else "bin"
         result = venv_path() / subdir
-        
+
         metric_counter("paths.bin_dir.calls")(1)
-        
+
         add_span_attributes(**{
             "paths.platform": sys.platform,
             "paths.is_windows": is_windows,
             "paths.bin_subdir": subdir,
             "paths.bin_path": str(result),
         })
-        
+
         add_span_event("paths.bin_dir.resolved", {
             "platform": sys.platform,
             "subdir": subdir,
             "path": str(result),
             "exists": result.exists(),
         })
-        
+
         return result
 
 
@@ -146,26 +146,26 @@ def bin_path(cmd: str) -> Path:
     """Get executable path in bin directory with telemetry."""
     with span("paths.bin_path", command=cmd):
         start_time = time.time()
-        
+
         result = bin_dir() / cmd
         duration = time.time() - start_time
-        
+
         # Record metrics
         metric_counter("paths.bin_path.calls")(1)
         metric_histogram("paths.bin_path.duration")(duration)
-        
+
         add_span_attributes(**{
             "paths.command": cmd,
             "paths.executable_path": str(result),
             "paths.exists": result.exists(),
             "paths.duration": duration,
         })
-        
+
         add_span_event("paths.bin_path.resolved", {
             "command": cmd,
             "path": str(result),
             "exists": result.exists(),
             "duration": duration,
         })
-        
+
         return result

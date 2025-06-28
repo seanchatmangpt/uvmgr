@@ -28,7 +28,7 @@ import pathlib
 
 import typer
 
-from uvmgr.core.instrumentation import instrument_command, add_span_attributes, add_span_event
+from uvmgr.core.instrumentation import add_span_attributes, add_span_event, instrument_command
 from uvmgr.core.semconv import ProcessAttributes
 from uvmgr.ops import exec as exec_ops
 

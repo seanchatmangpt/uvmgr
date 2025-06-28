@@ -5,22 +5,22 @@ Returns JSON-safe data for the CLI layer.
 
 from __future__ import annotations
 
-from pathlib import Path
 import time
+from pathlib import Path
 
 from uvmgr.core.fs import safe_write
+from uvmgr.core.instrumentation import add_span_attributes, add_span_event
+from uvmgr.core.metrics import OperationResult, ai_metrics
+from uvmgr.core.semconv import AIAttributes
 from uvmgr.core.shell import timed
 from uvmgr.core.telemetry import span
-from uvmgr.core.metrics import ai_metrics, OperationResult
-from uvmgr.core.semconv import AIAttributes
-from uvmgr.core.instrumentation import add_span_attributes, add_span_event
 from uvmgr.runtime import ai as _rt
 
 
 @timed
 def ask(model: str, prompt: str) -> str:
     start_time = time.time()
-    
+
     with span("ops.ai.ask", model=model):
         add_span_attributes(**{
             AIAttributes.MODEL: model,
@@ -33,10 +33,10 @@ def ask(model: str, prompt: str) -> str:
             "model": model,
             "prompt_preview": prompt[:100] + "..." if len(prompt) > 100 else prompt
         })
-        
+
         try:
             response = _rt.ask(model, prompt)
-            
+
             # Record successful AI operation metrics
             duration = time.time() - start_time
             result = OperationResult(success=True, duration=duration, metadata={
@@ -54,7 +54,7 @@ def ask(model: str, prompt: str) -> str:
                 cost=0.0,
                 result=result
             )
-            
+
             add_span_attributes(**{
                 "ai.response_length": len(response),
                 "ai.response_words": len(response.split()),
@@ -63,9 +63,9 @@ def ask(model: str, prompt: str) -> str:
                 "response_length": len(response),
                 "success": True
             })
-            
+
             return response
-            
+
         except Exception as e:
             # Record failed AI operation metrics
             duration = time.time() - start_time
@@ -81,7 +81,7 @@ def ask(model: str, prompt: str) -> str:
                 cost=0.0,
                 result=result
             )
-            
+
             add_span_event("ai.ask.failed", {"error": str(e), "model": model})
             raise
 
@@ -89,7 +89,7 @@ def ask(model: str, prompt: str) -> str:
 @timed
 def plan(model: str, topic: str, outfile: Path | None = None) -> str:
     start_time = time.time()
-    
+
     with span("ops.ai.plan", model=model, topic=topic):
         add_span_attributes(**{
             AIAttributes.MODEL: model,
@@ -103,15 +103,15 @@ def plan(model: str, topic: str, outfile: Path | None = None) -> str:
             "topic": topic,
             "output_file": str(outfile) if outfile else None
         })
-        
+
         try:
             steps = _rt.outline(model, topic)
             md = "# " + topic + "\n\n" + "\n".join(f"- {s}" for s in steps) + "\n"
-            
+
             if outfile:
                 safe_write(outfile, md)
                 add_span_event("ai.plan.file_saved", {"path": str(outfile), "size": len(md)})
-            
+
             # Record successful AI operation metrics
             duration = time.time() - start_time
             result = OperationResult(success=True, duration=duration, metadata={
@@ -128,7 +128,7 @@ def plan(model: str, topic: str, outfile: Path | None = None) -> str:
                 cost=0.0,
                 result=result
             )
-            
+
             add_span_attributes(**{
                 "ai.steps_generated": len(steps),
                 "ai.plan_length": len(md),
@@ -138,9 +138,9 @@ def plan(model: str, topic: str, outfile: Path | None = None) -> str:
                 "plan_length": len(md),
                 "success": True
             })
-            
+
             return md
-            
+
         except Exception as e:
             # Record failed AI operation metrics
             duration = time.time() - start_time
@@ -156,7 +156,7 @@ def plan(model: str, topic: str, outfile: Path | None = None) -> str:
                 cost=0.0,
                 result=result
             )
-            
+
             add_span_event("ai.plan.failed", {"error": str(e), "model": model})
             raise
 
@@ -178,18 +178,18 @@ def list_models() -> list[str]:
             AIAttributes.OPERATION: "list_models",
         })
         add_span_event("ai.list_models.started")
-        
+
         try:
             models = _rt.list_ollama_models()
-            
+
             add_span_attributes(**{"ai.models_count": len(models)})
             add_span_event("ai.list_models.completed", {
                 "models_count": len(models),
                 "models": models[:5] if models else []  # First 5 models
             })
-            
+
             return models
-            
+
         except Exception as e:
             add_span_event("ai.list_models.failed", {"error": str(e)})
             raise

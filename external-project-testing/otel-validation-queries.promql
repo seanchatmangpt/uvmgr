@@ -1,0 +1,87 @@
+# uvmgr External Testing OTEL Validation Queries
+# TRUST ONLY OTEL TRACES - NO HARDCODED VALUES
+
+# Claim Verification Rate
+sum(rate(uvmgr_claims_verified_total{status="verified"}[5m])) / 
+sum(rate(uvmgr_claims_verified_total[5m])) * 100
+
+# Command Performance 95th Percentile
+histogram_quantile(0.95, 
+    sum(rate(uvmgr_command_duration_seconds_bucket[5m])) by (le, command)
+)
+
+# Test Success Rate
+sum(rate(test_executions_total{status="success"}[5m])) /
+sum(rate(test_executions_total[5m])) * 100
+
+# Artifacts Found Ratio
+sum(rate(test_artifacts_validated_total{status="found"}[5m])) /
+sum(rate(test_artifacts_validated_total[5m]))
+
+# Performance Threshold Violations
+count(uvmgr_performance_threshold_ratio > 1.0)
+
+# Otel Spans By Service
+sum by (service_name) (otel_spans_total)
+
+# Recent Test Failures
+increase(test_executions_total{status!="success"}[1h])
+
+# Auto-Install Performance
+histogram_quantile(0.95, 
+    sum(rate(uvmgr_command_duration_seconds_bucket{command="auto-install-uvmgr.sh"}[5m])) by (le)
+)
+
+# Substrate Integration Success Rate
+sum(rate(uvmgr_claims_verified_total{claim="substrate_integration", status="verified"}[1h])) /
+sum(rate(uvmgr_claims_verified_total{claim="substrate_integration"}[1h])) * 100
+
+# Lifecycle Phase Coverage
+count by (phase) (
+    increase(test_executions_total{test_name="lifecycle_testing"}[1h])
+)
+
+# OTEL Collector Health
+up{job="otel-collector"}
+
+# Span Export Rate
+sum(rate(otel_exporter_sent_spans_total[5m]))
+
+# Performance Threshold Compliance by Command
+avg by (command) (uvmgr_performance_threshold_ratio < 1.0)
+
+# Test Artifact Validation Success
+sum(rate(test_artifacts_validated_total{status="found"}[5m])) by (test, artifact)
+
+# Claim Verification Duration Trends
+histogram_quantile(0.50, 
+    sum(rate(uvmgr_command_duration_seconds_bucket{command=~".*verification.*"}[5m])) by (le)
+)
+
+# External Project Test Coverage
+count by (project_type) (
+    increase(test_executions_total{test_name="lifecycle_testing"}[1h])
+)
+
+# uvmgr Command Startup Time (Critical Performance Metric)
+histogram_quantile(0.95, 
+    sum(rate(uvmgr_command_duration_seconds_bucket{command="uvmgr"}[5m])) by (le)
+) < 0.5  # Must be under 500ms
+
+# Real-time Claim Verification Status
+sum by (claim) (uvmgr_claims_verified_total{status="verified"}) /
+sum by (claim) (uvmgr_claims_verified_total) * 100
+
+# Test Infrastructure Health
+sum(up{job=~"uvmgr.*|otel.*|prometheus|grafana"}) / 
+count(up{job=~"uvmgr.*|otel.*|prometheus|grafana"}) * 100
+
+# Performance Regression Detection
+(
+    avg_over_time(uvmgr_command_duration_seconds{command="uvmgr"}[1h]) -
+    avg_over_time(uvmgr_command_duration_seconds{command="uvmgr"}[1h] offset 1d)
+) / avg_over_time(uvmgr_command_duration_seconds{command="uvmgr"}[1h] offset 1d) * 100 > 20
+
+# End-to-End Test Success Rate
+sum(rate(test_executions_total{status="success", test_name=~".*lifecycle.*|.*substrate.*|.*auto_install.*"}[5m])) /
+sum(rate(test_executions_total{test_name=~".*lifecycle.*|.*substrate.*|.*auto_install.*"}[5m])) * 100

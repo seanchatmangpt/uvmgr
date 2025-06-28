@@ -32,22 +32,22 @@ def is_venv() -> bool:
     """Check if running in virtual environment with telemetry."""
     with span("venv.is_venv"):
         result = sys.prefix != sys.base_prefix
-        
+
         metric_counter("venv.is_venv.calls")(1)
         metric_counter("venv.is_venv.in_venv" if result else "venv.is_venv.not_in_venv")(1)
-        
+
         add_span_attributes(**{
             "venv.in_venv": result,
             "venv.prefix": sys.prefix,
             "venv.base_prefix": sys.base_prefix,
         })
-        
+
         add_span_event("venv.is_venv.checked", {
             "in_venv": result,
             "prefix": sys.prefix,
             "base_prefix": sys.base_prefix,
         })
-        
+
         return result
 
 
@@ -71,14 +71,14 @@ def prepend_env_path(cmd: str) -> str:
     """Prepend environment PATH with telemetry tracking."""
     with span("venv.prepend_env_path", command=cmd):
         result = f"env PATH={bin_dir()}:{os.getenv('PATH', '')} {cmd}"
-        
+
         metric_counter("venv.prepend_env_path.calls")(1)
-        
+
         add_span_event("venv.prepend_env_path.completed", {
             "original_cmd": cmd,
             "modified_cmd": result,
         })
-        
+
         return result
 
 
@@ -87,12 +87,12 @@ def adapt_cmd(cmd: str | Iterable[str]) -> str:
     with span("venv.adapt_cmd", command=str(cmd)):
         start_time = time.time()
         original_cmd = str(cmd)
-        
+
         if isinstance(cmd, (list, tuple)):
             cmd = " ".join(cmd)
         toks = shlex.split(cmd)
         head = toks[0]
-        
+
         # Determine adaptation strategy
         adaptation_type = "none"
         if head in {"uv", "uvx", "uvmgr"}:
@@ -110,14 +110,14 @@ def adapt_cmd(cmd: str | Iterable[str]) -> str:
         else:
             result = cmd
             adaptation_type = "no_adaptation"
-        
+
         duration = time.time() - start_time
-        
+
         # Record metrics
         metric_counter("venv.adapt_cmd.calls")(1)
         metric_counter(f"venv.adapt_cmd.{adaptation_type}")(1)
         metric_histogram("venv.adapt_cmd.duration")(duration)
-        
+
         add_span_attributes(**{
             "venv.original_cmd": original_cmd,
             "venv.adapted_cmd": result,
@@ -126,7 +126,7 @@ def adapt_cmd(cmd: str | Iterable[str]) -> str:
             "venv.token_count": len(toks),
             "venv.duration": duration,
         })
-        
+
         add_span_event("venv.adapt_cmd.completed", {
             "original": original_cmd,
             "adapted": result,
@@ -134,5 +134,5 @@ def adapt_cmd(cmd: str | Iterable[str]) -> str:
             "head": head,
             "duration": duration,
         })
-        
+
         return result

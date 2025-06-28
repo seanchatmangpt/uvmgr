@@ -2,24 +2,51 @@
 uvmgr.runtime
 =============
 
-The *side-effect* layer.  Anything here is allowed to:
+The runtime layer – subprocess execution and side effects.
 
-* spawn subprocesses
-* touch the network or filesystem directly
-* depend on heavy or optional third-party packages
+This package contains the runtime implementation layer of uvmgr, responsible
+for executing subprocesses, managing file system operations, and handling
+other side effects. It provides a clean interface between the orchestration
+layer and the actual system operations.
 
-Design goals for this ``__init__``:
+Package Features
+---------------
+• **Subprocess Execution**: Safe and instrumented subprocess calls
+• **File System Operations**: File and directory management utilities
+• **Environment Management**: Virtual environment and path handling
+• **Process Control**: Process monitoring and control utilities
+• **Error Handling**: Comprehensive error handling and recovery
+• **Telemetry Integration**: Built-in OpenTelemetry instrumentation
 
-1. **Document** the available runtime helpers in **__all__**.
-2. Provide a **lazy importer** via ``__getattr__`` so
-   `from uvmgr.runtime import uv, ai` works without importing *every* helper at
-   start-up (keeps `uvmgr` CLI snappy and avoids ImportErrors if an optional
-   dep like *spiffworkflow* isn’t installed).
-3. Make adding new runtime helpers as simple as dropping a file and listing
-   its name in **__all__**.
+Available Modules
+----------------
+- uv : uv package manager operations
+- subprocess : General subprocess execution
+- filesystem : File and directory operations
+- environment : Environment and path management
+- process : Process monitoring and control
+- network : Network operations and HTTP requests
+- database : Database operations (if applicable)
 
-Whenever you create a new file under ``src/uvmgr/runtime/``, just add its
-basename (without ``.py``) to **__all__** below.
+Architecture
+-----------
+The runtime layer is designed to:
+- Handle all side effects and external interactions
+- Provide consistent error handling and telemetry
+- Abstract platform-specific operations
+- Enable easy testing through mocking
+
+Example
+-------
+    >>> from uvmgr.runtime.uv import call
+    >>> result = call("add requests", capture=True)
+    >>> print(result["success"])  # True/False
+    >>> print(result["output"])   # Command output
+
+See Also
+--------
+- :mod:`uvmgr.ops` : Orchestration layer
+- :mod:`uvmgr.core.telemetry` : Telemetry utilities
 """
 
 from __future__ import annotations
@@ -55,6 +82,39 @@ def __getattr__(name: str) -> ModuleType:
     """
     Import the requested runtime helper on first access, cache it in
     ``sys.modules``, then return it.
+    
+    This function implements lazy loading for runtime modules, ensuring that
+    only the modules actually used are imported. This keeps the CLI startup
+    fast and avoids ImportErrors for optional dependencies.
+    
+    Parameters
+    ----------
+    name : str
+        The name of the runtime module to import. Must be listed in __all__.
+    
+    Returns
+    -------
+    ModuleType
+        The imported runtime module.
+    
+    Raises
+    ------
+    AttributeError
+        If the requested module name is not in __all__.
+    ImportError
+        If the module cannot be imported (e.g., missing optional dependencies).
+    
+    Notes
+    -----
+    The function:
+    - Checks if the module name is in __all__
+    - Imports the module dynamically
+    - Caches the module in sys.modules for subsequent access
+    - Returns the imported module
+    
+    This enables syntax like:
+    >>> from uvmgr.runtime import uv, ai
+    >>> # Only uv and ai modules are imported, not all runtime modules
     """
     if name not in __all__:
         raise AttributeError(name)

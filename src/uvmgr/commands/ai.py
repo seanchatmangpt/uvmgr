@@ -8,7 +8,7 @@ import pathlib
 
 import typer
 
-from uvmgr.core.instrumentation import instrument_command, add_span_attributes, add_span_event
+from uvmgr.core.instrumentation import add_span_attributes, add_span_event, instrument_command
 from uvmgr.core.semconv import AIAttributes
 from uvmgr.core.shell import colour, dump_json, markdown
 from uvmgr.ops import ai as ai_ops

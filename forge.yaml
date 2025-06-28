@@ -1,0 +1,14 @@
+generation:
+  output_dir: src
+  python:
+    semconv_file: src/uvmgr/core/semconv.py
+name: uvmgr
+registry:
+  path: /Users/sac/dev/uvmgr/weaver-forge/registry
+  weaver_path: /Users/sac/dev/uvmgr/tools/weaver
+template: python
+workflows:
+  default:
+    generate: true
+    test: true
+    validate: true

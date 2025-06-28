@@ -11,7 +11,7 @@ from pathlib import Path
 
 import typer
 
-from uvmgr.core.instrumentation import instrument_command, add_span_attributes, add_span_event
+from uvmgr.core.instrumentation import add_span_attributes, add_span_event, instrument_command
 from uvmgr.core.semconv import WorkflowAttributes, WorkflowOperations
 from uvmgr.ops import agent as agent_ops
 
@@ -43,7 +43,7 @@ def run_bpmn(
             "workflow.file_size": file.stat().st_size,
         }
     )
-    
+
     # Validate BPMN file
     try:
         content = file.read_text()
@@ -54,10 +54,10 @@ def run_bpmn(
             "error": str(e),
             "file": str(file)
         })
-    
+
     add_span_event("agent.workflow.started", {
         "workflow.file": str(file),
         "workflow.name": file.stem
     })
-    
+
     agent_ops.run(file)

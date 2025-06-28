@@ -1,11 +1,38 @@
 """
 uvmgr.core.instrumentation
 --------------------------
-OpenTelemetry instrumentation decorators for CLI commands.
+OpenTelemetry instrumentation decorators and utilities for CLI commands.
 
-This module provides decorators to automatically instrument CLI commands
-with OpenTelemetry spans and metrics, following semantic conventions
-defined in weaver-forge/semantic-conventions.yaml.
+This module provides decorators and utilities to automatically instrument CLI commands
+with OpenTelemetry spans and metrics, following semantic conventions defined in
+weaver-forge/semantic-conventions.yaml.
+
+The module includes:
+
+• **Command Instrumentation**: `@instrument_command` decorator for CLI commands
+• **Subcommand Instrumentation**: `@instrument_subcommand` decorator for subcommands
+• **Attribute Management**: Functions to add attributes and events to spans
+• **Graceful Degradation**: No-op implementations when OpenTelemetry is not available
+• **Semantic Conventions**: Integration with uvmgr-specific semantic conventions
+
+All decorators and functions are designed to work seamlessly whether OpenTelemetry
+is available or not, ensuring the application continues to function normally.
+
+Example
+-------
+    @app.command()
+    @instrument_command("my_command")
+    def my_command(name: str, verbose: bool = False):
+        add_span_attributes(custom_name=name, verbose_mode=verbose)
+        
+        with span("my_operation", operation_type="custom"):
+            result = perform_operation(name)
+            return result
+
+See Also
+--------
+- :mod:`uvmgr.core.telemetry` : Core telemetry functions
+- :mod:`uvmgr.core.semconv` : Semantic conventions
 """
 
 from __future__ import annotations
@@ -65,14 +92,48 @@ def instrument_command(
     """
     Decorator to instrument CLI commands with OpenTelemetry.
     
-    Args:
-        name: Override name for the command (defaults to function name)
-        command_type: Type of command (cli, cli.subcommand, etc.)
-        track_args: Whether to track command arguments
-        
+    This decorator automatically creates a span for the decorated function and
+    adds semantic convention attributes for CLI commands. It extracts meaningful
+    information from function arguments and Typer context to provide rich
+    telemetry data.
+    
+    Parameters
+    ----------
+    name : str, optional
+        Override name for the command. If not provided, uses the function name.
+        This name will be used in the span name and CLI attributes.
+    command_type : str, optional
+        Type of command for span naming. Common values are "cli", "cli.subcommand".
+        Default is "cli".
+    track_args : bool, optional
+        Whether to track command arguments in telemetry. When True, extracts
+        argument information from the function signature and Typer context.
+        Default is True.
+    
     Returns
     -------
-        Decorated function with OTEL instrumentation
+    Callable[[Callable], Callable]
+        A decorator function that wraps the original function with telemetry.
+    
+    Notes
+    -----
+    The decorator automatically adds the following attributes to the span:
+    - cli.command: The command name
+    - cli.module: The module containing the command
+    - code.function: The function name
+    - code.namespace: The module namespace
+    
+    If track_args is True and the first argument is a Typer Context, it also adds:
+    - cli.subcommand: The invoked subcommand (if any)
+    - cli.args.count: Number of positional arguments
+    
+    Example
+    -------
+    >>> @app.command()
+    ... @instrument_command("add_dependency")
+    ... def add_dependency(ctx: typer.Context, package: str, dev: bool = False):
+    ...     # Function body - automatically instrumented
+    ...     pass
     """
     def decorator(func: Callable) -> Callable:
         @wraps(func)

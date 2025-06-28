@@ -1,12 +1,47 @@
 """
 uvmgr.core.telemetry
 --------------------
-Logging bootstrap + (optional) OpenTelemetry exporter.
+OpenTelemetry integration and telemetry utilities for uvmgr.
 
-*  Always exports ``setup_logging`` – used by `uvmgr.cli`.
-*  Exports context-manager ``span(name, **attrs)`` that becomes a real OTEL
-   span **iff** `opentelemetry-sdk` is installed *and* the environment sets
-   `OTEL_EXPORTER_OTLP_ENDPOINT`.  Otherwise it degrades to a no-op.
+This module provides comprehensive telemetry capabilities for the uvmgr application:
+
+• **Logging Setup**: Always exports ``setup_logging`` – used by `uvmgr.cli`
+• **Span Management**: Context-manager ``span(name, **attrs)`` for distributed tracing
+• **Metrics Collection**: Functions for counters, histograms, and gauges
+• **Exception Recording**: Utilities for recording exceptions with semantic conventions
+• **Graceful Degradation**: No-op implementations when OpenTelemetry is not available
+
+The module automatically initializes OpenTelemetry when the environment variable
+`OTEL_EXPORTER_OTLP_ENDPOINT` is set and the `opentelemetry-sdk` package is installed.
+Otherwise, it provides no-op implementations that allow the application to run normally.
+
+Example
+-------
+    # Basic span usage
+    with span("my_operation", operation_type="custom"):
+        result = perform_operation()
+    
+    # Metrics collection
+    counter = metric_counter("my.operation.calls")
+    counter(1, {"operation": "add"})
+    
+    # Exception recording
+    try:
+        risky_operation()
+    except Exception as e:
+        record_exception(e, attributes={"operation": "risky"})
+        raise
+
+Environment Variables
+--------------------
+- OTEL_EXPORTER_OTLP_ENDPOINT : OpenTelemetry collector endpoint
+- OTEL_SERVICE_NAME : Service name for telemetry (default: "uvmgr")
+- OTEL_SERVICE_VERSION : Service version for telemetry
+
+See Also
+--------
+- :mod:`uvmgr.core.instrumentation` : Command instrumentation decorators
+- :mod:`uvmgr.core.semconv` : Semantic conventions
 """
 
 from __future__ import annotations
@@ -24,8 +59,32 @@ from typing import Any
 # --------------------------------------------------------------------------- #
 def setup_logging(level: str = "INFO") -> None:
     """
-    Initialise root logging once, idempotently.  Called by `uvmgr.cli` on
-    start-up.
+    Initialize root logging configuration once, idempotently.
+    
+    This function sets up the basic logging configuration for the uvmgr application.
+    It's called by `uvmgr.cli` on startup and ensures consistent logging across
+    all modules. The function is idempotent - calling it multiple times has no
+    additional effect.
+    
+    Parameters
+    ----------
+    level : str, optional
+        Logging level to use. Must be a valid logging level name
+        (DEBUG, INFO, WARNING, ERROR, CRITICAL). Default is "INFO".
+    
+    Notes
+    -----
+    The logging configuration includes:
+    - Timestamp format: HH:MM:SS
+    - Level name with 8-character padding
+    - Logger name
+    - Message content
+    
+    Example
+    -------
+    >>> setup_logging("DEBUG")
+    >>> logging.getLogger("uvmgr").info("Application started")
+    14:30:25 INFO     uvmgr │ Application started
     """
     if logging.getLogger().handlers:
         return  # already configured
@@ -42,13 +101,13 @@ def setup_logging(level: str = "INFO") -> None:
 # --------------------------------------------------------------------------- #
 try:
     from opentelemetry import metrics, trace
-    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
     from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+    from opentelemetry.sdk.metrics import MeterProvider
+    from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
     from opentelemetry.sdk.resources import Resource
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
-    from opentelemetry.sdk.metrics import MeterProvider
-    from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 
     # Only initialize if OTEL endpoint is configured
     _OTEL_ENDPOINT = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
@@ -62,13 +121,13 @@ try:
             "os.type": platform.system().lower(),
         }
     )
-    
+
     # Setup Traces
     _TRACE_PROVIDER = TracerProvider(resource=_RESOURCE)
     _TRACE_PROVIDER.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=_OTEL_ENDPOINT)))
     trace.set_tracer_provider(_TRACE_PROVIDER)
     _TRACER = trace.get_tracer("uvmgr")
-    
+
     # Setup Metrics
     _METRIC_READER = PeriodicExportingMetricReader(
         OTLPMetricExporter(endpoint=_OTEL_ENDPOINT),
@@ -90,16 +149,112 @@ try:
         return _METER.create_counter(name).add
 
     def metric_histogram(name: str, unit: str = "s") -> Callable[[float], None]:
-        """Create a histogram metric for recording distributions."""
+        """
+        Create a histogram metric for recording distributions.
+        
+        Histograms are used to track the distribution of values, such as
+        operation durations, request sizes, or other measurable quantities.
+        
+        Parameters
+        ----------
+        name : str
+            The name of the histogram metric. Should follow OpenTelemetry
+            naming conventions (e.g., "operation.duration").
+        unit : str, optional
+            The unit of measurement for the histogram values. Common units
+            include "s" (seconds), "ms" (milliseconds), "bytes", "count".
+            Default is "s".
+        
+        Returns
+        -------
+        Callable[[float], None]
+            A function that records values in the histogram. The function
+            accepts a float value and optional attributes as keyword arguments.
+        
+        Example
+        -------
+        >>> duration_histogram = metric_histogram("api.request.duration", unit="ms")
+        >>> duration_histogram(150.5, {"endpoint": "/users", "method": "GET"})
+        """
         return _METER.create_histogram(name, unit=unit).record
 
     def metric_gauge(name: str) -> Callable[[float], None]:
-        """Create a gauge metric for recording current values."""
+        """
+        Create a gauge metric for recording current values.
+        
+        Gauges represent a single numerical value that can arbitrarily go up
+        and down. They are typically used for measured values like temperatures
+        or current memory usage, or "counts" that can go up and down, like
+        the number of concurrent requests.
+        
+        Parameters
+        ----------
+        name : str
+            The name of the gauge metric. Should follow OpenTelemetry
+            naming conventions (e.g., "system.memory.usage").
+        
+        Returns
+        -------
+        Callable[[float], None]
+            A function that updates the gauge value. The function accepts
+            a float value and optional attributes as keyword arguments.
+            Positive values increase the gauge, negative values decrease it.
+        
+        Notes
+        -----
+        OpenTelemetry uses UpDownCounter for gauge-like behavior, which
+        allows both positive and negative increments.
+        
+        Example
+        -------
+        >>> memory_gauge = metric_gauge("system.memory.usage")
+        >>> memory_gauge(1024.5, {"type": "heap"})  # Set to 1024.5
+        >>> memory_gauge(-100.0, {"type": "heap"})  # Decrease by 100
+        """
         # Note: OTEL uses UpDownCounter for gauge-like behavior
         return _METER.create_up_down_counter(name).add
 
     def record_exception(e: Exception, escaped: bool = True, attributes: dict[str, Any] | None = None):
-        """Record an exception in the current span with semantic conventions."""
+        """
+        Record an exception in the current span with semantic conventions.
+        
+        This function records exception information in the current OpenTelemetry span,
+        including the exception type, message, and stack trace. It also sets the
+        span status to ERROR and adds semantic convention attributes for common
+        exception types.
+        
+        Parameters
+        ----------
+        e : Exception
+            The exception to record. The exception type, message, and stack trace
+            will be extracted and recorded.
+        escaped : bool, optional
+            Whether the exception escaped the current span. True if the exception
+            was not caught and handled within the span. Default is True.
+        attributes : dict[str, Any], optional
+            Additional attributes to record with the exception. These will be
+            merged with the standard semantic convention attributes.
+        
+        Notes
+        -----
+        The function automatically adds the following semantic convention attributes:
+        - exception.type: The exception class name
+        - exception.message: The exception message
+        - exception.escaped: Whether the exception escaped
+        - exception.stacktrace: The exception stack trace
+        
+        For specific exception types, additional attributes are added:
+        - subprocess.CalledProcessError: process.exit_code, process.command
+        - FileNotFoundError/IOError: file.path
+        
+        Example
+        -------
+        >>> try:
+        ...     risky_operation()
+        ... except ValueError as e:
+        ...     record_exception(e, attributes={"operation": "validation"})
+        ...     raise
+        """
         current_span = trace.get_current_span()
         if current_span.is_recording():
             # Record the exception
@@ -132,11 +287,43 @@ try:
             current_span.set_status(Status(StatusCode.ERROR, str(e)))
 
     def get_current_span():
-        """Get the current active span."""
+        """
+        Get the current active span from the OpenTelemetry context.
+        
+        Returns
+        -------
+        opentelemetry.trace.Span
+            The current active span. If no span is active, returns a no-op span
+            that can be safely used for all span operations.
+        
+        Example
+        -------
+        >>> current_span = get_current_span()
+        >>> if current_span.is_recording():
+        ...     current_span.set_attribute("custom.attr", "value")
+        """
         return trace.get_current_span()
 
     def set_span_status(status_code, description: str = ""):
-        """Set the status of the current span."""
+        """
+        Set the status of the current span.
+        
+        Parameters
+        ----------
+        status_code : str
+            The status code to set. Valid values are:
+            - "OK": Operation completed successfully
+            - "ERROR": Operation failed with an error
+            - "UNSET": Status is not set (default)
+        description : str, optional
+            A description of the status, particularly useful for ERROR status.
+            Default is an empty string.
+        
+        Example
+        -------
+        >>> set_span_status("OK")
+        >>> set_span_status("ERROR", "Failed to connect to database")
+        """
         from opentelemetry.trace import Status, StatusCode
         current_span = trace.get_current_span()
         if current_span.is_recording():

@@ -14,9 +14,9 @@ from typing import TypeVar
 
 from pydantic import BaseModel
 
-from .paths import CONFIG_DIR
-from .telemetry import span, metric_counter, metric_histogram
 from .instrumentation import add_span_attributes, add_span_event
+from .paths import CONFIG_DIR
+from .telemetry import metric_counter, metric_histogram, span
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -27,11 +27,11 @@ def env_or(key: str, default: str | None = None) -> str | None:
     """Get configuration value from environment or TOML file with telemetry."""
     with span("config.env_or", key=key, has_default=default is not None):
         add_span_event("config.lookup.starting", {"key": key, "default": default})
-        
+
         start_time = time.time()
         source = None
         value = None
-        
+
         # Check environment first
         if key in os.environ:
             value = os.environ[key]
@@ -58,19 +58,19 @@ def env_or(key: str, default: str | None = None) -> str | None:
             else:
                 metric_counter("config.lookups.toml_missing")(1)
                 add_span_event("config.lookup.toml_file_missing", {"key": key, "expected_path": str(env_file)})
-        
+
         # Use default if no value found
         if value is None:
             value = default
             source = "default"
             metric_counter("config.lookups.default")(1)
             add_span_event("config.lookup.using_default", {"key": key, "default": default})
-        
+
         duration = time.time() - start_time
-        
+
         # Record metrics and attributes
         metric_histogram("config.lookup_duration")(duration)
-        
+
         add_span_attributes(**{
             "config.key": key,
             "config.source": source,
@@ -83,7 +83,7 @@ def env_or(key: str, default: str | None = None) -> str | None:
             "has_value": value is not None,
             "duration": duration,
         })
-        
+
         return value
 
 
@@ -91,23 +91,23 @@ def load_toml(path: Path, model: type[T]) -> T:
     """Load and validate TOML configuration file with telemetry."""
     with span("config.load_toml", path=str(path), model=model.__name__):
         add_span_event("config.toml.loading", {"path": str(path), "model": model.__name__})
-        
+
         start_time = time.time()
-        
+
         try:
             # Load TOML data
             content = path.read_text()
             data = tomllib.loads(content)
-            
+
             # Validate with Pydantic model
             validated_config = model.model_validate(data)
-            
+
             duration = time.time() - start_time
-            
+
             # Record success metrics
             metric_counter("config.toml_loads.success")(1)
             metric_histogram("config.toml_load_duration")(duration)
-            
+
             add_span_attributes(**{
                 "config.file_path": str(path),
                 "config.file_size": len(content),
@@ -121,15 +121,15 @@ def load_toml(path: Path, model: type[T]) -> T:
                 "keys_count": len(data) if isinstance(data, dict) else 0,
                 "duration": duration,
             })
-            
+
             return validated_config
-            
+
         except Exception as e:
             duration = time.time() - start_time
-            
+
             # Record failure metrics
             metric_counter("config.toml_loads.failed")(1)
-            
+
             add_span_event("config.toml.load_failed", {
                 "path": str(path),
                 "model": model.__name__,

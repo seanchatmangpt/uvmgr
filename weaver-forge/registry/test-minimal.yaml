@@ -1,0 +1,10 @@
+groups:
+  - id: cli
+    type: attribute_group
+    brief: 'CLI command attributes'
+    attributes:
+      - id: cli.command
+        type: string
+        brief: 'The CLI command being executed'
+        note: 'Main command like deps, build, tests'
+        requirement_level: required

@@ -14,7 +14,7 @@ import typer
 from rich.console import Console
 
 from uvmgr.cli_utils import handle_cli_exception, maybe_json
-from uvmgr.core.instrumentation import instrument_command, add_span_attributes, add_span_event
+from uvmgr.core.instrumentation import add_span_attributes, add_span_event, instrument_command
 from uvmgr.core.lint import map_exception
 from uvmgr.core.process import run_logged
 from uvmgr.core.semconv import CliAttributes
@@ -77,7 +77,7 @@ def check(
         "lint.show_fixes": show_fixes,
     })
     add_span_event("lint.check.started", {"path": str(path) if path else "."})
-    
+
     try:
         cmd = ["check"]
         if fix:
@@ -131,7 +131,7 @@ def format(
         "lint.check_only": check,
     })
     add_span_event("lint.format.started", {"path": str(path) if path else ".", "check_only": check})
-    
+
     try:
         cmd = ["format"]
         if check:
@@ -179,7 +179,7 @@ def fix(
         "lint.auto_fix": True,
     })
     add_span_event("lint.fix.started", {"path": str(path) if path else "."})
-    
+
     try:
         # First run the formatter
         if _run_ruff(["format"], str(path) if path else "."):

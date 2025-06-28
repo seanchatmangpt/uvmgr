@@ -1,6 +1,6 @@
 import typer
 
-from uvmgr.core.instrumentation import instrument_command, add_span_attributes, add_span_event
+from uvmgr.core.instrumentation import add_span_attributes, add_span_event, instrument_command
 from uvmgr.core.semconv import CacheAttributes
 from uvmgr.core.shell import colour
 from uvmgr.ops import cache as cache_ops
@@ -21,7 +21,7 @@ def _dir():
         }
     )
     add_span_event("cache.dir.started")
-    
+
     cache_dir = cache_ops.dir()
     add_span_attributes(**{"cache.directory": cache_dir})
     add_span_event("cache.dir.completed", {"directory": cache_dir})
@@ -38,7 +38,7 @@ def _prune():
         }
     )
     add_span_event("cache.prune.started")
-    
+
     cache_ops.prune()
     add_span_event("cache.prune.completed", {"success": True})
     colour("✔ cache pruned", "green")

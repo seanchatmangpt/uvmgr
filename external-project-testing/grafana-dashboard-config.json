@@ -1,0 +1,324 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "uvmgr External Testing - OTEL Claim Verification",
+    "tags": ["uvmgr", "external-testing", "otel", "claims"],
+    "style": "dark",
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Claim Verification Summary",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(uvmgr_claims_verified_total)",
+            "legendFormat": "Total Claims Verified"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "yellow", "value": 3},
+                {"color": "green", "value": 5}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 6, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Verification Success Rate",
+        "type": "gauge",
+        "targets": [
+          {
+            "expr": "sum(rate(uvmgr_claims_verified_total{status=\"verified\"}[5m])) / sum(rate(uvmgr_claims_verified_total[5m])) * 100",
+            "legendFormat": "Success Rate %"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "min": 0,
+            "max": 100,
+            "unit": "percent",
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "yellow", "value": 70},
+                {"color": "green", "value": 90}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 6, "x": 6, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Command Performance Thresholds",
+        "type": "bargauge",
+        "targets": [
+          {
+            "expr": "uvmgr_performance_threshold_ratio",
+            "legendFormat": "{{command}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "min": 0,
+            "max": 2,
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": 0},
+                {"color": "yellow", "value": 0.8},
+                {"color": "red", "value": 1.0}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      },
+      {
+        "id": 4,
+        "title": "Test Execution Duration",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(test_execution_duration_seconds_bucket[5m])) by (le, test))",
+            "legendFormat": "{{test}} - 95th percentile"
+          },
+          {
+            "expr": "histogram_quantile(0.50, sum(rate(test_execution_duration_seconds_bucket[5m])) by (le, test))",
+            "legendFormat": "{{test}} - 50th percentile"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "fillOpacity": 0.1
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8}
+      },
+      {
+        "id": 5,
+        "title": "uvmgr Command Duration by Command",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(uvmgr_command_duration_seconds_bucket[5m])) by (le, command))",
+            "legendFormat": "{{command}} - 95th percentile"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear"
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16}
+      },
+      {
+        "id": 6,
+        "title": "Test Artifacts Validation",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "sum(rate(test_artifacts_validated_total{status=\"found\"}[5m])) by (test)",
+            "legendFormat": "{{test}} - Found"
+          },
+          {
+            "expr": "sum(rate(test_artifacts_validated_total{status=\"missing\"}[5m])) by (test)",
+            "legendFormat": "{{test}} - Missing"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear"
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16}
+      },
+      {
+        "id": 7,
+        "title": "Claim Verification Status by Type",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "sum by (status) (uvmgr_claims_verified_total)",
+            "legendFormat": "{{status}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "vis": false
+              }
+            },
+            "mappings": [],
+            "color": {
+              "mode": "palette-classic"
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24}
+      },
+      {
+        "id": 8,
+        "title": "Test Performance Ratio",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "test_performance_ratio",
+            "legendFormat": "{{test}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "min": 0,
+            "max": 2,
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "thresholdsStyle": {
+                "mode": "line"
+              }
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "transparent", "value": null},
+                {"color": "red", "value": 1.0}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24}
+      },
+      {
+        "id": 9,
+        "title": "OTEL Spans by Lifecycle Phase",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "sum by (operation) (otel_spans_total{service_name=\"uvmgr-instrumented-test-runner\"})",
+            "legendFormat": "{{operation}}",
+            "format": "table",
+            "instant": true
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "align": "auto",
+              "displayMode": "auto"
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 32}
+      },
+      {
+        "id": 10,
+        "title": "Recent Test Executions",
+        "type": "logs",
+        "targets": [
+          {
+            "expr": "{service_name=\"uvmgr-instrumented-test-runner\"} |= \"test_execution\"",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "showLabels": false,
+              "showTime": true,
+              "sortOrder": "Descending",
+              "wrapLogMessage": true
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 32}
+      },
+      {
+        "id": 11,
+        "title": "External Project Testing Status",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(test_executions_total{status=\"success\"})",
+            "legendFormat": "Successful Tests"
+          },
+          {
+            "expr": "sum(test_executions_total{status=\"error\"})",
+            "legendFormat": "Failed Tests"
+          },
+          {
+            "expr": "sum(test_executions_total{status=\"timeout\"})",
+            "legendFormat": "Timeout Tests"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": null}
+              ]
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "Failed Tests"
+              },
+              "properties": [
+                {
+                  "id": "color",
+                  "value": {
+                    "mode": "thresholds",
+                    "thresholds": {
+                      "steps": [
+                        {"color": "red", "value": null}
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "gridPos": {"h": 6, "w": 24, "x": 0, "y": 40}
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "30s",
+    "schemaVersion": 30,
+    "version": 1,
+    "gnetId": null
+  },
+  "overwrite": true
+}

@@ -4,7 +4,7 @@ groups:
     type: attribute_group
     brief: 'Common attributes shared across uvmgr operations'
     attributes:
-      - id: version
+      - id: common.version
         type: string
         brief: 'Version number'
         note: 'Semantic version string (e.g., 1.2.3)'
@@ -12,7 +12,7 @@ groups:
         requirement_level: recommended
         stability: stable
         
-      - id: environment
+      - id: common.environment
         type: string
         brief: 'Execution environment'
         note: 'The environment where the operation is running'
@@ -20,14 +20,14 @@ groups:
         requirement_level: recommended
         stability: stable
         
-      - id: user_id
+      - id: common.user_id
         type: string
         brief: 'User identifier'
         note: 'Unique identifier for the user executing the operation'
         requirement_level: optional
         stability: stable
         
-      - id: session_id
+      - id: common.session_id
         type: string
         brief: 'Session identifier'
         note: 'Unique identifier for the current session'
@@ -39,7 +39,7 @@ groups:
     type: attribute_group
     brief: 'Error and exception tracking attributes'
     attributes:
-      - id: type
+      - id: error.type
         type: string
         brief: 'Error type or class name'
         note: 'The type of error that occurred'
@@ -47,21 +47,21 @@ groups:
         requirement_level: required
         stability: stable
         
-      - id: message
+      - id: error.message
         type: string
         brief: 'Error message'
         note: 'Human-readable error description'
         requirement_level: required
         stability: stable
         
-      - id: stacktrace
+      - id: error.stacktrace
         type: string
         brief: 'Error stack trace'
         note: 'Full stack trace of the error'
         requirement_level: recommended
         stability: stable
         
-      - id: code
+      - id: error.code
         type: string
         brief: 'Error code'
         note: 'Machine-readable error code'
@@ -74,7 +74,7 @@ groups:
     type: attribute_group
     brief: 'File system operation attributes'
     attributes:
-      - id: path
+      - id: file.path
         type: string
         brief: 'File or directory path'
         note: 'Absolute or relative path to the file or directory'
@@ -82,14 +82,14 @@ groups:
         requirement_level: required
         stability: stable
         
-      - id: size
+      - id: file.size
         type: int
         brief: 'File size in bytes'
         note: 'Size of the file in bytes'
         requirement_level: optional
         stability: stable
         
-      - id: permissions
+      - id: file.permissions
         type: string
         brief: 'File permissions'
         note: 'Unix-style file permissions'
@@ -97,7 +97,7 @@ groups:
         requirement_level: optional
         stability: stable
         
-      - id: operation
+      - id: file.operation
         type: string
         brief: 'File operation type'
         note: 'The type of file operation being performed'

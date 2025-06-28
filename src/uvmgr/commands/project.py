@@ -1,14 +1,39 @@
 import typer
 
-from uvmgr.core.instrumentation import instrument_command, add_span_attributes, add_span_event
+from uvmgr.core.instrumentation import add_span_attributes, add_span_event, instrument_command
 from uvmgr.core.semconv import ProjectAttributes, ProjectOperations
 from uvmgr.core.shell import colour, dump_json
 from uvmgr.ops import project as project_ops
 
 from .. import main as cli_root
 
-proj_app = typer.Typer(help="Project scaffolding (Copier template)")
+proj_app = typer.Typer(help="Project scaffolding with Substrate-inspired features")
 cli_root.app.add_typer(proj_app, name="new")
+
+
+@proj_app.command("substrate")
+@instrument_command("project_substrate", track_args=True)
+def substrate_project(
+    ctx: typer.Context,
+    name: str = typer.Argument(..., help="Directory / project name"),
+    fastapi: bool = typer.Option(False, "--fastapi", help="Include FastAPI API skeleton"),
+    typer_cli: bool = typer.Option(True, "--typer/--no-typer", help="Include Typer CLI skeleton"),
+):
+    """Create a new project with full Substrate-inspired features."""
+    # Forward to main command with substrate template
+    return new(
+        ctx=ctx,
+        name=name,
+        template="substrate",
+        substrate=True,
+        fastapi=fastapi,
+        typer_cli=typer_cli,
+        dev_containers=True,
+        github_actions=True,
+        pre_commit=True,
+        conventional_commits=True,
+        semantic_versioning=True,
+    )
 
 
 @proj_app.command()
@@ -16,25 +41,68 @@ cli_root.app.add_typer(proj_app, name="new")
 def new(
     ctx: typer.Context,
     name: str = typer.Argument(..., help="Directory / project name"),
+    template: str = typer.Option("basic", "--template", "-t", help="Project template: basic, substrate, fastapi, cli"),
+    substrate: bool = typer.Option(False, "--substrate", help="Generate Substrate-inspired project"),
     fastapi: bool = typer.Option(False, "--fastapi", help="Include FastAPI API skeleton"),
     typer_cli: bool = typer.Option(True, "--typer/--no-typer", help="Include Typer CLI skeleton"),
+    dev_containers: bool = typer.Option(False, "--dev-containers", help="Include DevContainer configuration"),
+    github_actions: bool = typer.Option(False, "--github-actions", help="Include GitHub Actions CI/CD"),
+    pre_commit: bool = typer.Option(False, "--pre-commit", help="Include pre-commit hooks"),
+    conventional_commits: bool = typer.Option(False, "--conventional-commits", help="Enable conventional commits"),
+    semantic_versioning: bool = typer.Option(False, "--semantic-versioning", help="Enable semantic versioning"),
 ):
+    # Auto-enable substrate features if substrate template selected
+    if template == "substrate" or substrate:
+        substrate = True
+        dev_containers = True
+        github_actions = True
+        pre_commit = True
+        conventional_commits = True
+        semantic_versioning = True
+
     # Track project creation
     add_span_attributes(**{
         ProjectAttributes.OPERATION: ProjectOperations.CREATE,
         ProjectAttributes.NAME: name,
         ProjectAttributes.LANGUAGE: "python",
+        "project.template": template,
+        "project.substrate": substrate,
         "project.fastapi": fastapi,
         "project.typer_cli": typer_cli,
+        "project.dev_containers": dev_containers,
+        "project.github_actions": github_actions,
+        "project.pre_commit": pre_commit,
+        "project.conventional_commits": conventional_commits,
+        "project.semantic_versioning": semantic_versioning,
     })
     add_span_event("project.new.started", {
         "name": name,
-        "fastapi": fastapi,
-        "typer_cli": typer_cli
+        "template": template,
+        "substrate": substrate,
+        "features": {
+            "fastapi": fastapi,
+            "typer_cli": typer_cli,
+            "dev_containers": dev_containers,
+            "github_actions": github_actions,
+            "pre_commit": pre_commit,
+            "conventional_commits": conventional_commits,
+            "semantic_versioning": semantic_versioning,
+        }
     })
-    
-    payload = project_ops.new(name, fastapi=fastapi, typer_cli=typer_cli)
-    
+
+    payload = project_ops.new(
+        name, 
+        template=template,
+        substrate=substrate,
+        fastapi=fastapi, 
+        typer_cli=typer_cli,
+        dev_containers=dev_containers,
+        github_actions=github_actions,
+        pre_commit=pre_commit,
+        conventional_commits=conventional_commits,
+        semantic_versioning=semantic_versioning,
+    )
+
     # Track successful creation
     add_span_attributes(**{
         "project.path": payload.get("path"),

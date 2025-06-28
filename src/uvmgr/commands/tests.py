@@ -1,7 +1,35 @@
 """
-Typer sub-app: uvmgr tests …
+uvmgr.commands.tests
+--------------------
+Test execution and coverage commands for uvmgr.
 
-This module implements a command (run) and a subcommand (coverage) to run the test suite and generate coverage reports.
+This module provides CLI commands for running tests and generating coverage reports
+using pytest and coverage tools. It includes comprehensive CI verification tools
+and full OpenTelemetry instrumentation.
+
+Commands
+--------
+- run : Run the test suite using pytest
+- coverage : Generate coverage reports using coverage
+- ci verify : Comprehensive CI verification (replaces verify_pyinstaller_ci.py)
+- ci quick : Quick CI checks for development
+- ci run : Run full CI pipeline locally
+
+All commands automatically instrument with telemetry and provide both human-readable
+and JSON output formats.
+
+Example
+-------
+    $ uvmgr tests run
+    $ uvmgr tests run --verbose
+    $ uvmgr tests coverage
+    $ uvmgr tests ci verify
+    $ uvmgr tests ci quick
+
+See Also
+--------
+- :mod:`uvmgr.core.process` : Process execution utilities
+- :mod:`uvmgr.core.semconv` : Semantic conventions
 """
 
 from __future__ import annotations
@@ -18,9 +46,15 @@ from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
-from uvmgr.core.instrumentation import instrument_command, instrument_subcommand, add_span_attributes, add_span_event
-from uvmgr.core.semconv import TestAttributes, CIAttributes, CIOperations
+from uvmgr.core.instrumentation import (
+    add_span_attributes,
+    add_span_event,
+    instrument_command,
+    instrument_subcommand,
+)
 from uvmgr.core.process import run_logged
+from uvmgr.core.semconv import CIAttributes, CIOperations, TestAttributes
+
 from .. import main as cli_root
 
 tests_app = typer.Typer(help="Run the test suite (and coverage) using pytest and coverage.")
@@ -34,7 +68,45 @@ console = Console()
 @tests_app.command("run")
 @instrument_command("tests_run", track_args=True)
 def run_tests(verbose: bool = typer.Option(False, "--verbose", "-v", help="Run tests verbosely.")):
-    """Run the test suite using pytest."""
+    """
+    Run the test suite using pytest.
+    
+    This command executes the project's test suite using pytest. It automatically
+    discovers and runs all tests in the project, providing detailed output and
+    telemetry for test execution.
+    
+    Parameters
+    ----------
+    verbose : bool, optional
+        If True, run tests with verbose output showing more details about
+        test execution, including individual test names and results.
+        Default is False.
+    
+    Notes
+    -----
+    The command automatically:
+    - Discovers tests in the project using pytest
+    - Runs all discovered tests
+    - Provides detailed output and error reporting
+    - Records telemetry for test execution
+    - Uses project's pytest configuration from pyproject.toml
+    
+    Test discovery follows pytest conventions:
+    - Looks for files named test_*.py or *_test.py
+    - Searches in tests/ and src/ directories
+    - Respects pytest.ini and pyproject.toml configuration
+    
+    Example
+    -------
+    >>> # Run tests with default output
+    >>> uvmgr tests run
+    >>> 
+    >>> # Run tests with verbose output
+    >>> uvmgr tests run --verbose
+    >>> 
+    >>> # Run tests and capture output
+    >>> result = subprocess.run(["uvmgr", "tests", "run"], capture_output=True)
+    """
     # Track test execution
     add_span_attributes(
         **{
@@ -44,7 +116,7 @@ def run_tests(verbose: bool = typer.Option(False, "--verbose", "-v", help="Run t
         }
     )
     add_span_event("tests.run.started", {"framework": "pytest", "verbose": verbose})
-    
+
     cmd = ["pytest"]
     if verbose:
         cmd.append("-v")
@@ -57,7 +129,44 @@ def run_tests(verbose: bool = typer.Option(False, "--verbose", "-v", help="Run t
 def run_coverage(
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Run coverage verbosely."),
 ):
-    """Generate coverage reports using coverage run + coverage report."""
+    """
+    Generate coverage reports using coverage run + coverage report.
+    
+    This command runs the test suite with coverage measurement and generates
+    a coverage report showing which parts of the code were executed during
+    testing. It uses the coverage tool to measure code coverage.
+    
+    Parameters
+    ----------
+    verbose : bool, optional
+        If True, run coverage with verbose output showing more details about
+        coverage measurement and reporting. Default is False.
+    
+    Notes
+    -----
+    The command automatically:
+    - Runs the test suite with coverage measurement
+    - Generates a coverage report showing line coverage
+    - Records telemetry for coverage execution
+    - Uses project's coverage configuration from pyproject.toml
+    
+    Coverage measurement includes:
+    - Line coverage for all Python files in the project
+    - Branch coverage if enabled in configuration
+    - Coverage data stored in .coverage file
+    - HTML and XML reports generated automatically
+    
+    Example
+    -------
+    >>> # Generate coverage report
+    >>> uvmgr tests coverage
+    >>> 
+    >>> # Generate coverage with verbose output
+    >>> uvmgr tests coverage --verbose
+    >>> 
+    >>> # Coverage data is stored in .coverage file
+    >>> # HTML report available in htmlcov/ directory
+    """
     # Track coverage execution
     add_span_attributes(
         **{
@@ -67,7 +176,7 @@ def run_coverage(
         }
     )
     add_span_event("tests.coverage.started", {"framework": "pytest", "verbose": verbose})
-    
+
     cmd_run = ["coverage", "run", "--module", "pytest"]
     cmd_report = ["coverage", "report"]
     if verbose:
@@ -83,14 +192,78 @@ tests_app.add_typer(ci_app, name="ci")
 
 
 class CIVerifier:
-    """Verify CI tests locally."""
+    """
+    Verify CI tests locally.
+    
+    This class provides functionality to run CI verification tests locally,
+    allowing developers to test their changes before pushing to CI. It
+    includes comprehensive testing of build processes, package installation,
+    and executable generation.
+    
+    Attributes
+    ----------
+    results : list[tuple[str, bool, str]]
+        List of test results as (description, success, details) tuples.
+    start_time : float
+        Timestamp when verification started.
+    
+    Example
+    -------
+    >>> verifier = CIVerifier()
+    >>> verifier.run_command("python --version", "Check Python version")
+    >>> verifier.run_command("uv --version", "Check uv version")
+    >>> success = verifier.show_results()
+    """
 
     def __init__(self):
         self.results: list[tuple[str, bool, str]] = []
         self.start_time = time.time()
 
     def run_command(self, cmd: str, description: str, check: bool = True, timeout: int = 300) -> bool:
-        """Run a command and record the result."""
+        """
+        Run a command and record the result.
+        
+        This method executes a shell command and records the success or failure
+        of the command. It provides real-time feedback and handles timeouts
+        and exceptions gracefully.
+        
+        Parameters
+        ----------
+        cmd : str
+            The shell command to execute.
+        description : str
+            Human-readable description of what the command is testing.
+        check : bool, optional
+            If True, raise an exception on command failure. If False,
+            record the failure but continue execution. Default is True.
+        timeout : int, optional
+            Maximum time in seconds to wait for command completion.
+            Default is 300 seconds (5 minutes).
+        
+        Returns
+        -------
+        bool
+            True if the command succeeded, False otherwise.
+        
+        Notes
+        -----
+        The method automatically:
+        - Displays the command being executed
+        - Shows real-time progress feedback
+        - Handles command timeouts gracefully
+        - Records detailed error information
+        - Updates the results list with outcome
+        
+        Example
+        -------
+        >>> verifier = CIVerifier()
+        >>> success = verifier.run_command(
+        ...     "python -c 'print(\"Hello\")'",
+        ...     "Test Python execution",
+        ...     check=False
+        ... )
+        >>> print(f"Command succeeded: {success}")
+        """
         console.print(f"\n[bold blue]Testing:[/bold blue] {description}")
         console.print(f"[dim]Command: {cmd}[/dim]")
 
@@ -128,7 +301,40 @@ class CIVerifier:
             return False
 
     def show_results(self) -> bool:
-        """Display test results summary."""
+        """
+        Display test results summary.
+        
+        This method displays a comprehensive summary of all test results,
+        including a formatted table showing the status of each test and
+        overall statistics.
+        
+        Returns
+        -------
+        bool
+            True if all tests passed, False if any test failed.
+        
+        Notes
+        -----
+        The method displays:
+        - A formatted table with test names, status, and details
+        - Overall statistics (total tests, passed, failed, success rate)
+        - Time elapsed for all tests
+        - Color-coded status indicators
+        
+        The summary panel is color-coded:
+        - Green: All tests passed
+        - Yellow: Some tests passed, some failed
+        - Red: All tests failed
+        
+        Example
+        -------
+        >>> verifier = CIVerifier()
+        >>> verifier.run_command("python --version", "Python version")
+        >>> verifier.run_command("uv --version", "uv version")
+        >>> all_passed = verifier.show_results()
+        >>> if all_passed:
+        ...     print("All CI checks passed!")
+        """
         elapsed = time.time() - self.start_time
 
         # Create results table
@@ -153,7 +359,7 @@ class CIVerifier:
 
         summary_style = "green" if passed == total else "yellow" if passed > 0 else "red"
         console.print(Panel.fit(
-            f"[bold]Summary[/bold]\n\n"
+            "[bold]Summary[/bold]\n\n"
             f"Tests run: {total}\n"
             f"Passed: {passed}\n"
             f"Failed: {total - passed}\n"
@@ -172,7 +378,53 @@ def ci_verify(
     skip_build: bool = typer.Option(False, "--skip-build", help="Skip executable build tests"),
     clean: bool = typer.Option(True, "--clean/--no-clean", help="Clean up artifacts after testing"),
 ):
-    """Comprehensive CI verification (replaces verify_pyinstaller_ci.py)."""
+    """
+    Comprehensive CI verification (replaces verify_pyinstaller_ci.py).
+    
+    This command runs a comprehensive set of CI verification tests locally,
+    allowing developers to test their changes before pushing to CI. It includes
+    environment checks, dependency validation, build testing, and executable
+    generation verification.
+    
+    Parameters
+    ----------
+    timeout : int, optional
+        Maximum time in seconds to wait for each command to complete.
+        Default is 300 seconds (5 minutes).
+    skip_build : bool, optional
+        If True, skip the PyInstaller build tests. Useful for faster
+        verification when build testing is not needed. Default is False.
+    clean : bool, optional
+        If True, clean up temporary artifacts after testing. Set to False
+        to preserve artifacts for debugging. Default is True.
+    
+    Notes
+    -----
+    The verification includes:
+    - Environment checks (Python version, uv version, etc.)
+    - Dependency validation and installation
+    - Package building and installation
+    - PyInstaller executable generation (unless skipped)
+    - Test execution and coverage
+    - Cleanup of temporary files
+    
+    All tests are run with telemetry instrumentation and provide
+    detailed feedback on success or failure.
+    
+    Example
+    -------
+    >>> # Run full verification
+    >>> uvmgr tests ci verify
+    >>> 
+    >>> # Quick verification without build tests
+    >>> uvmgr tests ci verify --skip-build
+    >>> 
+    >>> # Verification with longer timeout
+    >>> uvmgr tests ci verify --timeout 600
+    >>> 
+    >>> # Keep artifacts for debugging
+    >>> uvmgr tests ci verify --no-clean
+    """
     add_span_attributes(**{
         CIAttributes.OPERATION: CIOperations.VERIFY,
         CIAttributes.RUNNER: "local",

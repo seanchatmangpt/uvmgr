@@ -3,7 +3,7 @@ groups:
     type: attribute_group
     brief: 'CLI command attributes for uvmgr'
     attributes:
-      - id: command
+      - id: cli.command
         type: string
         brief: 'The primary CLI command being executed'
         note: 'This represents the main command like deps, build, tests, etc.'
@@ -11,7 +11,7 @@ groups:
         requirement_level: required
         stability: stable
         
-      - id: subcommand
+      - id: cli.subcommand
         type: string
         brief: 'The subcommand if applicable'
         note: 'This represents subcommands like add, remove, list under the main command'
@@ -19,7 +19,7 @@ groups:
         requirement_level: recommended
         stability: stable
         
-      - id: exit_code
+      - id: cli.exit_code
         type: int
         brief: 'The exit code of the CLI command'
         note: 'Exit code 0 indicates success, non-zero indicates an error'
@@ -30,7 +30,7 @@ groups:
     type: attribute_group  
     brief: 'Package management operation attributes'
     attributes:
-      - id: name
+      - id: package.name
         type: string
         brief: 'Name of the package being operated on'
         note: 'The package name as it appears in PyPI or other package registries'
@@ -38,7 +38,7 @@ groups:
         requirement_level: required
         stability: stable
         
-      - id: version
+      - id: package.version
         type: string
         brief: 'Version specification or resolved version'
         note: 'Can be a specific version, version range, or constraint'
@@ -46,7 +46,7 @@ groups:
         requirement_level: recommended
         stability: stable
         
-      - id: operation
+      - id: package.operation
         type: string
         brief: 'The type of package operation'
         note: 'The action being performed on the package'

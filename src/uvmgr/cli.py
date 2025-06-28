@@ -2,11 +2,31 @@
 uvmgr.cli
 =========
 
-Root Typer application.
+Root Typer application for the uvmgr unified Python workflow engine.
 
-• Sets up logging once (plain `logging` + optional OpenTelemetry)
-• Adds a global `--json / -j` flag
-• Dynamically mounts every sub-command package found in **uvmgr.commands**
+This module serves as the main entry point for the uvmgr CLI application. It provides:
+
+• **Logging Setup**: Configures logging once (plain `logging` + optional OpenTelemetry)
+• **Global Flags**: Adds a global `--json / -j` flag for machine-readable output
+• **Dynamic Command Loading**: Automatically mounts every sub-command package found in **uvmgr.commands**
+• **Error Handling**: Provides centralized exception handling for CLI operations
+• **Telemetry Integration**: Instruments the main CLI with OpenTelemetry for observability
+
+The application follows a modular design where each command group (deps, tests, build, etc.)
+is implemented as a separate Typer sub-application that gets dynamically mounted.
+
+Example
+-------
+    $ uvmgr --help                    # Show main help
+    $ uvmgr deps add requests         # Add dependency
+    $ uvmgr tests run                 # Run test suite
+    $ uvmgr --json deps list          # JSON output
+
+See Also
+--------
+- :mod:`uvmgr.commands` : Command implementations
+- :mod:`uvmgr.core.instrumentation` : Telemetry instrumentation
+- :mod:`uvmgr.logging_config` : Logging configuration
 """
 
 from __future__ import annotations
@@ -18,8 +38,8 @@ import sys
 import typer
 
 from uvmgr.cli_utils import handle_cli_exception
-from uvmgr.logging_config import setup_logging
 from uvmgr.core.instrumentation import instrument_command
+from uvmgr.logging_config import setup_logging
 
 os.environ.setdefault("LITELLM_LOCAL_MODEL_COST_MAP", "True")
 

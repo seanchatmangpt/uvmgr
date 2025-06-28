@@ -1,8 +1,29 @@
 """
 Build Tools - Tools for building packages and managing versions.
 
-This module provides tools for building Python packages, managing versions,
-and generating changelogs.
+This module provides MCP tools for building Python packages, managing versions,
+and generating changelogs. These tools enable AI assistants to help with
+package distribution and release management.
+
+Available Tools
+--------------
+- build_package : Build Python package (wheel and sdist)
+- bump_version : Bump project version using Commitizen
+- generate_changelog : Generate changelog from commit history
+
+All tools integrate with uvmgr's build and release operations and provide
+detailed feedback on success or failure.
+
+Example
+-------
+    >>> from uvmgr.mcp.tools.build import build_package
+    >>> result = build_package(upload=False)
+    >>> print(result)  # OperationResult string
+
+See Also
+--------
+- :mod:`uvmgr.ops.build` : Core build operations
+- :mod:`uvmgr.ops.release` : Core release operations
 """
 
 from fastmcp import Context
@@ -24,11 +45,47 @@ async def build_package(
 ) -> str:
     """
     Build Python package (wheel and sdist).
-
+    
+    This tool builds distribution packages for the current Python project,
+    creating both wheel (.whl) and source distribution (.tar.gz) files.
+    Optionally uploads the packages to PyPI after building.
+    
     Parameters
     ----------
-    - ctx: MCP context
-    - upload: If True, upload to PyPI after building
+    ctx : Context
+        MCP context for the operation.
+    upload : bool, optional
+        If True, upload the built packages to PyPI after building.
+        Requires proper PyPI credentials to be configured.
+        Default is False.
+    
+    Returns
+    -------
+    str
+        JSON-formatted string containing operation result with success status,
+        message, and details about the build process.
+    
+    Notes
+    -----
+    The tool automatically:
+    - Builds both wheel and source distribution packages
+    - Places built packages in the dist/ directory
+    - Validates package structure and metadata
+    - Optionally uploads to PyPI if upload=True
+    - Provides detailed feedback on the build process
+    
+    Requirements:
+    - Project must have a valid pyproject.toml file
+    - All dependencies must be installed
+    - For upload: PyPI credentials must be configured
+    
+    Example
+    -------
+    >>> # Build packages without uploading
+    >>> result = await build_package(upload=False)
+    >>> 
+    >>> # Build and upload to PyPI
+    >>> result = await build_package(upload=True)
     """
     try:
         await ctx.info("Building package...")

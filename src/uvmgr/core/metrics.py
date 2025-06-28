@@ -31,6 +31,7 @@ from .telemetry import metric_counter, metric_gauge, metric_histogram
 @dataclass
 class OperationResult:
     """Result of an operation with timing and context information."""
+
     success: bool
     duration: float
     error: Exception | None = None
@@ -321,9 +322,71 @@ class ProcessMetrics(BaseMetrics):
         self.process_by_executable(1, **attributes)
 
 
+class ProjectMetrics(BaseMetrics):
+    """Metrics for project scaffolding operations."""
+
+    def __init__(self):
+        super().__init__("project")
+
+    def _init_metrics(self):
+        super()._init_metrics()
+        # Project-specific metrics
+        self.templates_used = metric_counter("project.templates_used")
+        self.projects_created = metric_counter("project.projects_created")
+
+    def record_project_operation(
+        self,
+        operation: str,
+        template_name: str | None = None,
+        duration: float = 0.0,
+        success: bool = True,
+    ):
+        """Record project-specific metrics."""
+        attributes = {"operation": operation}
+        
+        if template_name:
+            attributes["template_name"] = template_name
+
+        self.record_operation(operation, duration, success, attributes)
+
+        if success:
+            if operation == "create":
+                self.projects_created(1, **attributes)
+            if template_name:
+                self.templates_used(1, **attributes)
+
+    def record_creation(
+        self,
+        name: str,
+        template: str,
+        files_created: int,
+        result: OperationResult,
+    ):
+        """Record project creation metrics."""
+        attributes = {
+            "template": template,
+            "files_created": files_created,
+            "success": result.success,
+        }
+        
+        self.record_operation("create", result.duration, result.success, attributes)
+        
+        if result.success:
+            self.projects_created(1, **attributes)
+            self.templates_used(1, template=template)
+            
+            # Record files created
+            metric_histogram("project.files_created")(files_created, **attributes)
+            
+        # Record any error information
+        if result.error:
+            metric_counter("project.creation_errors")(1, error_type=type(result.error).__name__)
+
+
 # Global metric instances
 package_metrics = PackageMetrics()
 build_metrics = BuildMetrics()
 test_metrics = TestMetrics()
 ai_metrics = AiMetrics()
 process_metrics = ProcessMetrics()
+project_metrics = ProjectMetrics()

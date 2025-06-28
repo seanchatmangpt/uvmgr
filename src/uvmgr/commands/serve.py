@@ -16,7 +16,7 @@ Each transport method has different use cases and configuration options.
 
 import typer
 
-from uvmgr.core.instrumentation import instrument_command, add_span_attributes, add_span_event
+from uvmgr.core.instrumentation import add_span_attributes, add_span_event, instrument_command
 from uvmgr.core.semconv import ServerAttributes, ServerOperations
 from uvmgr.core.shell import colour, colour_stderr
 

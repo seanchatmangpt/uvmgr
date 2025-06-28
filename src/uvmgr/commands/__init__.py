@@ -39,6 +39,7 @@ __all__: Final[list[str]] = [
     "lint",  # new lint command
     "otel",  # OpenTelemetry validation and management
     "weaver",  # OpenTelemetry Weaver semantic convention tools
+    "forge",  # 8020 Weaver Forge automation and development workflows
     # advanced / optional
     "ai",
     "remote",

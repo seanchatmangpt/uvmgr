@@ -18,14 +18,16 @@ Features:
 import asyncio
 import json
 import os
+import signal
 import subprocess
+import sys
 import time
-import requests
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
-import signal
-import sys
+
+import requests
+
 
 @dataclass
 class TestResult:
@@ -35,17 +37,17 @@ class TestResult:
     duration: float
     traces_found: bool
     metrics_found: bool
-    error: Optional[str] = None
+    error: str | None = None
 
 class OTELValidator:
     """Comprehensive OTEL validation for uvmgr in devcontainer."""
-    
+
     def __init__(self):
-        self.results: List[TestResult] = []
+        self.results: list[TestResult] = []
         self.jaeger_url = "http://localhost:26686"
         self.prometheus_url = "http://localhost:19090"
         self.collector_url = "http://localhost:18888"
-        
+
         # OTEL environment setup
         self.otel_env = {
             **os.environ,
@@ -54,7 +56,7 @@ class OTELValidator:
             "OTEL_RESOURCE_ATTRIBUTES": "service.name=uvmgr,service.version=e2e-test,environment=devcontainer",
             "OTEL_LOG_LEVEL": "INFO",
         }
-        
+
         # All 18 instrumented commands
         self.test_commands = [
             (["--help"], "CLI help"),
@@ -76,16 +78,16 @@ class OTELValidator:
             (["weaver", "--help"], "Weaver tools"),
             (["otel", "--help"], "OTEL tools"),
         ]
-    
+
     def check_services(self) -> bool:
         """Check if OTEL stack services are running."""
         print("🔍 Checking OTEL stack services...")
-        
+
         services = [
             ("Jaeger", self.jaeger_url + "/api/services"),
             ("Prometheus", self.prometheus_url + "/api/v1/status/config"),
         ]
-        
+
         all_ready = True
         for name, url in services:
             try:
@@ -98,29 +100,29 @@ class OTELValidator:
             except Exception as e:
                 print(f"❌ {name} not accessible: {e}")
                 all_ready = False
-        
+
         # Check OTEL collector with simple port test
         import socket
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
-            result = sock.connect_ex(('localhost', 14317))
+            result = sock.connect_ex(("localhost", 14317))
             sock.close()
             if result == 0:
-                print(f"✅ OTEL Collector is ready (port 14317)")
+                print("✅ OTEL Collector is ready (port 14317)")
             else:
-                print(f"❌ OTEL Collector port 14317 not accessible")
+                print("❌ OTEL Collector port 14317 not accessible")
                 all_ready = False
         except Exception as e:
             print(f"❌ OTEL Collector port check failed: {e}")
             all_ready = False
-        
+
         return all_ready
-    
-    def run_command(self, cmd_args: List[str], description: str) -> TestResult:
+
+    def run_command(self, cmd_args: list[str], description: str) -> TestResult:
         """Run uvmgr command with OTEL and measure results."""
         print(f"🧪 Testing: {description:<30}", end=" ", flush=True)
-        
+
         start_time = time.time()
         try:
             # Run command with OTEL enabled
@@ -129,21 +131,21 @@ class OTELValidator:
                 env=self.otel_env,
                 capture_output=True,
                 text=True,
-                timeout=15
+                timeout=15, check=False
             )
-            
+
             duration = time.time() - start_time
             success = result.returncode == 0
-            
+
             # Give traces time to reach collector
             time.sleep(0.5)
-            
+
             # Check for traces in Jaeger (simplified check)
             traces_found = self.check_traces_exist()
-            
+
             # Check for metrics in Prometheus
             metrics_found = self.check_metrics_exist()
-            
+
             test_result = TestResult(
                 command=" ".join(cmd_args),
                 description=description,
@@ -153,16 +155,16 @@ class OTELValidator:
                 metrics_found=metrics_found,
                 error=result.stderr if not success else None
             )
-            
+
             if success and traces_found:
                 print("✅")
             elif success:
                 print("⚠️  (no traces)")
             else:
                 print("❌")
-                
+
             return test_result
-            
+
         except subprocess.TimeoutExpired:
             duration = time.time() - start_time
             print("⏰ (timeout)")
@@ -187,7 +189,7 @@ class OTELValidator:
                 metrics_found=False,
                 error=str(e)
             )
-    
+
     def check_traces_exist(self) -> bool:
         """Check if traces exist in Jaeger (simplified)."""
         try:
@@ -201,16 +203,16 @@ class OTELValidator:
                 },
                 timeout=5
             )
-            
+
             if response.status_code == 200:
                 data = response.json()
                 return len(data.get("data", [])) > 0
-                
+
         except Exception:
             pass
-        
+
         return False
-    
+
     def check_metrics_exist(self) -> bool:
         """Check if uvmgr metrics exist in Prometheus."""
         try:
@@ -220,99 +222,99 @@ class OTELValidator:
                 params={"query": "uvmgr_cli_command_calls_total"},
                 timeout=5
             )
-            
+
             if response.status_code == 200:
                 data = response.json()
                 return len(data.get("data", {}).get("result", [])) > 0
-                
+
         except Exception:
             pass
-        
+
         return False
-    
-    def run_stress_test(self) -> Dict[str, float]:
+
+    def run_stress_test(self) -> dict[str, float]:
         """Run stress test to measure performance impact."""
         print("\n🏋️  Running performance stress test...")
-        
+
         stress_commands = [
             ["--help"],
-            ["deps", "--help"], 
+            ["deps", "--help"],
             ["lint", "--help"],
             ["tests", "--help"],
         ]
-        
+
         # Baseline without OTEL
         baseline_times = []
         for cmd in stress_commands:
             start = time.time()
-            subprocess.run(["uvmgr"] + cmd, capture_output=True, timeout=10)
+            subprocess.run(["uvmgr"] + cmd, capture_output=True, timeout=10, check=False)
             baseline_times.append(time.time() - start)
-        
+
         # With OTEL
         otel_times = []
         for cmd in stress_commands:
             start = time.time()
-            subprocess.run(["uvmgr"] + cmd, env=self.otel_env, capture_output=True, timeout=10)
+            subprocess.run(["uvmgr"] + cmd, env=self.otel_env, capture_output=True, timeout=10, check=False)
             otel_times.append(time.time() - start)
-        
+
         baseline_avg = sum(baseline_times) / len(baseline_times)
         otel_avg = sum(otel_times) / len(otel_times)
         overhead_pct = ((otel_avg - baseline_avg) / baseline_avg) * 100 if baseline_avg > 0 else 0
-        
+
         return {
             "baseline_avg": baseline_avg,
             "otel_avg": otel_avg,
             "overhead_pct": overhead_pct
         }
-    
-    def generate_report(self, performance_data: Dict[str, float]) -> None:
+
+    def generate_report(self, performance_data: dict[str, float]) -> None:
         """Generate comprehensive validation report."""
         print("\n" + "="*80)
         print("📊 E2E OTEL Validation Report")
         print("="*80)
-        
+
         # Overall stats
         total_tests = len(self.results)
         successful = sum(1 for r in self.results if r.success)
         traces_found = sum(1 for r in self.results if r.traces_found)
         metrics_found = sum(1 for r in self.results if r.metrics_found)
-        
-        print(f"\n🎯 Test Results:")
+
+        print("\n🎯 Test Results:")
         print(f"   Total commands tested: {total_tests}")
         print(f"   Successful executions: {successful}/{total_tests} ({successful/total_tests*100:.1f}%)")
         print(f"   Traces collected: {traces_found}/{total_tests} ({traces_found/total_tests*100:.1f}%)")
         print(f"   Metrics collected: {metrics_found}/{total_tests} ({metrics_found/total_tests*100:.1f}%)")
-        
+
         # Performance impact
-        print(f"\n⚡ Performance Impact:")
+        print("\n⚡ Performance Impact:")
         print(f"   Baseline avg: {performance_data['baseline_avg']*1000:.1f}ms")
         print(f"   OTEL avg: {performance_data['otel_avg']*1000:.1f}ms")
         print(f"   Overhead: {performance_data['overhead_pct']:+.1f}%")
-        
+
         # Performance assessment
-        if performance_data['overhead_pct'] < 5:
+        if performance_data["overhead_pct"] < 5:
             print("   Assessment: ✅ EXCELLENT (<5% overhead)")
-        elif performance_data['overhead_pct'] < 10:
+        elif performance_data["overhead_pct"] < 10:
             print("   Assessment: ✅ GOOD (<10% overhead)")
         else:
             print("   Assessment: ⚠️  NEEDS OPTIMIZATION")
-        
+
         # Failed tests
         failed = [r for r in self.results if not r.success]
         if failed:
             print(f"\n❌ Failed Tests ({len(failed)}):")
             for result in failed:
                 print(f"   - {result.description}: {result.error}")
-        
+
         # Missing traces
         no_traces = [r for r in self.results if r.success and not r.traces_found]
         if no_traces:
             print(f"\n⚠️  Commands without traces ({len(no_traces)}):")
             for result in no_traces:
                 print(f"   - {result.description}")
-        
+
         # Overall assessment
-        print(f"\n🎯 Overall Assessment:")
+        print("\n🎯 Overall Assessment:")
         if successful == total_tests and traces_found >= total_tests * 0.9:
             print("   🚀 PRODUCTION READY")
             print("   ✅ All commands working with OTEL")
@@ -325,11 +327,11 @@ class OTELValidator:
         else:
             print("   ❌ NEEDS WORK")
             print("   ❌ Significant issues found")
-        
+
         # Save detailed results
         self.save_detailed_report(performance_data)
-    
-    def save_detailed_report(self, performance_data: Dict[str, float]) -> None:
+
+    def save_detailed_report(self, performance_data: dict[str, float]) -> None:
         """Save detailed JSON report."""
         report_data = {
             "timestamp": time.time(),
@@ -354,47 +356,46 @@ class OTELValidator:
                 for r in self.results
             ]
         }
-        
+
         report_file = Path("./otel-validation-report.json")
         with open(report_file, "w") as f:
             json.dump(report_data, f, indent=2)
-        
+
         print(f"\n📄 Detailed report saved: {report_file}")
-    
+
     def run(self) -> int:
         """Run complete E2E validation."""
         print("🚀 uvmgr E2E OTEL Validation in Devcontainer")
         print("="*60)
-        
+
         # Check prerequisites
         if not self.check_services():
             print("\n❌ OTEL stack not ready. Run: docker-compose -f .devcontainer/docker-compose.otel.yml up -d")
             return 1
-        
+
         print(f"\n🧪 Testing {len(self.test_commands)} commands with OTEL...")
-        
+
         # Run all command tests
         for cmd_args, description in self.test_commands:
             result = self.run_command(cmd_args, description)
             self.results.append(result)
             time.sleep(0.2)  # Brief pause between tests
-        
+
         # Performance test
         performance_data = self.run_stress_test()
-        
+
         # Generate report
         self.generate_report(performance_data)
-        
+
         # Return exit code based on results
         successful = sum(1 for r in self.results if r.success)
         total = len(self.results)
-        
+
         if successful == total:
             return 0  # All tests passed
-        elif successful >= total * 0.9:
+        if successful >= total * 0.9:
             return 1  # Minor issues
-        else:
-            return 2  # Major issues
+        return 2  # Major issues
 
 def signal_handler(signum, frame):
     """Handle Ctrl+C gracefully."""
@@ -404,10 +405,10 @@ def signal_handler(signum, frame):
 def main():
     """Main entry point."""
     signal.signal(signal.SIGINT, signal_handler)
-    
+
     validator = OTELValidator()
     exit_code = validator.run()
-    
+
     print("\n🏁 E2E validation complete!")
     sys.exit(exit_code)
 
