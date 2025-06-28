@@ -1,7 +1,7 @@
 {
   "success": true,
   "workflow_name": "8020_validation",
-  "duration_seconds": 0.008779764175415039,
+  "duration_seconds": 0.004935026168823242,
   "validation_steps": [
     "Initialize OTEL",
     "Test Spans",
@@ -12,7 +12,7 @@
   "spans_validated": 1,
   "errors": [],
   "performance_data": {
-    "execution_time": 0.008779764175415039
+    "execution_time": 0.004935026168823242
   },
   "generated_at": "2025-06-28T00:00:00Z"
 }

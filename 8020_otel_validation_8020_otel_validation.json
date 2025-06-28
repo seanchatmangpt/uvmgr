@@ -1,0 +1,141 @@
+{
+  "success": true,
+  "workflow_name": "8020_otel_validation",
+  "duration_seconds": 0.006135225296020508,
+  "validation_steps": [
+    {
+      "name": "BPMN Validation",
+      "type": "workflow",
+      "success": true,
+      "duration": 0.0017580986022949219,
+      "details": {
+        "workflow_path": "/Users/sac/dev/uvmgr/.uvmgr_temp/workflows/8020_otel_validation.bpmn"
+      },
+      "error": null
+    },
+    {
+      "name": "Workflow Execution",
+      "type": "workflow",
+      "success": true,
+      "duration": 0.003946065902709961,
+      "details": {
+        "status": "completed",
+        "duration_seconds": 0.0033838748931884766,
+        "steps_executed": 1,
+        "total_tasks": 12,
+        "completed_tasks": 1,
+        "failed_tasks": 0,
+        "workflow_name": "8020_otel_validation"
+      },
+      "error": null
+    },
+    {
+      "name": "Test Step 1",
+      "type": "test",
+      "success": true,
+      "duration": 0.0001430511474609375,
+      "details": {
+        "command": "python -c 'from uvmgr.core.telemetry import span; print(\"\u2713 Core telemetry import\")'",
+        "exit_code": 0,
+        "stdout_lines": 2,
+        "stderr_lines": 1,
+        "metrics_count": 0,
+        "spans_count": 0,
+        "performance": 0.0001430511474609375
+      },
+      "error": null
+    },
+    {
+      "name": "Test Step 2",
+      "type": "test",
+      "success": true,
+      "duration": 6.103515625e-05,
+      "details": {
+        "command": "python -c 'from uvmgr.core.instrumentation import instrument_command; print(\"\u2713 Instrumentation import\")'",
+        "exit_code": 0,
+        "stdout_lines": 2,
+        "stderr_lines": 1,
+        "metrics_count": 0,
+        "spans_count": 0,
+        "performance": 6.103515625e-05
+      },
+      "error": null
+    },
+    {
+      "name": "Test Step 3",
+      "type": "test",
+      "success": true,
+      "duration": 4.982948303222656e-05,
+      "details": {
+        "command": "python -c 'from uvmgr.runtime.agent.spiff import run_bpmn; print(\"\u2713 SpiffWorkflow import\")'",
+        "exit_code": 0,
+        "stdout_lines": 2,
+        "stderr_lines": 1,
+        "metrics_count": 0,
+        "spans_count": 0,
+        "performance": 4.982948303222656e-05
+      },
+      "error": null
+    },
+    {
+      "name": "Test Step 4",
+      "type": "test",
+      "success": true,
+      "duration": 4.291534423828125e-05,
+      "details": {
+        "command": "python -c 'from uvmgr.ops.search import CodeSearchEngine; print(\"\u2713 Search engine import\")'",
+        "exit_code": 0,
+        "stdout_lines": 2,
+        "stderr_lines": 1,
+        "metrics_count": 0,
+        "spans_count": 0,
+        "performance": 4.291534423828125e-05
+      },
+      "error": null
+    },
+    {
+      "name": "Test Step 5",
+      "type": "test",
+      "success": true,
+      "duration": 4.506111145019531e-05,
+      "details": {
+        "command": "python -c 'from uvmgr.core.agi_reasoning import observe_with_agi_reasoning; print(\"\u2713 AGI reasoning import\")'",
+        "exit_code": 0,
+        "stdout_lines": 2,
+        "stderr_lines": 1,
+        "metrics_count": 0,
+        "spans_count": 0,
+        "performance": 4.506111145019531e-05
+      },
+      "error": null
+    },
+    {
+      "name": "OTEL System Health",
+      "type": "system",
+      "success": true,
+      "duration": 5.9604644775390625e-06,
+      "details": {
+        "telemetry_import": true,
+        "span_creation": true,
+        "metric_creation": true,
+        "instrumentation_registry": true,
+        "system_spans": 5,
+        "system_metrics": 3
+      },
+      "error": null
+    }
+  ],
+  "metrics_validated": 3,
+  "spans_validated": 5,
+  "errors": [],
+  "performance_data": {
+    "workflow_duration": 0.003946065902709961,
+    "workflow_steps": 1,
+    "test_1": 0.0001430511474609375,
+    "test_2": 6.103515625e-05,
+    "test_3": 4.982948303222656e-05,
+    "test_4": 4.291534423828125e-05,
+    "test_5": 4.506111145019531e-05
+  },
+  "generated_at": "2025-06-28T00:00:00Z"
+}

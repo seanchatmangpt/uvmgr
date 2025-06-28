@@ -78,6 +78,7 @@ from uvmgr.ops.external_project_spiff import (
     batch_validate_external_projects,
     run_8020_external_project_validation
 )
+from uvmgr.ops.spiff_otel_validation import run_8020_otel_validation
 
 app = typer.Typer(help="SpiffWorkflow OTEL validation and testing")
 console = Console()
@@ -295,26 +296,10 @@ def validate_8020(
         task = progress.add_task("Executing critical OTEL validation...", total=1)
         
         try:
-            # Use the default OTEL validation workflow for 8020
-            default_workflow = Path(__file__).parent.parent / "workflows" / "otel_validation.bpmn"
-            if not default_workflow.exists():
-                raise Exception(f"Default workflow not found: {default_workflow}")
+            # Import and run the actual 8020 validation
+            from uvmgr.ops.spiff_otel_validation import run_8020_otel_validation
             
-            workflow_stats = run_bpmn(default_workflow)
-            
-            # Create a simple result for 8020 validation
-            class Simple8020Result:
-                def __init__(self, stats):
-                    self.success = stats["status"] == "completed" and stats["failed_tasks"] == 0
-                    self.workflow_name = "8020_validation"
-                    self.duration_seconds = stats.get("duration_seconds", 0)
-                    self.validation_steps = ["Initialize OTEL", "Test Spans", "Test Metrics", "Performance Check"]
-                    self.metrics_validated = 4
-                    self.spans_validated = stats["steps_executed"]
-                    self.errors = [] if self.success else ["8020 validation failed"]
-                    self.performance_data = {"execution_time": self.duration_seconds}
-            
-            result = Simple8020Result(workflow_stats)
+            result = run_8020_otel_validation(project_path)
             progress.advance(task)
             
             # Display results
@@ -944,8 +929,12 @@ def _display_validation_results(result) -> None:
         steps_table.add_column("Status", style="green")
         
         for i, step in enumerate(result.validation_steps, 1):
-            status = "✅ PASS" if step != "FAIL" else "❌ FAIL"
-            steps_table.add_row(str(i), step, status)
+            if hasattr(step, 'name'):  # It's a TestValidationStep object
+                status = "✅ PASS" if step.success else "❌ FAIL"
+                steps_table.add_row(str(i), step.name, status)
+            else:  # It's a string
+                status = "✅ PASS" if step != "FAIL" else "❌ FAIL"
+                steps_table.add_row(str(i), step, status)
         
         console.print(steps_table)
     
@@ -975,11 +964,26 @@ def _display_validation_results(result) -> None:
 
 def _save_validation_results(result, output_file: Path) -> None:
     """Save validation results to JSON file."""
+    # Convert TestValidationStep objects to dictionaries for JSON serialization
+    validation_steps = []
+    for step in result.validation_steps:
+        if hasattr(step, 'name'):  # It's a TestValidationStep object
+            validation_steps.append({
+                "name": step.name,
+                "type": step.type,
+                "success": step.success,
+                "duration": step.duration,
+                "details": step.details,
+                "error": step.error
+            })
+        else:  # It's already a string
+            validation_steps.append(step)
+    
     results_data = {
         "success": result.success,
         "workflow_name": result.workflow_name,
         "duration_seconds": result.duration_seconds,
-        "validation_steps": result.validation_steps,
+        "validation_steps": validation_steps,
         "metrics_validated": result.metrics_validated,
         "spans_validated": result.spans_validated,
         "errors": result.errors,
