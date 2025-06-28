@@ -6,4 +6,8 @@ This module creates and exports the FastMCP instance (mcp) so that other modules
 
 from fastmcp import FastMCP
 
-mcp = FastMCP("uvmgr-mcp", description="Python project management via Model Context Protocol", dependencies=["uv", "pytest", "build", "twine", "ruff"]) 
+mcp = FastMCP(
+    "uvmgr-mcp",
+    description="Python project management via Model Context Protocol",
+    dependencies=["uv", "pytest", "build", "twine", "ruff"],
+)

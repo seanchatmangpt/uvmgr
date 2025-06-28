@@ -1,0 +1,23 @@
+# Example: Custom Application Registry
+# This shows how to create your own semantic conventions
+
+name: "myapp"
+description: "Semantic conventions for MyApp application"
+version: "1.0.0"
+semconv_version: "1.26.0"
+schema_base_url: "https://myapp.example.com/schemas"
+
+# Import base conventions from OpenTelemetry
+imports:
+  - url: "https://github.com/open-telemetry/semantic-conventions.git"
+    path: "model"
+    version: "v1.26.0"
+
+# Custom models
+models:
+  - path: models/user.yaml
+    description: "User-related attributes"
+  - path: models/payment.yaml
+    description: "Payment processing attributes"
+  - path: models/inventory.yaml
+    description: "Inventory management attributes"

@@ -1,0 +1,152 @@
+name: base-command
+description: Base template for instrumenting CLI commands with OpenTelemetry
+version: 1.0.0
+author: weaver-forge
+
+# This is a template that will be used by other command-specific forge files
+# It provides the pattern for adding instrumentation to any command module
+
+inputs:
+  - name: command_module
+    type: string
+    description: Name of the command module (e.g., 'build', 'cache', 'tests')
+  - name: has_subcommands
+    type: boolean
+    default: false
+    description: Whether this command has subcommands
+  - name: uses_subprocess
+    type: boolean  
+    default: false
+    description: Whether this command uses direct subprocess calls
+
+templates:
+  command_instrumentation: |
+    # Add these imports at the top of the file
+    from uvmgr.core.instrumentation import (
+        add_span_attributes, 
+        add_span_event,
+        instrument_command,
+        child_span,
+    )
+    from uvmgr.core.semconv import (
+        CLIAttributes,
+        SpanAttributes,
+        {% if command_module == 'build' %}BuildAttributes,{% endif %}
+        {% if command_module == 'tests' %}TestAttributes,{% endif %}
+        {% if command_module == 'ai' %}AIAttributes,{% endif %}
+        {% if command_module == 'cache' %}UvmgrAttributes,{% endif %}
+        {% if command_module == 'lint' %}ProcessAttributes,{% endif %}
+    )
+    
+    # For each command function, add the decorator:
+    @app.command()
+    @instrument_command("{{ command_module }}_{{ command_name }}", track_args=True)
+    def {{ command_name }}(...):
+        """Command docstring."""
+        # Add semantic attributes specific to this command
+        add_span_attributes(
+            **{
+                # Add command-specific attributes here
+                {% if command_module == 'build' %}
+                BuildAttributes.OPERATION: "{{ command_name }}",
+                {% elif command_module == 'tests' %}
+                TestAttributes.OPERATION: "{{ command_name }}",
+                {% elif command_module == 'ai' %}
+                AIAttributes.OPERATION: "{{ command_name }}",
+                {% else %}
+                "{{ command_module }}.operation": "{{ command_name }}",
+                {% endif %}
+            }
+        )
+        
+        {% if uses_subprocess %}
+        # Replace direct subprocess calls with instrumented versions
+        # Before: subprocess.run(cmd, check=True)
+        # After:
+        from uvmgr.core.process import run_logged
+        with child_span("{{ command_module }}.subprocess", command=" ".join(cmd)):
+            run_logged(cmd)
+        {% endif %}
+        
+        # Add events for important milestones
+        add_span_event("{{ command_name }}.started")
+        
+        # ... command implementation ...
+        
+        add_span_event("{{ command_name }}.completed", {"status": "success"})
+
+  subprocess_fix: |
+    # For commands that use subprocess directly (tests.py, lint.py)
+    # Replace this pattern:
+    import subprocess
+    result = subprocess.run(cmd, check=True)
+    
+    # With this pattern:
+    from uvmgr.core.process import run_logged
+    from uvmgr.core.instrumentation import child_span
+    
+    with child_span("{{ command_module }}.subprocess", 
+                    command=" ".join(cmd),
+                    executable=cmd[0] if cmd else "unknown"):
+        run_logged(cmd)
+
+  error_handling: |
+    # Enhanced error handling with telemetry
+    try:
+        # ... operation ...
+    except subprocess.CalledProcessError as e:
+        add_span_attributes(
+            **{
+                ProcessAttributes.EXIT_CODE: e.returncode,
+                ProcessAttributes.ERROR_OUTPUT: e.stderr if hasattr(e, 'stderr') else "",
+            }
+        )
+        # Let the decorator handle exception recording
+        raise
+    except Exception as e:
+        add_span_event("{{ command_name }}.error", {
+            "error.type": type(e).__name__,
+            "error.message": str(e),
+        })
+        raise
+
+examples:
+  - name: build_command_example
+    description: Example of instrumenting the build wheel command
+    code: |
+      @build_app.command()
+      @instrument_command("build_wheel", track_args=True)
+      def wheel(
+          ctx: typer.Context,
+          outdir: pathlib.Path = typer.Option(None, "--outdir", "-o"),
+      ):
+          """Build wheel distribution."""
+          # Add build-specific attributes
+          add_span_attributes(
+              **{
+                  BuildAttributes.OPERATION: "wheel",
+                  BuildAttributes.TYPE: BuildAttributes.Type.WHEEL.value,
+              }
+          )
+          
+          add_span_event("build.wheel.started")
+          
+          payload = build_ops.dist(outdir)
+          
+          # Add size information if available
+          if "size" in payload:
+              add_span_attributes(
+                  **{
+                      BuildAttributes.SIZE: payload["size"],
+                      BuildAttributes.SIZE_CATEGORY: categorize_size(payload["size"]),
+                  }
+              )
+          
+          add_span_event("build.wheel.completed", {
+              "build.output_path": str(payload.get("output_path", "")),
+          })
+          
+          if ctx.meta.get("json"):
+              dump_json(payload)
+          else:
+              colour("✔ wheel built", "green")

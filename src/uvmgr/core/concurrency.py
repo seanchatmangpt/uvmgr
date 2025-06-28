@@ -7,7 +7,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Callable, Iterable
 from concurrent.futures import ThreadPoolExecutor
-from typing import List, TypeVar
+from typing import TypeVar
 
 from .shell import progress_bar
 

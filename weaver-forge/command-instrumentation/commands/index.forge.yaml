@@ -1,0 +1,114 @@
+name: index-command-instrumentation
+description: Instrumentation for package index management commands
+version: 1.0.0
+author: weaver-forge
+extends: ../base-command.forge.yaml
+
+inputs:
+  command_module: index
+  has_subcommands: true
+  uses_subprocess: false
+
+outputs:
+  - path: src/uvmgr/commands/index.py
+    merge_strategy: patch
+    patches:
+      - description: Add instrumentation imports
+        after: "import typer"
+        content: |
+          
+          from uvmgr.core.instrumentation import instrument_command, add_span_attributes, add_span_event
+          from uvmgr.core.semconv import PackageAttributes, PackageOperations
+      
+      - description: Instrument add command
+        pattern: "@idx_app.command\\(\"add\"\\)\\s*def _add\\(url: str\\):"
+        replacement: |
+          @idx_app.command("add")
+          @instrument_command("index_add", track_args=True)
+          def _add(url: str):
+      
+      - description: Add attributes to add command
+        after: "def _add\\(url: str\\):"
+        content: |
+              # Track index addition
+              add_span_attributes(
+                  **{
+                      PackageAttributes.OPERATION: "add_index",
+                      "index.url": url,
+                      "index.type": "custom",
+                  }
+              )
+              add_span_event("index.add.started", {"url": url})
+      
+      - description: Track add completion
+        after: "idx_ops.add\\(url\\)"
+        content: |
+              add_span_event("index.add.completed", {"url": url, "success": True})
+      
+      - description: Instrument list command
+        pattern: "@idx_app.command\\(\"list\"\\)\\s*def _list\\(\\):"
+        replacement: |
+          @idx_app.command("list")
+          @instrument_command("index_list", track_args=True)
+          def _list():
+      
+      - description: Add attributes to list command
+        after: "def _list\\(\\):"
+        content: |
+              # Track index listing
+              add_span_attributes(
+                  **{
+                      PackageAttributes.OPERATION: "list_indexes",
+                  }
+              )
+              add_span_event("index.list.started")
+      
+      - description: Track list result
+        after: "for line in idx_ops.list_indexes\\(\\):"
+        content: |
+          indexes = idx_ops.list_indexes()
+          add_span_attributes(**{"index.count": len(indexes)})
+          add_span_event("index.list.completed", {"count": len(indexes)})
+          
+          for line in indexes:
+      
+      - description: Fix list iteration variable
+        pattern: "colour\\(line, \"cyan\"\\)"
+        replacement: "colour(line, \"cyan\")"
+
+example_applied: |
+  @idx_app.command("add")
+  @instrument_command("index_add", track_args=True)
+  def _add(url: str):
+      # Track index addition
+      add_span_attributes(
+          **{
+              PackageAttributes.OPERATION: "add_index",
+              "index.url": url,
+              "index.type": "custom",
+          }
+      )
+      add_span_event("index.add.started", {"url": url})
+      
+      idx_ops.add(url)
+      add_span_event("index.add.completed", {"url": url, "success": True})
+      colour(f"✔ added {url}", "green")
+  
+  
+  @idx_app.command("list")
+  @instrument_command("index_list", track_args=True)
+  def _list():
+      # Track index listing
+      add_span_attributes(
+          **{
+              PackageAttributes.OPERATION: "list_indexes",
+          }
+      )
+      add_span_event("index.list.started")
+      
+      indexes = idx_ops.list_indexes()
+      add_span_attributes(**{"index.count": len(indexes)})
+      add_span_event("index.list.completed", {"count": len(indexes)})
+      
+      for line in indexes:
+          colour(line, "cyan")

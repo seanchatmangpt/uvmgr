@@ -7,7 +7,6 @@ User-facing dependency orchestration (uv add / remove / upgrade / list).
 from __future__ import annotations
 
 import logging
-from typing import List
 
 from uvmgr.core.shell import timed
 from uvmgr.core.telemetry import span
@@ -17,7 +16,7 @@ _log = logging.getLogger("uvmgr.ops.deps")
 
 
 @timed
-def add(pkgs: List[str], *, dev: bool = False) -> dict:
+def add(pkgs: list[str], *, dev: bool = False) -> dict:
     with span("deps.add", pkgs=" ".join(pkgs), dev=dev):
         _rt.add(pkgs, dev=dev)
     _log.debug("Added %s (dev=%s)", pkgs, dev)
@@ -25,7 +24,7 @@ def add(pkgs: List[str], *, dev: bool = False) -> dict:
 
 
 @timed
-def remove(pkgs: List[str]) -> dict:
+def remove(pkgs: list[str]) -> dict:
     with span("deps.remove", pkgs=" ".join(pkgs)):
         _rt.remove(pkgs)
     _log.debug("Removed %s", pkgs)
@@ -33,13 +32,14 @@ def remove(pkgs: List[str]) -> dict:
 
 
 @timed
-def upgrade(*, all_pkgs: bool = False, pkgs: List[str] | None = None) -> dict:
+def upgrade(*, all_pkgs: bool = False, pkgs: list[str] | None = None) -> dict:
     with span("deps.upgrade", all=all_pkgs, pkgs=pkgs):
         _rt.upgrade(all_pkgs=all_pkgs, pkgs=pkgs)
     _log.debug("Upgraded %s", "all packages" if all_pkgs else pkgs)
     return {"upgraded": "all" if all_pkgs else pkgs}
 
 
+@timed
 def list_pkgs() -> list[str]:
     """Return the current dependency list as plain strings."""
     txt = _rt.list_pkgs()

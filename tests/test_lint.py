@@ -3,7 +3,6 @@ Tests for the lint command.
 """
 
 import json
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -120,7 +119,7 @@ def test_lint_json_output(mock_ruff):
     assert result.exit_code == 0
     assert json.loads(result.stdout) == {
         "status": "success",
-        "message": "✅ No Ruff violations found"
+        "message": "✅ No Ruff violations found",
     }
 
     # Test format command
@@ -129,7 +128,7 @@ def test_lint_json_output(mock_ruff):
     assert result.exit_code == 0
     assert json.loads(result.stdout) == {
         "status": "success",
-        "message": "✅ Code formatted successfully"
+        "message": "✅ Code formatted successfully",
     }
 
     # Test fix command
@@ -138,21 +137,18 @@ def test_lint_json_output(mock_ruff):
     assert result.exit_code == 0
     assert json.loads(result.stdout) == {
         "status": "success",
-        "message": "✅ All issues fixed successfully"
+        "message": "✅ All issues fixed successfully",
     }
 
     # Test error case
     mock_ruff.return_value.returncode = 1
     result = runner.invoke(app, ["--json", "lint", "check"])
     assert result.exit_code == 1
-    assert json.loads(result.stdout) == {
-        "status": "error",
-        "message": "❌ Ruff violations found"
-    }
+    assert json.loads(result.stdout) == {"status": "error", "message": "❌ Ruff violations found"}
 
 
 def test_lint_invalid_path():
     """Test lint command with invalid path."""
     result = runner.invoke(app, ["lint", "check", "nonexistent/"])
     assert result.exit_code != 0
-    assert "does not exist" in result.stdout 
+    assert "does not exist" in result.stdout

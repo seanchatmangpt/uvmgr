@@ -7,7 +7,6 @@ from __future__ import annotations
 import subprocess
 import sys
 from collections.abc import Mapping
-from typing import Type
 
 __all__ = ["enforce_ruff", "map_exception"]
 

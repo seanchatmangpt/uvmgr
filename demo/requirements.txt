@@ -1,0 +1,6 @@
+nautilus_trader
+matplotlib
+seaborn
+pandas
+numpy
+jupyter

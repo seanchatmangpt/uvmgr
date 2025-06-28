@@ -5,7 +5,6 @@ uvmgr.ops.exec – orchestration for running Python scripts with uv.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List, Optional
 
 from uvmgr.core.shell import timed
 from uvmgr.runtime import exec as _rt
@@ -15,14 +14,14 @@ from uvmgr.runtime import exec as _rt
 def script(
     path: Path | None = None,
     *,
-    argv: List[str] | None = None,
+    argv: list[str] | None = None,
     stdin: bool = False,
     no_project: bool = False,
-    with_deps: List[str] | None = None,
+    with_deps: list[str] | None = None,
 ) -> None:
     """
     Execute a Python script using uv run.
-    
+
     Parameters
     ----------
     path

@@ -7,7 +7,7 @@ directly and always return JSON-safe data structures.
 
 This package-level ``__init__``:
 
-1. Documents every ops module in **__all__**.  
+1. Documents every ops module in **__all__**.
 2. Implements a `__getattr__` lazy importer so
    ``from uvmgr.ops import deps`` works without
    importing *build*, *ai*, etc. until needed.
@@ -24,7 +24,7 @@ import sys
 from types import ModuleType
 from typing import Final, List
 
-__all__: Final[List[str]] = [
+__all__: Final[list[str]] = [
     # core verbs
     "deps",
     "tools",

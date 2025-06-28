@@ -35,9 +35,9 @@ for _name in _SUBMODS:
     _mod: ModuleType = importlib.import_module(f".{_name}", package=__name__)
     # copy *public* symbols only, never dunders, never overwrite built-ins
     for _k, _v in _mod.__dict__.items():
-        if _k.startswith("_"):           # skip dunder / private
+        if _k.startswith("_"):  # skip dunder / private
             continue
-        if _k in globals():              # don't clobber existing names
+        if _k in globals():  # don't clobber existing names
             continue
         globals()[_k] = _v
     # also expose sub-module itself

@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import json
 import time
-from pathlib import Path
 
 from .fs import hash_str
 from .paths import CACHE_DIR

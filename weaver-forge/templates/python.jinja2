@@ -1,0 +1,66 @@
+{#- OpenTelemetry Weaver Python Code Generation Template -#}
+{#- This template generates Python constants from semantic conventions -#}
+"""
+Auto-generated semantic convention constants for {{ registry_name }}.
+Generated from OpenTelemetry Weaver semantic conventions.
+
+DO NOT EDIT - this file is auto-generated.
+
+Generated on: {{ timestamp }}
+Registry version: {{ registry_version }}
+"""
+
+from __future__ import annotations
+
+{% for group in groups %}
+{%- if group.attributes %}
+
+class {{ group.id | pascal_case }}Attributes:
+    """{{ group.brief }}"""
+    {%- for attr in group.attributes %}
+    {{ attr.id | upper }} = "{{ group.prefix }}.{{ attr.id }}"
+    {%- endfor %}
+{%- endif %}
+{%- endfor %}
+
+{#- Generate enums for attributes with predefined values -#}
+{% for group in groups %}
+{%- for attr in group.attributes %}
+{%- if attr.type is mapping and attr.type.members %}
+
+class {{ group.id | pascal_case }}{{ attr.id | pascal_case }}Values:
+    """Valid values for {{ group.prefix }}.{{ attr.id }}"""
+    {%- for member in attr.type.members %}
+    {{ member.id | upper }} = "{{ member.value }}"
+    {%- endfor %}
+{%- endif %}
+{%- endfor %}
+{%- endfor %}
+
+{#- Generate metric name constants -#}
+{% if metrics %}
+
+class MetricNames:
+    """Metric name constants"""
+    {%- for metric in metrics %}
+    {{ metric.id | upper }} = "{{ metric.id }}"
+    {%- endfor %}
+{% endif %}
+
+{#- Generate a registry of all conventions -#}
+
+SEMCONV_REGISTRY = {
+    "version": "{{ registry_version }}",
+    "groups": [
+        {%- for group in groups %}
+        "{{ group.id }}",
+        {%- endfor %}
+    ],
+    {%- if metrics %}
+    "metrics": [
+        {%- for metric in metrics %}
+        "{{ metric.id }}",
+        {%- endfor %}
+    ],
+    {%- endif %}
+}

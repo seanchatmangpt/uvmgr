@@ -10,4 +10,4 @@ with the main implementation in the spiff module.
 
 from __future__ import annotations
 
-__all__ = ["spiff"] 
+__all__ = ["spiff"]

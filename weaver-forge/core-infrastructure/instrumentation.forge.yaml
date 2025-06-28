@@ -1,0 +1,464 @@
+name: instrumentation
+description: Core instrumentation decorators and helpers for uvmgr commands and operations
+version: 1.0.0
+author: weaver-forge
+
+outputs:
+  - path: src/uvmgr/core/instrumentation.py
+    template: |
+      """
+      Core instrumentation decorators and helpers for OpenTelemetry integration.
+      
+      This module provides the primary decorators used throughout uvmgr for
+      instrumenting commands, operations, and other functions with OpenTelemetry
+      spans, metrics, and semantic conventions.
+      """
+      
+      from __future__ import annotations
+      
+      import functools
+      import time
+      from contextlib import contextmanager
+      from typing import Any, Callable, Optional, TypeVar, Union
+      
+      import typer
+      from opentelemetry import trace
+      from opentelemetry.trace import Status, StatusCode
+      
+      from .telemetry import span, metric_counter, metric_histogram, record_exception
+      
+      # Wrapper functions to handle the callable metric API
+      def _record_counter(name: str, value: int = 1, attributes: dict[str, Any] = None):
+          """Record a counter metric."""
+          counter = metric_counter(name)
+          counter(value, attributes or {})
+      
+      def _record_histogram(name: str, value: float, attributes: dict[str, Any] = None):
+          """Record a histogram metric."""
+          histogram = metric_histogram(name)
+          histogram(value, attributes or {})
+      
+      # Type variable for decorated functions
+      F = TypeVar('F', bound=Callable[..., Any])
+      
+      
+      def instrument_command(
+          name: Optional[str] = None,
+          command_type: str = "cli",
+          track_args: bool = True,
+          record_errors: bool = True,
+      ) -> Callable[[F], F]:
+          """
+          Decorator to instrument CLI commands with OpenTelemetry.
+          
+          This decorator automatically creates spans for CLI commands, records metrics,
+          and handles exceptions with proper OTEL semantic conventions.
+          
+          Parameters
+          ----------
+          name : str, optional
+              The name of the command for telemetry. If not provided, uses function name.
+          command_type : str
+              Type of command (e.g., "cli", "cli.subcommand")
+          track_args : bool
+              Whether to track command arguments in span attributes
+          record_errors : bool
+              Whether to automatically record exceptions
+          
+          Returns
+          -------
+          Callable
+              Decorated function with telemetry instrumentation
+          
+          Examples
+          --------
+          >>> @app.command()
+          ... @instrument_command("deps_add")
+          ... def add(packages: List[str]):
+          ...     # Command implementation
+          ...     pass
+          """
+          def decorator(func: F) -> F:
+              @functools.wraps(func)
+              def wrapper(*args, **kwargs) -> Any:
+                  command_name = name or func.__name__
+                  span_name = f"{command_type}.command.{command_name}"
+                  
+                  # Build initial attributes
+                  attributes = {
+                      "cli.command": command_name,
+                      "cli.module": func.__module__.split('.')[-1] if func.__module__ else "unknown",
+                      "code.function": func.__name__,
+                      "code.namespace": func.__module__ or "unknown",
+                  }
+                  
+                  # Track command arguments if requested
+                  if track_args and args:
+                      # Safely extract Typer context if present
+                      if args and hasattr(args[0], '__class__') and args[0].__class__.__name__ == 'Context':
+                          ctx = args[0]
+                          if hasattr(ctx, 'parent') and ctx.parent:
+                              attributes["cli.parent_command"] = ctx.parent.info_name
+                  
+                  # Start span and metrics
+                  start_time = time.time()
+                  
+                  with span(
+                      span_name,
+                      span_kind=trace.SpanKind.SERVER,
+                      **attributes
+                  ) as current_span:
+                      # Increment command counter
+                      _record_counter(f"cli.command.{command_name}.calls", 1, {
+                          "command": command_name,
+                          "module": attributes["cli.module"],
+                      })
+                      
+                      try:
+                          # Add start event
+                          if current_span:
+                              current_span.add_event(
+                                  "command.started",
+                                  {"cli.command": command_name}
+                              )
+                          
+                          # Execute the command
+                          result = func(*args, **kwargs)
+                          
+                          # Success handling
+                          if current_span:
+                              current_span.set_status(Status(StatusCode.OK))
+                              current_span.add_event(
+                                  "command.completed",
+                                  {
+                                      "cli.command": command_name,
+                                      "cli.success": True,
+                                  }
+                              )
+                          
+                          # Record success metrics
+                          duration = time.time() - start_time
+                          _record_histogram(
+                              "cli.command.duration",
+                              duration,
+                              {
+                                  "command": command_name,
+                                  "status": "success",
+                              }
+                          )
+                          
+                          return result
+                      
+                      except typer.Exit as e:
+                          # Handle Typer exits (like --help)
+                          exit_code = getattr(e, 'exit_code', 0)
+                          
+                          if current_span:
+                              if exit_code == 0:
+                                  current_span.set_status(Status(StatusCode.OK))
+                              else:
+                                  current_span.set_status(
+                                      Status(StatusCode.ERROR, f"Exit code: {exit_code}")
+                                  )
+                              current_span.set_attribute("cli.exit_code", exit_code)
+                          
+                          # Record exit metrics
+                          duration = time.time() - start_time
+                          _record_histogram(
+                              "cli.command.duration",
+                              duration,
+                              {
+                                  "command": command_name,
+                                  "status": "exit",
+                                  "exit_code": str(exit_code),
+                              }
+                          )
+                          
+                          raise
+                      
+                      except Exception as e:
+                          # Error handling
+                          if record_errors:
+                              record_exception(e, escaped=True)
+                          
+                          if current_span:
+                              current_span.set_status(
+                                  Status(StatusCode.ERROR, str(e))
+                              )
+                              current_span.add_event(
+                                  "command.failed",
+                                  {
+                                      "cli.command": command_name,
+                                      "cli.success": False,
+                                      "exception.type": type(e).__name__,
+                                  }
+                              )
+                          
+                          # Record error metrics
+                          duration = time.time() - start_time
+                          _record_counter(f"cli.command.{command_name}.errors", 1, {
+                              "command": command_name,
+                              "error_type": type(e).__name__,
+                          })
+                          _record_histogram(
+                              "cli.command.duration",
+                              duration,
+                              {
+                                  "command": command_name,
+                                  "status": "error",
+                              }
+                          )
+                          
+                          raise
+              
+              return wrapper  # type: ignore
+          
+          return decorator
+      
+      
+      def instrument_operation(
+          operation_type: str,
+          operation_name: Optional[str] = None,
+          track_args: bool = False,
+          record_errors: bool = True,
+      ) -> Callable[[F], F]:
+          """
+          Decorator to instrument operations with OpenTelemetry.
+          
+          This decorator is for the operations layer (ops/*) and creates child spans
+          under command spans with appropriate semantic conventions.
+          
+          Parameters
+          ----------
+          operation_type : str
+              Type of operation (e.g., "deps", "build", "test")
+          operation_name : str, optional
+              Name of the specific operation. If not provided, uses function name.
+          track_args : bool
+              Whether to include function arguments in span attributes
+          record_errors : bool
+              Whether to automatically record exceptions
+          
+          Returns
+          -------
+          Callable
+              Decorated function with telemetry instrumentation
+          """
+          def decorator(func: F) -> F:
+              @functools.wraps(func)
+              def wrapper(*args, **kwargs) -> Any:
+                  op_name = operation_name or func.__name__
+                  span_name = f"{operation_type}.{op_name}"
+                  
+                  attributes = {
+                      "uvmgr.operation.type": operation_type,
+                      "uvmgr.operation.name": op_name,
+                      "code.function": func.__name__,
+                      "code.namespace": func.__module__ or "unknown",
+                  }
+                  
+                  # Add operation-specific semantic conventions
+                  if operation_type == "package":
+                      attributes["package.manager"] = "uv"
+                      attributes["package.operation"] = op_name
+                  elif operation_type == "build":
+                      attributes["build.system"] = "python"
+                      attributes["build.operation"] = op_name
+                  elif operation_type == "test":
+                      attributes["test.framework"] = "pytest"
+                      attributes["test.operation"] = op_name
+                  
+                  start_time = time.time()
+                  
+                  with span(span_name, **attributes) as current_span:
+                      try:
+                          result = func(*args, **kwargs)
+                          
+                          # Record success metrics
+                          duration = time.time() - start_time
+                          _record_histogram(
+                              f"{operation_type}.operation.duration",
+                              duration,
+                              {
+                                  "operation": op_name,
+                                  "status": "success",
+                              }
+                          )
+                          _record_counter(
+                              f"{operation_type}.operations",
+                              1,
+                              {
+                                  "operation": op_name,
+                                  "status": "success",
+                              }
+                          )
+                          
+                          return result
+                      
+                      except Exception as e:
+                          if record_errors:
+                              record_exception(e, escaped=True)
+                          
+                          # Record error metrics
+                          duration = time.time() - start_time
+                          _record_histogram(
+                              f"{operation_type}.operation.duration",
+                              duration,
+                              {
+                                  "operation": op_name,
+                                  "status": "error",
+                              }
+                          )
+                          _record_counter(
+                              f"{operation_type}.operations",
+                              1,
+                              {
+                                  "operation": op_name,
+                                  "status": "error",
+                              }
+                          )
+                          _record_counter(
+                              f"{operation_type}.errors",
+                              1,
+                              {
+                                  "operation": op_name,
+                                  "error_type": type(e).__name__,
+                              }
+                          )
+                          
+                          raise
+              
+              return wrapper  # type: ignore
+          
+          return decorator
+      
+      
+      def add_span_attributes(**attributes: Any) -> None:
+          """
+          Add attributes to the current span.
+          
+          This is a convenience function to add attributes to the currently
+          active span without needing to access the span directly.
+          
+          Parameters
+          ----------
+          **attributes : Any
+              Key-value pairs of attributes to add to the current span
+          
+          Examples
+          --------
+          >>> add_span_attributes(
+          ...     package_name="pytest",
+          ...     package_version="7.0.0",
+          ...     operation="install"
+          ... )
+          """
+          current_span = trace.get_current_span()
+          if current_span and current_span.is_recording():
+              for key, value in attributes.items():
+                  # Ensure valid attribute types
+                  if isinstance(value, (str, bool, int, float)):
+                      current_span.set_attribute(key, value)
+                  elif isinstance(value, (list, tuple)):
+                      # Convert sequences to comma-separated strings
+                      current_span.set_attribute(key, ",".join(str(v) for v in value))
+                  else:
+                      # Convert other types to string
+                      current_span.set_attribute(key, str(value))
+      
+      
+      def add_span_event(name: str, attributes: Optional[dict[str, Any]] = None) -> None:
+          """
+          Add an event to the current span.
+          
+          Events are used to mark important points in the span's lifetime,
+          such as reaching a milestone or encountering a specific condition.
+          
+          Parameters
+          ----------
+          name : str
+              Name of the event
+          attributes : dict, optional
+              Attributes to attach to the event
+          """
+          current_span = trace.get_current_span()
+          if current_span and current_span.is_recording():
+              current_span.add_event(name, attributes or {})
+      
+      
+      @contextmanager
+      def child_span(name: str, **attributes: Any):
+          """
+          Create a child span within the current span context.
+          
+          This is useful for creating sub-operations within a larger operation,
+          maintaining the trace hierarchy.
+          
+          Parameters
+          ----------
+          name : str
+              Name of the child span
+          **attributes : Any
+              Attributes to add to the child span
+          
+          Yields
+          ------
+          Span
+              The child span object
+          
+          Examples
+          --------
+          >>> with child_span("deps.resolve_dependencies", package_count=5):
+          ...     # Resolve dependencies
+          ...     pass
+          """
+          with span(name, **attributes) as child:
+              yield child
+      
+      
+      def record_metric(
+          metric_type: str,
+          name: str,
+          value: Union[int, float],
+          attributes: Optional[dict[str, Any]] = None,
+      ) -> None:
+          """
+          Record a metric value.
+          
+          This is a convenience function that routes to the appropriate metric
+          type based on the metric_type parameter.
+          
+          Parameters
+          ----------
+          metric_type : str
+              Type of metric: "counter", "histogram", or "gauge"
+          name : str
+              Name of the metric
+          value : int or float
+              Value to record
+          attributes : dict, optional
+              Attributes to attach to the metric
+          """
+          attrs = attributes or {}
+          
+          if metric_type == "counter":
+              _record_counter(name, value, attrs)
+          elif metric_type == "histogram":
+              _record_histogram(name, value, attrs)
+          elif metric_type == "gauge":
+              # For gauges, we use histogram as a approximation
+              # Real gauge implementation would require observable callbacks
+              metric_histogram(f"{name}.gauge", value, attrs)
+          else:
+              raise ValueError(f"Unknown metric type: {metric_type}")
+      
+      
+      # Export all public functions
+      __all__ = [
+          "instrument_command",
+          "instrument_operation",
+          "add_span_attributes",
+          "add_span_event",
+          "child_span",
+          "record_metric",
+      ]

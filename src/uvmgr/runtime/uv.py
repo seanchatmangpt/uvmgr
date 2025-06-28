@@ -19,11 +19,9 @@ from __future__ import annotations
 import logging
 import shlex
 from pathlib import Path
-from typing import List
 
 from uvmgr.core.config import env_or
 from uvmgr.core.process import run_logged
-from uvmgr.core.shell import colour
 from uvmgr.core.telemetry import span
 
 _log = logging.getLogger("uvmgr.runtime.uv")
@@ -64,19 +62,22 @@ def call(sub_cmd: str, *, capture: bool = False, cwd: Path | None = None) -> str
 # High-level helpers – used by ops.deps
 # --------------------------------------------------------------------------- #
 def add(pkgs: list[str], *, dev: bool = False) -> None:
-    flags = "--dev" if dev else ""
-    call(f"add {flags} {' '.join(pkgs)}")
+    with span("uv.add", pkgs=" ".join(pkgs), dev=dev):
+        flags = "--dev" if dev else ""
+        call(f"add {flags} {' '.join(pkgs)}")
 
 
 def remove(pkgs: list[str]) -> None:
-    call(f"remove {' '.join(pkgs)}")
+    with span("uv.remove", pkgs=" ".join(pkgs)):
+        call(f"remove {' '.join(pkgs)}")
 
 
 def upgrade(*, all_pkgs: bool = False, pkgs: list[str] | None = None) -> None:
-    if all_pkgs:
-        call("upgrade --all")
-    elif pkgs:
-        call(f"upgrade {' '.join(pkgs)}")
+    with span("uv.upgrade", all=all_pkgs, pkgs=pkgs or []):
+        if all_pkgs:
+            call("upgrade --all")
+        elif pkgs:
+            call(f"upgrade {' '.join(pkgs)}")
 
 
 def list_pkgs() -> str:
@@ -84,4 +85,5 @@ def list_pkgs() -> str:
     Return `uv list` output (one package per line) as **plain text**.
     The ops layer will turn it into a Python list.
     """
-    return call("list", capture=True) or ""
+    with span("uv.list"):
+        return call("list", capture=True) or ""

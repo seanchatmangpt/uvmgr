@@ -10,6 +10,7 @@ from SpiffWorkflow.bpmn.parser import BpmnParser
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow
 
 from uvmgr.core.shell import colour
+from uvmgr.core.telemetry import span
 
 
 def _load(path: Path) -> BpmnWorkflow:
@@ -33,7 +34,8 @@ def _step(wf: BpmnWorkflow) -> None:
 
 
 def run_bpmn(path: Path) -> None:
-    wf = _load(path)
-    while not wf.is_completed():
-        _step(wf)
-    colour("✔ BPMN workflow completed", "green")
+    with span("agent.run_bpmn", path=str(path)):
+        wf = _load(path)
+        while not wf.is_completed():
+            _step(wf)
+        colour("✔ BPMN workflow completed", "green")

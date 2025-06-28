@@ -9,7 +9,6 @@ import re
 import shlex
 import sys
 from collections.abc import Iterable
-from pathlib import Path
 
 from .paths import bin_dir
 
@@ -37,7 +36,7 @@ def is_py_file(tok: str) -> bool:
 
 
 def prepend_env_path(cmd: str) -> str:
-    return f"env PATH={bin_dir()}:{os.getenv('PATH','')} {cmd}"
+    return f"env PATH={bin_dir()}:{os.getenv('PATH', '')} {cmd}"
 
 
 def adapt_cmd(cmd: str | Iterable[str]) -> str:

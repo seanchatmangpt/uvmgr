@@ -1,0 +1,165 @@
+name: serve-command-instrumentation
+description: Instrumentation for MCP server commands
+version: 1.0.0
+author: weaver-forge
+extends: ../base-command.forge.yaml
+
+inputs:
+  command_module: serve
+  has_subcommands: true
+  uses_subprocess: false
+
+outputs:
+  - path: src/uvmgr/commands/serve.py
+    merge_strategy: patch
+    patches:
+      - description: Update imports to new instrumentation pattern
+        pattern: "from uvmgr.core.instrumentation import instrument_subcommand"
+        replacement: |
+          from uvmgr.core.instrumentation import instrument_command, add_span_attributes, add_span_event
+          from uvmgr.core.semconv import ServerAttributes, ServerOperations
+      
+      - description: Update serve instrumentation
+        pattern: "@instrument_subcommand\\(\"mcp\"\\)"
+        replacement: "@instrument_command(\"mcp_serve\", track_args=True)"
+      
+      - description: Add server startup attributes
+        after: "auth_token: str = typer.Option\\(.*\\),\\s*\\):"
+        content: |
+              # Track MCP server startup
+              add_span_attributes(
+                  **{
+                      ServerAttributes.OPERATION: "start",
+                      ServerAttributes.PROTOCOL: "mcp",
+                      ServerAttributes.TRANSPORT: transport,
+                      ServerAttributes.HOST: host,
+                      ServerAttributes.PORT: port,
+                      "server.auth_enabled": auth_token is not None,
+                  }
+              )
+              add_span_event("mcp.server.startup", {
+                  "transport": transport,
+                  "host": host,
+                  "port": port,
+                  "auth": auth_token is not None
+              })
+      
+      - description: Track server configuration
+        after: "# Use stderr for stdio transport to avoid interfering with MCP protocol"
+        content: |
+              
+              # Track server configuration
+              add_span_event("mcp.server.config", {
+                  "transport": transport,
+                  "stdio_mode": transport == "stdio",
+                  "network_mode": transport in ["sse", "http"]
+              })
+      
+      - description: Track stdio transport start
+        after: "mcp.run\\(\\)"
+        content: |
+              add_span_event("mcp.server.started", {"transport": "stdio"})
+      
+      - description: Track SSE transport start  
+        after: "mcp.run\\(transport=\"sse\", host=host, port=port\\)"
+        content: |
+              add_span_event("mcp.server.started", {
+                  "transport": "sse",
+                  "url": f"http://{host}:{port}/sse"
+              })
+      
+      - description: Track HTTP transport start
+        after: "mcp.run\\(transport=\"streamable-http\", host=host, port=port, path=\"/mcp\"\\)"
+        content: |
+              add_span_event("mcp.server.started", {
+                  "transport": "http",
+                  "url": f"http://{host}:{port}/mcp",
+                  "auth_required": auth_token is not None
+              })
+      
+      - description: Track authentication setup
+        after: "mcp.add_auth\\(BearerTokenAuth\\(token=auth_token\\)\\)"
+        content: |
+              add_span_event("mcp.server.auth_configured", {"auth_type": "bearer_token"})
+      
+      - description: Track server shutdown
+        after: "colour\\(\"\\\\n\\\\n✋ MCP server stopped by user\", \"yellow\"\\)"
+        content: |
+              add_span_event("mcp.server.shutdown", {"reason": "user_interrupt"})
+      
+      - description: Track import errors
+        after: "colour\\(\"❌ FastMCP is not installed\", \"red\"\\)"
+        content: |
+              add_span_event("mcp.server.error", {
+                  "error_type": "missing_dependency",
+                  "dependency": "fastmcp"
+              })
+      
+      - description: Track general errors
+        after: "colour\\(f\"❌ Error running MCP server: \\{e\\}\", \"red\"\\)"
+        content: |
+              add_span_event("mcp.server.error", {
+                  "error_type": "runtime_error",
+                  "error_message": str(e)
+              })
+
+example_applied: |
+  @mcp_app.command("serve")
+  @instrument_command("mcp_serve", track_args=True)
+  def serve(
+      transport: str = typer.Option("stdio", "--transport", "-t"),
+      host: str = typer.Option("127.0.0.1", "--host"),
+      port: int = typer.Option(8000, "--port", "-p"),
+      auth_token: str = typer.Option(None, "--auth-token"),
+  ):
+      \"\"\"Start the MCP server for uvmgr functionality...\"\"\"
+      # Track MCP server startup
+      add_span_attributes(
+          **{
+              ServerAttributes.OPERATION: "start",
+              ServerAttributes.PROTOCOL: "mcp",
+              ServerAttributes.TRANSPORT: transport,
+              ServerAttributes.HOST: host,
+              ServerAttributes.PORT: port,
+              "server.auth_enabled": auth_token is not None,
+          }
+      )
+      add_span_event("mcp.server.startup", {
+          "transport": transport,
+          "host": host,
+          "port": port,
+          "auth": auth_token is not None
+      })
+      
+      try:
+          from uvmgr.mcp import mcp
+          
+          # Use stderr for stdio transport to avoid interfering with MCP protocol
+          
+          # Track server configuration
+          add_span_event("mcp.server.config", {
+              "transport": transport,
+              "stdio_mode": transport == "stdio",
+              "network_mode": transport in ["sse", "http"]
+          })
+          
+          print_fn = colour_stderr if transport == "stdio" else colour
+          
+          # ... server setup and configuration ...
+          
+          if transport == "stdio":
+              print_fn("🚀 Starting MCP server (stdio transport)...", "green")
+              mcp.run()
+              add_span_event("mcp.server.started", {"transport": "stdio"})
+          elif transport == "sse":
+              print_fn("🚀 Starting MCP server (SSE transport)...", "green")
+              mcp.run(transport="sse", host=host, port=port)
+              add_span_event("mcp.server.started", {
+                  "transport": "sse",
+                  "url": f"http://{host}:{port}/sse"
+              })
+          # ... other transports ...
+      except KeyboardInterrupt:
+          add_span_event("mcp.server.shutdown", {"reason": "user_interrupt"})
+          colour("\n\n✋ MCP server stopped by user", "yellow")
+          raise typer.Exit(0)

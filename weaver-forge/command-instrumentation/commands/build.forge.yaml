@@ -1,0 +1,176 @@
+name: build-command-instrumentation
+description: Instrumentation for build commands (wheel, sdist, exe, etc.)
+version: 1.0.0
+author: weaver-forge
+extends: ../base-command.forge.yaml
+
+inputs:
+  command_module: build
+  has_subcommands: true
+  uses_subprocess: false
+
+outputs:
+  - path: src/uvmgr/commands/build.py
+    merge_strategy: patch
+    patches:
+      - description: Add instrumentation imports
+        after: "import typer"
+        content: |
+          
+          from uvmgr.core.instrumentation import add_span_attributes, add_span_event, instrument_command
+          from uvmgr.core.semconv import BuildAttributes, BuildOperations, categorize_size
+      
+      - description: Instrument wheel command
+        pattern: "@build_app.command\\(\\)"
+        replacement: |
+          @build_app.command()
+          @instrument_command("build_wheel", track_args=True)
+      
+      - description: Add attributes to wheel command
+        after: "def wheel\\(ctx: typer.Context,"
+        find_end: "):"
+        append: |
+              """Build wheel distribution (.whl)."""
+              # Add build operation attributes
+              add_span_attributes(
+                  **{
+                      BuildAttributes.OPERATION: "wheel",
+                      BuildAttributes.TYPE: "wheel",
+                  }
+              )
+              
+              add_span_event("build.wheel.started", {"output_dir": str(outdir) if outdir else "dist"})
+      
+      - description: Add metrics after wheel build
+        after: "payload = build_ops.dist\\(outdir\\)"
+        content: |
+              
+              # Add size information if available
+              if "size" in payload:
+                  add_span_attributes(
+                      **{
+                          BuildAttributes.SIZE: payload["size"],
+                          BuildAttributes.SIZE_CATEGORY: categorize_size(payload["size"]),
+                      }
+                  )
+              
+              add_span_event("build.wheel.completed", {
+                  "build.success": True,
+                  "build.output_path": str(payload.get("output_path", "")),
+              })
+      
+      - description: Instrument exe command
+        pattern: "@build_app.command\\(\\)\ndef exe\\("
+        replacement: |
+          @build_app.command()
+          @instrument_command("build_exe", track_args=True)
+          def exe(
+      
+      - description: Add attributes to exe command
+        after: "\"\"\"Build standalone executable using PyInstaller.\"\"\""
+        content: |
+              # Add build operation attributes
+              add_span_attributes(
+                  **{
+                      BuildAttributes.OPERATION: "exe",
+                      BuildAttributes.TYPE: "exe",
+                      BuildAttributes.PLATFORM: sys.platform,
+                      "build.onefile": onefile,
+                      "build.clean": clean,
+                      "build.debug": debug,
+                  }
+              )
+              
+              add_span_event("build.exe.started", {
+                  "build.name": name,
+                  "build.onefile": onefile,
+              })
+      
+      - description: Add exe build completion tracking
+        after: "payload = build_ops.exe\\("
+        find_pattern: "\\)"
+        append: |
+              
+              # Track exe build metrics
+              if "size" in payload:
+                  add_span_attributes(
+                      **{
+                          BuildAttributes.SIZE: payload["size"],
+                          BuildAttributes.SIZE_CATEGORY: categorize_size(payload["size"]),
+                      }
+                  )
+              
+              add_span_event("build.exe.completed", {
+                  "build.success": True,
+                  "build.executable": str(payload.get("output_file", "")),
+              })
+      
+      - description: Instrument dogfood command
+        pattern: "@build_app.command\\(\\)\ndef dogfood\\("
+        replacement: |
+          @build_app.command()
+          @instrument_command("build_dogfood", track_args=True)
+          def dogfood(
+      
+      - description: Add dogfood instrumentation
+        after: "\"\"\"Build uvmgr executable \\(eat own dog food\\)."
+        find_end: "\"\"\""
+        append: |
+              # Special instrumentation for self-build
+              add_span_attributes(
+                  **{
+                      BuildAttributes.OPERATION: "dogfood",
+                      BuildAttributes.TYPE: "exe",
+                      "build.self_build": True,
+                      "build.include_version": version,
+                      "build.include_platform": platform_suffix,
+                  }
+              )
+              
+              add_span_event("build.dogfood.started", {
+                  "build.target": "uvmgr",
+                  "build.recursive": True,
+              })
+
+      - description: Add test tracking for dogfood
+        after: "if test:"
+        find_pattern: "test_result = build_ops.test_executable"
+        content: |
+              add_span_event("build.dogfood.testing", {"test.executable": str(pathlib.Path(payload["output_file"]))})
+              # Test the built executable
+
+example_applied: |
+  @build_app.command()
+  @instrument_command("build_wheel", track_args=True)
+  def wheel(ctx: typer.Context, outdir: pathlib.Path = typer.Option(None, "--outdir", "-o")):
+      """Build wheel distribution (.whl)."""
+      # Add build operation attributes
+      add_span_attributes(
+          **{
+              BuildAttributes.OPERATION: "wheel",
+              BuildAttributes.TYPE: "wheel",
+          }
+      )
+      
+      add_span_event("build.wheel.started", {"output_dir": str(outdir) if outdir else "dist"})
+      
+      payload = build_ops.dist(outdir)
+      
+      # Add size information if available
+      if "size" in payload:
+          add_span_attributes(
+              **{
+                  BuildAttributes.SIZE: payload["size"],
+                  BuildAttributes.SIZE_CATEGORY: categorize_size(payload["size"]),
+              }
+          )
+      
+      add_span_event("build.wheel.completed", {
+          "build.success": True,
+          "build.output_path": str(payload.get("output_path", "")),
+      })
+      
+      if ctx.meta.get("json"):
+          dump_json(payload)
+      else:
+          colour("✔ wheel built", "green")

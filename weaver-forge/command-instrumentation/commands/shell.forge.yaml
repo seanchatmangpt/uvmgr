@@ -1,0 +1,68 @@
+name: shell-command-instrumentation
+description: Instrumentation for shell/REPL commands
+version: 1.0.0
+author: weaver-forge
+extends: ../base-command.forge.yaml
+
+inputs:
+  command_module: shell
+  has_subcommands: true
+  uses_subprocess: false
+
+outputs:
+  - path: src/uvmgr/commands/shell.py
+    merge_strategy: patch
+    patches:
+      - description: Update imports to new instrumentation pattern
+        pattern: "from uvmgr.core.instrumentation import instrument_subcommand"
+        replacement: |
+          from uvmgr.core.instrumentation import instrument_command, add_span_attributes, add_span_event
+          from uvmgr.core.semconv import ShellAttributes, ShellOperations
+      
+      - description: Update open instrumentation
+        pattern: "@instrument_subcommand\\(\"shell\"\\)"
+        replacement: "@instrument_command(\"shell_open\", track_args=True)"
+      
+      - description: Add shell startup attributes
+        after: "\"\"\"Drop into IPython if available, else plain REPL.\"\"\""
+        content: |
+              # Track shell/REPL startup
+              add_span_attributes(
+                  **{
+                      ShellAttributes.OPERATION: "open",
+                      ShellAttributes.TYPE: "repl",
+                      "shell.interactive": True,
+                      "shell.preferred": "ipython",
+                  }
+              )
+              add_span_event("shell.repl.starting", {
+                  "type": "interactive",
+                  "preferred": "ipython"
+              })
+      
+      - description: Track shell operation
+        after: "shell_ops.open\\(\\)"
+        content: |
+              add_span_event("shell.repl.started", {"success": True})
+
+example_applied: |
+  @shell_app.command("open")
+  @instrument_command("shell_open", track_args=True)
+  def open_():
+      \"\"\"Drop into IPython if available, else plain REPL.\"\"\"
+      # Track shell/REPL startup
+      add_span_attributes(
+          **{
+              ShellAttributes.OPERATION: "open",
+              ShellAttributes.TYPE: "repl",
+              "shell.interactive": True,
+              "shell.preferred": "ipython",
+          }
+      )
+      add_span_event("shell.repl.starting", {
+          "type": "interactive",
+          "preferred": "ipython"
+      })
+      
+      shell_ops.open()
+      add_span_event("shell.repl.started", {"success": True})

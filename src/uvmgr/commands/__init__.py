@@ -23,20 +23,22 @@ import sys
 from types import ModuleType
 from typing import Final, List
 
-__all__: Final[List[str]] = [
+__all__: Final[list[str]] = [
     # core
     "deps",
-    "project",       # new
+    "project",  # new
     "build",
     "release",
-    "tests",         # new test command (tests)
+    "tests",  # new test command (tests)
     "tool",
     "cache",
     "index",
     "exec",
     "shell",
-    "serve",         # MCP server command
-    "lint",         # new lint command
+    "serve",  # MCP server command
+    "lint",  # new lint command
+    "otel",  # OpenTelemetry validation and management
+    "weaver",  # OpenTelemetry Weaver semantic convention tools
     # advanced / optional
     "ai",
     "remote",

@@ -1,0 +1,380 @@
+name: semantic-conventions
+description: OpenTelemetry semantic conventions for uvmgr
+version: 1.0.0
+author: weaver-forge
+
+outputs:
+  - path: src/uvmgr/core/semconv.py
+    template: |
+      """
+      OpenTelemetry Semantic Conventions for uvmgr.
+      
+      This module defines standard attribute names and values following
+      OpenTelemetry semantic conventions, ensuring consistency across
+      all telemetry data.
+      
+      References:
+      - https://opentelemetry.io/docs/reference/specification/trace/semantic_conventions/
+      - https://opentelemetry.io/docs/reference/specification/metrics/semantic_conventions/
+      """
+      
+      from __future__ import annotations
+      
+      from enum import Enum
+      from typing import Final
+      
+      
+      # ============================================================================
+      # Standard OpenTelemetry Semantic Conventions (from OTEL spec)
+      # ============================================================================
+      
+      class ResourceAttributes:
+          """Standard resource attributes from OpenTelemetry specification."""
+          
+          # Service attributes
+          SERVICE_NAME: Final[str] = "service.name"
+          SERVICE_VERSION: Final[str] = "service.version"
+          SERVICE_NAMESPACE: Final[str] = "service.namespace"
+          SERVICE_INSTANCE_ID: Final[str] = "service.instance.id"
+          
+          # Process attributes
+          PROCESS_PID: Final[str] = "process.pid"
+          PROCESS_EXECUTABLE_NAME: Final[str] = "process.executable.name"
+          PROCESS_EXECUTABLE_PATH: Final[str] = "process.executable.path"
+          PROCESS_COMMAND: Final[str] = "process.command"
+          PROCESS_COMMAND_LINE: Final[str] = "process.command_line"
+          PROCESS_COMMAND_ARGS: Final[str] = "process.command_args"
+          PROCESS_RUNTIME_NAME: Final[str] = "process.runtime.name"
+          PROCESS_RUNTIME_VERSION: Final[str] = "process.runtime.version"
+          PROCESS_RUNTIME_DESCRIPTION: Final[str] = "process.runtime.description"
+          
+          # OS attributes
+          OS_TYPE: Final[str] = "os.type"
+          OS_DESCRIPTION: Final[str] = "os.description"
+          OS_NAME: Final[str] = "os.name"
+          OS_VERSION: Final[str] = "os.version"
+          
+          # Host attributes
+          HOST_NAME: Final[str] = "host.name"
+          HOST_TYPE: Final[str] = "host.type"
+          HOST_ARCH: Final[str] = "host.arch"
+      
+      
+      class SpanAttributes:
+          """Standard span attributes from OpenTelemetry specification."""
+          
+          # Code attributes
+          CODE_FUNCTION: Final[str] = "code.function"
+          CODE_NAMESPACE: Final[str] = "code.namespace"
+          CODE_FILEPATH: Final[str] = "code.filepath"
+          CODE_LINENO: Final[str] = "code.lineno"
+          
+          # Exception attributes
+          EXCEPTION_TYPE: Final[str] = "exception.type"
+          EXCEPTION_MESSAGE: Final[str] = "exception.message"
+          EXCEPTION_STACKTRACE: Final[str] = "exception.stacktrace"
+          EXCEPTION_ESCAPED: Final[str] = "exception.escaped"
+      
+      
+      # ============================================================================
+      # uvmgr-specific Semantic Conventions
+      # ============================================================================
+      
+      class CLIAttributes:
+          """Semantic conventions for CLI operations."""
+          
+          # Command attributes
+          COMMAND: Final[str] = "cli.command"
+          SUBCOMMAND: Final[str] = "cli.subcommand"
+          PARENT_COMMAND: Final[str] = "cli.parent_command"
+          ARGS: Final[str] = "cli.args"
+          ARGS_COUNT: Final[str] = "cli.args.count"
+          OPTIONS: Final[str] = "cli.options"
+          EXIT_CODE: Final[str] = "cli.exit_code"
+          INTERACTIVE: Final[str] = "cli.interactive"
+          MODULE: Final[str] = "cli.module"
+          
+          # Command types
+          class CommandType(str, Enum):
+              MAIN = "main"
+              SUB = "sub"
+              GROUP = "group"
+      
+      
+      class PackageAttributes:
+          """Semantic conventions for package management operations."""
+          
+          # Package attributes
+          MANAGER: Final[str] = "package.manager"
+          NAME: Final[str] = "package.name"
+          NAMES: Final[str] = "package.names"  # Comma-separated list
+          VERSION: Final[str] = "package.version"
+          OPERATION: Final[str] = "package.operation"
+          DEV_DEPENDENCY: Final[str] = "package.dev_dependency"
+          EXTRAS: Final[str] = "package.extras"
+          SOURCE: Final[str] = "package.source"
+          COUNT: Final[str] = "package.count"
+          UPDATE_ALL: Final[str] = "package.update.all"
+      
+      
+      class PackageOperations(str, Enum):
+          """Package operation types."""
+          ADD = "add"
+          REMOVE = "remove"
+          UPDATE = "update"
+          LOCK = "lock"
+          SYNC = "sync"
+          LIST = "list"
+          INSTALL = "install"
+      
+      
+      class BuildAttributes:
+          """Semantic conventions for build operations."""
+          
+          # Build attributes
+          SYSTEM: Final[str] = "build.system"
+          TYPE: Final[str] = "build.type"
+          OPERATION: Final[str] = "build.operation"
+          SIZE: Final[str] = "build.size"
+          SIZE_CATEGORY: Final[str] = "build.size_category"
+          DURATION: Final[str] = "build.duration"
+          OUTPUT_PATH: Final[str] = "build.output_path"
+          PYTHON_VERSION: Final[str] = "build.python_version"
+          PLATFORM: Final[str] = "build.platform"
+          
+      
+      
+      class TestAttributes:
+          """Semantic conventions for test operations."""
+          
+          # Test attributes
+          FRAMEWORK: Final[str] = "test.framework"
+          OPERATION: Final[str] = "test.operation"
+          TEST_COUNT: Final[str] = "test.count"
+          TEST_COUNT_CATEGORY: Final[str] = "test.count_category"
+          PASSED: Final[str] = "test.passed"
+          FAILED: Final[str] = "test.failed"
+          SKIPPED: Final[str] = "test.skipped"
+          DURATION: Final[str] = "test.duration"
+          COVERAGE_PERCENT: Final[str] = "test.coverage.percent"
+          COVERAGE_LINES_COVERED: Final[str] = "test.coverage.lines_covered"
+          COVERAGE_LINES_TOTAL: Final[str] = "test.coverage.lines_total"
+          
+      
+      
+      class AIAttributes:
+          """Semantic conventions for AI/LLM operations."""
+          
+          # AI attributes
+          MODEL: Final[str] = "ai.model"
+          PROVIDER: Final[str] = "ai.provider"
+          OPERATION: Final[str] = "ai.operation"
+          TOKENS_INPUT: Final[str] = "ai.tokens.input"
+          TOKENS_OUTPUT: Final[str] = "ai.tokens.output"
+          TOKENS_TOTAL: Final[str] = "ai.tokens.total"
+          COST: Final[str] = "ai.cost"
+          TEMPERATURE: Final[str] = "ai.temperature"
+          MAX_TOKENS: Final[str] = "ai.max_tokens"
+          
+          # Operation types
+          class Operation(str, Enum):
+              ASSIST = "assist"
+              GENERATE = "generate"
+              FIX = "fix"
+              PLAN = "plan"
+              COMPLETE = "complete"
+      
+      
+      class MCPAttributes:
+          """Semantic conventions for Model Context Protocol operations."""
+          
+          # MCP attributes
+          OPERATION: Final[str] = "mcp.operation"
+          TOOL_NAME: Final[str] = "mcp.tool.name"
+          RESOURCE_NAME: Final[str] = "mcp.resource.name"
+          PROMPT_NAME: Final[str] = "mcp.prompt.name"
+          SERVER_PORT: Final[str] = "mcp.server.port"
+          TRANSPORT: Final[str] = "mcp.transport"
+          
+          # Operation types
+          class Operation(str, Enum):
+              START = "start"
+              STOP = "stop"
+              TOOL_CALL = "tool_call"
+              RESOURCE_ACCESS = "resource_access"
+              PROMPT_GET = "prompt_get"
+      
+      
+      class ProcessAttributes:
+          """Semantic conventions for subprocess execution."""
+          
+          # Process execution attributes
+          COMMAND: Final[str] = "process.command"
+          EXECUTABLE: Final[str] = "process.executable"
+          EXIT_CODE: Final[str] = "process.exit_code"
+          DURATION: Final[str] = "process.duration"
+          WORKING_DIRECTORY: Final[str] = "process.working_directory"
+          OUTPUT_SIZE: Final[str] = "process.output_size"
+          ERROR_OUTPUT: Final[str] = "process.error_output"
+      
+      
+      class UvmgrAttributes:
+          """General uvmgr-specific attributes."""
+          
+          # Operation attributes
+          OPERATION_TYPE: Final[str] = "uvmgr.operation.type"
+          OPERATION_NAME: Final[str] = "uvmgr.operation.name"
+          OPERATION_STATUS: Final[str] = "uvmgr.operation.status"
+          
+          # Cache attributes
+          CACHE_HIT: Final[str] = "uvmgr.cache.hit"
+          CACHE_SIZE: Final[str] = "uvmgr.cache.size"
+          CACHE_DIR: Final[str] = "uvmgr.cache.dir"
+          
+          # Environment attributes
+          VIRTUAL_ENV: Final[str] = "uvmgr.venv.path"
+          PROJECT_ROOT: Final[str] = "uvmgr.project.root"
+          CONFIG_FILE: Final[str] = "uvmgr.config.file"
+      
+      
+      # ============================================================================
+      # Metric Names
+      # ============================================================================
+      
+      class MetricNames:
+          """Standard metric names for uvmgr."""
+          
+          # CLI metrics
+          CLI_COMMAND_CALLS: Final[str] = "cli.command.calls"
+          CLI_COMMAND_ERRORS: Final[str] = "cli.command.errors"
+          CLI_COMMAND_DURATION: Final[str] = "cli.command.duration"
+          
+          # Package operation metrics
+          PACKAGE_OPERATIONS: Final[str] = "package.operations"
+          PACKAGE_OPERATION_DURATION: Final[str] = "package.operation.duration"
+          PACKAGE_ERRORS: Final[str] = "package.errors"
+          PACKAGE_TOTAL: Final[str] = "package.total"
+          
+          # Build metrics
+          BUILD_OPERATIONS: Final[str] = "build.operations"
+          BUILD_DURATION: Final[str] = "build.duration"
+          BUILD_SIZE: Final[str] = "build.size"
+          BUILD_ARTIFACTS: Final[str] = "build.artifacts"
+          BUILD_ERRORS: Final[str] = "build.errors"
+          
+          # Test metrics
+          TEST_RUNS: Final[str] = "test.runs"
+          TEST_RESULTS: Final[str] = "test.results"
+          TEST_DURATION: Final[str] = "test.duration"
+          TEST_COVERAGE_PERCENT: Final[str] = "test.coverage.percent"
+          TEST_FAILURE_RATE: Final[str] = "test.failure.rate"
+          
+          # AI metrics
+          AI_OPERATIONS: Final[str] = "ai.operations"
+          AI_TOKENS: Final[str] = "ai.tokens"
+          AI_COST: Final[str] = "ai.cost"
+          AI_DURATION: Final[str] = "ai.duration"
+          AI_ERRORS: Final[str] = "ai.errors"
+          
+          # Process metrics
+          PROCESS_EXECUTIONS: Final[str] = "process.executions"
+          PROCESS_FAILURES: Final[str] = "process.failures"
+          PROCESS_DURATION: Final[str] = "process.duration"
+          PROCESS_OUTPUT_SIZE: Final[str] = "process.output.size"
+          
+          # System metrics
+          SYSTEM_CPU_PERCENT: Final[str] = "system.cpu.percent"
+          SYSTEM_MEMORY_PERCENT: Final[str] = "system.memory.percent"
+          SYSTEM_DISK_PERCENT: Final[str] = "system.disk.percent"
+          
+          # Function metrics (for @timed decorator)
+          FUNCTION_CALLS: Final[str] = "function.calls"
+          FUNCTION_DURATION: Final[str] = "function.duration"
+          FUNCTION_ERRORS: Final[str] = "function.errors"
+      
+      
+      # ============================================================================
+      # Span Names
+      # ============================================================================
+      
+      class SpanNames:
+          """Standard span name patterns for uvmgr."""
+          
+          # Command spans
+          @staticmethod
+          def cli_command(command: str) -> str:
+              """Generate span name for CLI command."""
+              return f"cli.command.{command}"
+          
+          # Operation spans
+          @staticmethod
+          def operation(op_type: str, op_name: str) -> str:
+              """Generate span name for operation."""
+              return f"{op_type}.{op_name}"
+          
+          # Process spans
+          @staticmethod
+          def process(executable: str) -> str:
+              """Generate span name for process execution."""
+              return f"process.{executable}"
+          
+          # Child operation spans
+          @staticmethod
+          def child_operation(parent: str, child: str) -> str:
+              """Generate span name for child operation."""
+              return f"{parent}.{child}"
+      
+      
+      # ============================================================================
+      # Helper Functions
+      # ============================================================================
+      
+      def categorize_size(size_bytes: int) -> str:
+          """Categorize file size into buckets."""
+          mb = size_bytes / (1024 * 1024)
+          if mb < 1:
+              return BuildAttributes.SizeCategory.SMALL.value
+          elif mb < 10:
+              return BuildAttributes.SizeCategory.MEDIUM.value
+          elif mb < 100:
+              return BuildAttributes.SizeCategory.LARGE.value
+          else:
+              return BuildAttributes.SizeCategory.XLARGE.value
+      
+      
+      def categorize_test_count(count: int) -> str:
+          """Categorize test count into buckets."""
+          if count < 10:
+              return TestAttributes.CountCategory.SMALL.value
+          elif count < 100:
+              return TestAttributes.CountCategory.MEDIUM.value
+          elif count < 1000:
+              return TestAttributes.CountCategory.LARGE.value
+          else:
+              return TestAttributes.CountCategory.XLARGE.value
+      
+      
+      # Export all public interfaces
+      __all__ = [
+          # Standard OTEL conventions
+          "ResourceAttributes",
+          "SpanAttributes",
+          
+          # uvmgr conventions
+          "CLIAttributes",
+          "PackageAttributes", 
+          "BuildAttributes",
+          "TestAttributes",
+          "AIAttributes",
+          "MCPAttributes",
+          "ProcessAttributes",
+          "UvmgrAttributes",
+          
+          # Metrics and spans
+          "MetricNames",
+          "SpanNames",
+          
+          # Helper functions
+          "categorize_size",
+          "categorize_test_count",
+      ]

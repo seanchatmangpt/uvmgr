@@ -14,9 +14,9 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import List
 
 import dspy
+
 from uvmgr.core.telemetry import span
 
 _log = logging.getLogger("uvmgr.runtime.ai")
@@ -49,35 +49,39 @@ def _init_lm(model: str, **kw) -> dspy.LM:
     return lm
 
 
-def list_ollama_models() -> List[str]:
+def list_ollama_models() -> list[str]:
     """List all available Ollama models."""
-    import requests
-    from urllib.parse import urljoin
+    with span("ai.list_models"):
+        from urllib.parse import urljoin
 
-    base_url = os.getenv("OLLAMA_BASE", "http://localhost:11434")
-    try:
-        response = requests.get(urljoin(base_url, "/api/tags"))
-        response.raise_for_status()
-        models = response.json().get("models", [])
-        return [model["name"] for model in models]
-    except requests.RequestException as e:
-        _log.error(f"Failed to list Ollama models: {e}")
-        return []
+        import requests
+
+        base_url = os.getenv("OLLAMA_BASE", "http://localhost:11434")
+        try:
+            response = requests.get(urljoin(base_url, "/api/tags"))
+            response.raise_for_status()
+            models = response.json().get("models", [])
+            return [model["name"] for model in models]
+        except requests.RequestException as e:
+            _log.error(f"Failed to list Ollama models: {e}")
+            return []
 
 
 def delete_ollama_model(model: str) -> bool:
     """Delete an Ollama model. Returns True if successful, False otherwise."""
-    import requests
-    from urllib.parse import urljoin
+    with span("ai.delete_model", model=model):
+        from urllib.parse import urljoin
 
-    base_url = os.getenv("OLLAMA_BASE", "http://localhost:11434")
-    try:
-        response = requests.delete(urljoin(base_url, f"/api/delete"), json={"name": model})
-        response.raise_for_status()
-        return True
-    except requests.RequestException as e:
-        _log.error(f"Failed to delete Ollama model {model}: {e}")
-        return False
+        import requests
+
+        base_url = os.getenv("OLLAMA_BASE", "http://localhost:11434")
+        try:
+            response = requests.delete(urljoin(base_url, "/api/delete"), json={"name": model})
+            response.raise_for_status()
+            return True
+        except requests.RequestException as e:
+            _log.error(f"Failed to delete Ollama model {model}: {e}")
+            return False
 
 
 # --------------------------------------------------------------------------- #
@@ -95,9 +99,10 @@ def ask(model: str, prompt: str) -> str:
         return response
 
 
-def outline(model: str, topic: str, n: int = 5) -> List[str]:
-    bullets = ask(model, f"List {n} key points about {topic}:\n•").splitlines()
-    return [b.lstrip("•- ").strip() for b in bullets if b.strip()]
+def outline(model: str, topic: str, n: int = 5) -> list[str]:
+    with span("ai.outline", model=model, topic=topic, n=n):
+        bullets = ask(model, f"List {n} key points about {topic}:\n•").splitlines()
+        return [b.lstrip("•- ").strip() for b in bullets if b.strip()]
 
 
 def fix_tests(model: str) -> str:
@@ -106,8 +111,10 @@ def fix_tests(model: str) -> str:
     diff* patch that fixes the bug.  Return the diff (caller decides what to
     do with it).
     """
-    from uvmgr.core.process import run
-    failure = run("pytest --maxfail=1 -q", capture=True)
+    with span("ai.fix_tests", model=model):
+        from uvmgr.core.process import run
+
+        failure = run("pytest --maxfail=1 -q", capture=True)
     if "failed" not in failure:
         return ""
 

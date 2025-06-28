@@ -14,12 +14,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from uvmgr.core.telemetry import span
 from uvmgr.runtime.agent.spiff import run_bpmn as _backend_run_bpmn
 
 
-def run(path: Path) -> None:                # happy-path wrapper
+def run(path: Path) -> None:  # happy-path wrapper
     """Execute *path* (a ``.bpmn`` file) until the workflow finishes."""
-    _backend_run_bpmn(path)
+    with span("agent.run", path=str(path)):
+        _backend_run_bpmn(path)
 
 
 __all__ = ["run"]

@@ -32,17 +32,17 @@ from typing import Final, List
 # --------------------------------------------------------------------------- #
 # Update this list when you add/remove runtime helpers
 # --------------------------------------------------------------------------- #
-__all__: Final[List[str]] = [
-    "uv",        # thin wrapper around the `uv` CLI
-    "exec",      # run arbitrary Python scripts
-    "poetask",   # wrapper for `poe <task>`
-    "project",   # copier scaffold helpers
-    "build",     # python -m build + twine upload
-    "release",   # commitizen bump/changelog
-    "ai",        # DSPy LM factory (OpenAI / Ollama)
-    "aps",       # APScheduler singleton
-    "remote",    # rsync + tmux launcher
-    "agent",     # BPMN runner (spiffworkflow)
+__all__: Final[list[str]] = [
+    "agent",  # BPMN runner (spiffworkflow)
+    "ai",  # DSPy LM factory (OpenAI / Ollama)
+    "aps",  # APScheduler singleton
+    "build",  # python -m build + twine upload
+    "exec",  # run arbitrary Python scripts
+    "poetask",  # wrapper for `poe <task>`
+    "project",  # copier scaffold helpers
+    "release",  # commitizen bump/changelog
+    "remote",  # rsync + tmux launcher
+    "uv",  # thin wrapper around the `uv` CLI
 ]
 
 _PREFIX = __name__ + "."

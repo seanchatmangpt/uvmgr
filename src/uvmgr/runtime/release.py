@@ -10,4 +10,5 @@ def bump() -> None:
 
 
 def changelog() -> str:
-    return run_logged(["cz", "changelog"], capture=True) or ""
+    with span("release.changelog"):
+        return run_logged(["cz", "changelog"], capture=True) or ""

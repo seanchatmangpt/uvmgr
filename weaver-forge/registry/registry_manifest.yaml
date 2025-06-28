@@ -1,0 +1,15 @@
+# OpenTelemetry Semantic Convention Registry Manifest
+# This file defines the registry metadata for uvmgr semantic conventions
+
+name: "uvmgr"
+description: "Semantic conventions for uvmgr Python workflow engine"
+version: "1.0.0"
+semconv_version: "1.26.0"
+schema_base_url: "https://opentelemetry.io/schemas"
+
+# Models included in this registry
+models:
+  - path: uvmgr.yaml
+    description: "uvmgr telemetry semantic conventions"
+  - path: models/common.yaml
+    description: "Common attributes shared across uvmgr"

@@ -8,7 +8,6 @@ import json
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import List
 
 from .paths import CONFIG_DIR
 from .shell import rich_table

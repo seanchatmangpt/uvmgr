@@ -22,5 +22,6 @@ def add(url: str) -> None:
         _FILE.write_text("\n".join(sorted(lines)) + "\n")
 
 
+@timed
 def list_indexes() -> list[str]:
     return _FILE.read_text().splitlines() if _FILE.exists() else []

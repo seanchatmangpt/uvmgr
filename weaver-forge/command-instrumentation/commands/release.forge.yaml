@@ -1,0 +1,138 @@
+name: release-command-instrumentation
+description: Instrumentation for release management commands (Commitizen)
+version: 1.0.0
+author: weaver-forge
+extends: ../base-command.forge.yaml
+
+inputs:
+  command_module: release
+  has_subcommands: true
+  uses_subprocess: false
+
+outputs:
+  - path: src/uvmgr/commands/release.py
+    merge_strategy: patch
+    patches:
+      - description: Add instrumentation imports
+        after: "import typer"
+        content: |
+          
+          from uvmgr.core.instrumentation import instrument_command, add_span_attributes, add_span_event
+          from uvmgr.core.semconv import ReleaseAttributes, ReleaseOperations
+      
+      - description: Instrument bump command
+        pattern: "@rel_app.command\\(\"bump\"\\)\\s*def _bump\\(\\):"
+        replacement: |
+          @rel_app.command("bump")
+          @instrument_command("release_bump", track_args=True)
+          def _bump():
+      
+      - description: Add attributes to bump command
+        after: "def _bump\\(\\):"
+        content: |
+              # Track version bump
+              add_span_attributes(
+                  **{
+                      ReleaseAttributes.OPERATION: "bump",
+                      ReleaseAttributes.TOOL: "commitizen",
+                      "release.type": "auto",
+                  }
+              )
+              add_span_event("release.bump.started", {"tool": "commitizen"})
+      
+      - description: Track bump completion
+        after: "rel_ops.bump\\(\\)"
+        content: |
+              add_span_event("release.bump.completed", {"success": True})
+      
+      - description: Instrument changelog command
+        pattern: "@rel_app.command\\(\"changelog\"\\)\\s*def _changelog\\(\\):"
+        replacement: |
+          @rel_app.command("changelog")
+          @instrument_command("release_changelog", track_args=True)
+          def _changelog():
+      
+      - description: Add attributes to changelog command
+        after: "def _changelog\\(\\):"
+        content: |
+              # Track changelog generation
+              add_span_attributes(
+                  **{
+                      ReleaseAttributes.OPERATION: "changelog",
+                      ReleaseAttributes.TOOL: "commitizen",
+                  }
+              )
+              add_span_event("release.changelog.started", {"tool": "commitizen"})
+      
+      - description: Track changelog result
+        after: "print\\(rel_ops.changelog\\(\\)\\)"
+        content: |
+          changelog = rel_ops.changelog()
+          add_span_attributes(**{
+              "release.changelog_length": len(changelog),
+              "release.changelog_sections": changelog.count("##") if changelog else 0,
+          })
+          add_span_event("release.changelog.completed", {
+              "length": len(changelog),
+              "success": True
+          })
+          
+          print(changelog)
+      
+      - description: Fix changelog variable
+        pattern: "print\\(rel_ops.changelog\\(\\)\\)"
+        replacement: |
+          changelog = rel_ops.changelog()
+          add_span_attributes(**{
+              "release.changelog_length": len(changelog),
+              "release.changelog_sections": changelog.count("##") if changelog else 0,
+          })
+          add_span_event("release.changelog.completed", {
+              "length": len(changelog),
+              "success": True
+          })
+          
+          print(changelog)
+
+example_applied: |
+  @rel_app.command("bump")
+  @instrument_command("release_bump", track_args=True)
+  def _bump():
+      # Track version bump
+      add_span_attributes(
+          **{
+              ReleaseAttributes.OPERATION: "bump",
+              ReleaseAttributes.TOOL: "commitizen",
+              "release.type": "auto",
+          }
+      )
+      add_span_event("release.bump.started", {"tool": "commitizen"})
+      
+      rel_ops.bump()
+      add_span_event("release.bump.completed", {"success": True})
+      colour("✔ version bumped", "green")
+  
+  
+  @rel_app.command("changelog")
+  @instrument_command("release_changelog", track_args=True)
+  def _changelog():
+      # Track changelog generation
+      add_span_attributes(
+          **{
+              ReleaseAttributes.OPERATION: "changelog",
+              ReleaseAttributes.TOOL: "commitizen",
+          }
+      )
+      add_span_event("release.changelog.started", {"tool": "commitizen"})
+      
+      changelog = rel_ops.changelog()
+      add_span_attributes(**{
+          "release.changelog_length": len(changelog),
+          "release.changelog_sections": changelog.count("##") if changelog else 0,
+      })
+      add_span_event("release.changelog.completed", {
+          "length": len(changelog),
+          "success": True
+      })
+      
+      print(changelog)

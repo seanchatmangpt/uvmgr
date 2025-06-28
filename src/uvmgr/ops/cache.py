@@ -6,9 +6,9 @@ User-facing wrapper around `uv cache` commands.
 
 from __future__ import annotations
 
-from uvmgr.runtime.uv import call as uv_call
 from uvmgr.core.shell import timed
 from uvmgr.core.telemetry import span
+from uvmgr.runtime.uv import call as uv_call
 
 
 @timed

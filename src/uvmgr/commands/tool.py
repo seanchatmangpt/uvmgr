@@ -17,28 +17,29 @@ uvmgr tool dir
 
 from __future__ import annotations
 
-from typing import List
-
 import typer
 
-from .. import main as cli_root
+from uvmgr.core.instrumentation import instrument_subcommand
 from uvmgr.core.shell import colour
 from uvmgr.ops import tools as tools_ops
 
+from .. import main as cli_root
+
 tool_app = typer.Typer(help="Run or manage extra tools inside the venv")
-cli_root.app.add_typer(tool_app, name="tool")   # ← mount on the root CLI
+cli_root.app.add_typer(tool_app, name="tool")  # ← mount on the root CLI
 
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Commands
 # ──────────────────────────────────────────────────────────────────────────────
 @tool_app.command("run")
+@instrument_subcommand("tool")
 def run(
-    pkg_and_args: List[str] = typer.Argument(
+    pkg_and_args: list[str] = typer.Argument(
         ...,
         metavar="COMMAND [ARGS]...",
         help="Tool name followed by its arguments (e.g.  black --check src/)",
-    )
+    ),
 ):
     """Execute an installed console-script."""
     if not pkg_and_args:  # happy-path code rarely reaches this
@@ -50,18 +51,20 @@ def run(
 
 
 @tool_app.command("install")
+@instrument_subcommand("tool")
 def install(
-    pkgs: List[str] = typer.Argument(
+    pkgs: list[str] = typer.Argument(
         ...,
         metavar="PACKAGE...",
         help="One or more PyPI package names to install in the venv",
-    )
+    ),
 ):
     """Install additional tools via *uv pip install*."""
     tools_ops.install(pkgs)
 
 
 @tool_app.command("dir")
+@instrument_subcommand("tool")
 def dir_() -> None:
     """Print the venv’s *bin* directory that hosts console-scripts."""
     colour(tools_ops.tool_dir(), "cyan")

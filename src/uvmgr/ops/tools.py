@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
-from typing import List
-
 from uvmgr.core.shell import timed
 from uvmgr.core.telemetry import span
 from uvmgr.runtime.uv import call as uv_call
@@ -20,5 +17,6 @@ def install(pkgs: list[str]) -> None:
         uv_call(f"tool install {' '.join(pkgs)}")
 
 
+@timed
 def tool_dir() -> str:
     return uv_call("tool dir", capture=True) or ""

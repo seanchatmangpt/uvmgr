@@ -1,0 +1,111 @@
+{#- OpenTelemetry Weaver Markdown Documentation Template -#}
+# {{ registry_name }} Semantic Conventions
+
+{{ registry_description }}
+
+**Version**: {{ registry_version }}  
+**Generated**: {{ timestamp }}
+
+## Table of Contents
+
+{% for group in groups %}
+- [{{ group.id }}](#{{ group.id | slugify }})
+{%- endfor %}
+{%- if metrics %}
+- [Metrics](#metrics)
+{%- endif %}
+
+---
+
+{% for group in groups %}
+## {{ group.id }} {#{{ group.id | slugify }}}
+
+{{ group.brief }}
+
+{%- if group.note %}
+
+{{ group.note }}
+{%- endif %}
+
+{%- if group.attributes %}
+
+### Attributes
+
+| Attribute | Type | Description | Examples | Requirement Level |
+|-----------|------|-------------|----------|-------------------|
+{%- for attr in group.attributes %}
+| `{{ group.prefix }}.{{ attr.id }}` | {{ attr.type | format_type }} | {{ attr.brief }} | {% if attr.examples %}{{ attr.examples | join(", ") | code_format }}{% else %}-{% endif %} | {{ attr.requirement_level | format_requirement }} |
+{%- endfor %}
+
+{%- for attr in group.attributes %}
+{%- if attr.note %}
+
+#### {{ group.prefix }}.{{ attr.id }}
+
+{{ attr.note }}
+
+{%- if attr.type is mapping and attr.type.members %}
+**Valid values:**
+{%- for member in attr.type.members %}
+- `{{ member.value }}` - {{ member.brief }}
+{%- endfor %}
+{%- endif %}
+{%- endif %}
+{%- endfor %}
+{%- endif %}
+
+---
+{% endfor %}
+
+{%- if metrics %}
+## Metrics
+
+### Overview
+
+This registry defines the following metrics:
+
+| Metric | Type | Unit | Description |
+|--------|------|------|-------------|
+{%- for metric in metrics %}
+| `{{ metric.id }}` | {{ metric.type }} | {{ metric.unit | default("-") }} | {{ metric.brief }} |
+{%- endfor %}
+
+### Detailed Metric Definitions
+
+{% for metric in metrics %}
+#### {{ metric.id }}
+
+**Type**: {{ metric.type }}  
+{%- if metric.unit %}
+**Unit**: `{{ metric.unit }}`  
+{%- endif %}
+**Description**: {{ metric.brief }}
+
+{%- if metric.note %}
+
+{{ metric.note }}
+{%- endif %}
+
+{%- if metric.attributes %}
+**Attributes**:
+{%- for attr_ref in metric.attributes %}
+- `{{ attr_ref.ref }}` {% if attr_ref.requirement_level %}({{ attr_ref.requirement_level }}){% endif %}
+{%- endfor %}
+{%- endif %}
+
+---
+{% endfor %}
+{%- endif %}
+
+## Stability Levels
+
+- **stable**: The convention is stable and unlikely to change
+- **experimental**: The convention is experimental and may change
+- **deprecated**: The convention is deprecated and should not be used
+
+## Requirement Levels
+
+- **required**: Must be present
+- **recommended**: Should be present if available
+- **optional**: May be present
+- **conditionally_required**: Required under specific conditions

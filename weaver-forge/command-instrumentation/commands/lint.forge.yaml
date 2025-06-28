@@ -1,0 +1,231 @@
+name: lint-command-instrumentation
+description: Instrumentation for code linting and formatting commands
+version: 1.0.0
+author: weaver-forge
+extends: ../base-command.forge.yaml
+
+inputs:
+  command_module: lint
+  has_subcommands: true
+  uses_subprocess: true  # NOTE: Currently uses subprocess directly - needs fix!
+
+outputs:
+  - path: src/uvmgr/commands/lint.py
+    merge_strategy: patch
+    patches:
+      - description: Update imports to new instrumentation pattern
+        pattern: "from uvmgr.core.instrumentation import instrument_subcommand"
+        replacement: |
+          from uvmgr.core.instrumentation import instrument_command, add_span_attributes, add_span_event
+          from uvmgr.core.semconv import ProcessAttributes, ProcessOperations, LintAttributes
+      
+      # NOTE: This file needs refactoring to use runtime layer instead of direct subprocess
+      - description: Add TODO comment about subprocess usage
+        after: "from uvmgr.core.lint import map_exception"
+        content: |
+          
+          # TODO: Refactor to use runtime.exec_sync instead of direct subprocess calls
+          # This will ensure proper telemetry and error handling
+      
+      - description: Instrument _run_ruff helper
+        after: "def _run_ruff\\(cmd: list\\[str\\], path: str \\| None = None\\) -> int:"
+        content: |
+              """Run Ruff with the given command and path."""
+              # Track subprocess execution
+              add_span_event("lint.subprocess.start", {
+                  "command": " ".join(["ruff"] + cmd),
+                  "path": path or ".",
+              })
+      
+      - description: Update check instrumentation
+        pattern: "@instrument_subcommand\\(\"lint\"\\)\\s*def check\\("
+        replacement: |
+          @instrument_command("lint_check", track_args=True)
+          def check(
+      
+      - description: Add check attributes
+        after: "If no path is provided, checks the current directory."
+        find_end: "\"\"\""
+        append: |
+              # Track lint check operation
+              add_span_attributes(
+                  **{
+                      LintAttributes.OPERATION: "check",
+                      LintAttributes.TOOL: "ruff",
+                      "lint.path": str(path) if path else ".",
+                      "lint.fix": fix,
+                      "lint.show_fixes": show_fixes,
+                  }
+              )
+              add_span_event("lint.check.started", {
+                  "path": str(path) if path else ".",
+                  "mode": "fix" if fix else "check"
+              })
+      
+      - description: Track check result
+        after: "if _run_ruff\\(cmd, str\\(path\\) if path else \".\"\\):"
+        content: |
+              add_span_event("lint.check.violations_found", {"path": str(path) if path else "."})
+      
+      - description: Track check success
+        pattern: "console.print\\(\"\\[green\\]✅ No Ruff violations found\\[/green\\]\"\\)"
+        replacement: |
+          add_span_event("lint.check.clean", {"path": str(path) if path else "."})
+              console.print("[green]✅ No Ruff violations found[/green]")
+      
+      - description: Update format instrumentation
+        pattern: "@instrument_subcommand\\(\"lint\"\\)\\s*def format\\("
+        replacement: |
+          @instrument_command("lint_format", track_args=True)
+          def format(
+      
+      - description: Add format attributes
+        after: "If no path is provided, formats the current directory."
+        find_end: "\"\"\""
+        append: |
+              # Track format operation
+              add_span_attributes(
+                  **{
+                      LintAttributes.OPERATION: "format",
+                      LintAttributes.TOOL: "ruff",
+                      "lint.path": str(path) if path else ".",
+                      "lint.check_only": check,
+                  }
+              )
+              add_span_event("lint.format.started", {
+                  "path": str(path) if path else ".",
+                  "mode": "check" if check else "format"
+              })
+      
+      - description: Track format result
+        after: "if _run_ruff\\(cmd, str\\(path\\) if path else \".\"\\):"
+        find_pattern: "console.print\\(\"\\[red\\]❌ Formatting issues found\\[/red\\]\"\\)"
+        content: |
+              add_span_event("lint.format.issues_found", {"path": str(path) if path else "."})
+              console.print("[red]❌ Formatting issues found[/red]")
+      
+      - description: Track format success
+        pattern: "console.print\\(\"\\[green\\]✅ Code formatted successfully\\[/green\\]\"\\)"
+        replacement: |
+          add_span_event("lint.format.success", {"path": str(path) if path else "."})
+              console.print("[green]✅ Code formatted successfully[/green]")
+      
+      - description: Update fix instrumentation
+        pattern: "@instrument_subcommand\\(\"lint\"\\)\\s*def fix\\("
+        replacement: |
+          @instrument_command("lint_fix", track_args=True)
+          def fix(
+      
+      - description: Add fix attributes
+        after: "This is equivalent to running both `check --fix` and `format`."
+        find_end: "\"\"\""
+        append: |
+              # Track fix operation (format + check --fix)
+              add_span_attributes(
+                  **{
+                      LintAttributes.OPERATION: "fix",
+                      LintAttributes.TOOL: "ruff",
+                      "lint.path": str(path) if path else ".",
+                      "lint.steps": "format,check",
+                  }
+              )
+              add_span_event("lint.fix.started", {"path": str(path) if path else "."})
+      
+      - description: Track format step in fix
+        after: "# First run the formatter"
+        find_pattern: "if _run_ruff\\(\\[\"format\"\\]"
+        content: |
+              add_span_event("lint.fix.format_step", {"path": str(path) if path else "."})
+              if _run_ruff(["format"]
+      
+      - description: Track check step in fix
+        after: "# Then run the linter with fixes"
+        find_pattern: "if _run_ruff\\(\\[\"check\", \"--fix\"\\]"
+        content: |
+              add_span_event("lint.fix.check_step", {"path": str(path) if path else "."})
+              if _run_ruff(["check", "--fix"]
+      
+      - description: Track fix success
+        pattern: "console.print\\(\"\\[green\\]✅ All issues fixed successfully\\[/green\\]\"\\)"
+        replacement: |
+          add_span_event("lint.fix.success", {"path": str(path) if path else "."})
+              console.print("[green]✅ All issues fixed successfully[/green]")
+
+# TODO: This command needs refactoring to use runtime.exec_sync
+refactoring_notes: |
+  The lint commands currently use subprocess.run() directly. They should be refactored to:
+  1. Create a new lint operation in src/uvmgr/ops/lint.py
+  2. Use runtime.exec_sync() instead of subprocess.run()
+  3. This will ensure proper telemetry, error handling, and consistency
+  
+  Example refactoring:
+  ```python
+  # In ops/lint.py
+  from uvmgr.runtime import exec_sync
+  
+  def run_ruff_check(path: str, fix: bool = False, show_fixes: bool = False) -> dict:
+      cmd = ["ruff", "check"]
+      if fix:
+          cmd.append("--fix")
+      if show_fixes:
+          cmd.append("--show-fixes")
+      cmd.append(path)
+      
+      result = exec_sync(cmd)
+      return {
+          "success": result.returncode == 0,
+          "stdout": result.stdout,
+          "stderr": result.stderr,
+          "returncode": result.returncode
+      }
+  ```
+
+example_applied: |
+  @app.command()
+  @instrument_command("lint_check", track_args=True)
+  def check(
+      ctx: typer.Context,
+      path: Path | None = typer.Argument(None),
+      fix: bool = typer.Option(False, "--fix", "-f"),
+      show_fixes: bool = typer.Option(False, "--show-fixes"),
+  ) -> None:
+      """
+      Run Ruff linter on the specified path.
+      
+      If no path is provided, checks the current directory.
+      """
+      # Track lint check operation
+      add_span_attributes(
+          **{
+              LintAttributes.OPERATION: "check",
+              LintAttributes.TOOL: "ruff",
+              "lint.path": str(path) if path else ".",
+              "lint.fix": fix,
+              "lint.show_fixes": show_fixes,
+          }
+      )
+      add_span_event("lint.check.started", {
+          "path": str(path) if path else ".",
+          "mode": "fix" if fix else "check"
+      })
+      
+      try:
+          cmd = ["check"]
+          if fix:
+              cmd.append("--fix")
+          if show_fixes:
+              cmd.append("--show-fixes")
+          
+          if _run_ruff(cmd, str(path) if path else "."):
+              add_span_event("lint.check.violations_found", {"path": str(path) if path else "."})
+              maybe_json(ctx, {"status": "error", "message": "❌ Ruff violations found"}, exit_code=1)
+              console.print("[red]❌ Ruff violations found[/red]")
+              sys.exit(1)
+          
+          add_span_event("lint.check.clean", {"path": str(path) if path else "."})
+          maybe_json(ctx, {"status": "success", "message": "✅ No Ruff violations found"}, exit_code=0)
+          console.print("[green]✅ No Ruff violations found[/green]")
+      except Exception as e:
+          if isinstance(e, typer.Exit):
+              raise
+          handle_cli_exception(e, exit_code=map_exception(e))

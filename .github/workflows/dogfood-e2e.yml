@@ -1,0 +1,251 @@
+name: Dogfooding E2E Tests
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'pyproject.toml'
+      - '.github/workflows/dogfood-e2e.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'pyproject.toml'
+      - '.github/workflows/dogfood-e2e.yml'
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      verbose:
+        description: 'Run tests in verbose mode'
+        required: false
+        default: 'false'
+
+jobs:
+  dogfood-test:
+    name: Dogfooding Test Loop
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ['3.8', '3.11', '3.12']
+        exclude:
+          # Skip some combinations to save CI time
+          - os: windows-latest
+            python-version: '3.8'
+          - os: macos-latest
+            python-version: '3.8'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+        if: runner.os != 'Windows'
+      
+      - name: Install uv (Windows)
+        run: |
+          irm https://astral.sh/uv/install.ps1 | iex
+          echo "$env:USERPROFILE\.cargo\bin" >> $env:GITHUB_PATH
+        if: runner.os == 'Windows'
+        shell: powershell
+      
+      - name: Install uvmgr
+        run: |
+          pip install -e .
+          uvmgr --version
+      
+      - name: Run dogfooding test loop
+        run: |
+          python tests/e2e/run_dogfood_loop.py ${{ github.event.inputs.verbose == 'true' && '-v' || '' }}
+      
+      - name: Run E2E test suite with uvmgr
+        run: |
+          uvmgr tests run tests/e2e/ -v --tb=short
+      
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dogfood-results-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: |
+            dogfood_report.json
+            reports/
+            .coverage
+      
+      - name: Test uvmgr self-build
+        run: |
+          uvmgr build wheel
+          uvmgr build check
+        if: matrix.python-version == '3.11'  # Only test on one version
+  
+  performance-benchmark:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      
+      - name: Install uvmgr
+        run: |
+          pip install -e .
+      
+      - name: Run performance benchmarks
+        run: |
+          uvmgr tests run tests/e2e/test_performance.py -v
+      
+      - name: Store benchmark results
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          tool: 'customSmallerIsBetter'
+          output-file-path: performance_report.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          alert-threshold: '150%'
+          comment-on-alert: true
+          fail-on-alert: true
+  
+  integration-matrix:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        test-scenario:
+          - "monorepo"
+          - "large-deps"
+          - "ai-features"
+          - "mcp-server"
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      
+      - name: Install uvmgr with extras
+        run: |
+          pip install -e ".[mcp,ai]"
+      
+      - name: Run integration test - ${{ matrix.test-scenario }}
+        run: |
+          case "${{ matrix.test-scenario }}" in
+            monorepo)
+              uvmgr tests run tests/e2e/test_workflows.py::TestProjectWorkflows::test_monorepo_workflow -v
+              ;;
+            large-deps)
+              uvmgr tests run tests/e2e/test_performance.py::TestScalabilityBenchmarks::test_large_dependency_tree -v
+              ;;
+            ai-features)
+              if [ -n "${{ secrets.OPENAI_API_KEY }}" ]; then
+                export OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}"
+                uvmgr tests run tests/e2e/test_workflows.py::TestAIWorkflows -v
+              else
+                echo "Skipping AI tests - no API key"
+              fi
+              ;;
+            mcp-server)
+              uvmgr serve start &
+              SERVER_PID=$!
+              sleep 5
+              uvmgr tests run tests/e2e/test_dogfooding.py::TestDogfoodingLoop::test_uvmgr_tests_itself -v
+              kill $SERVER_PID || true
+              ;;
+          esac
+      
+      - name: Check test coverage
+        run: |
+          uvmgr tests coverage
+          coverage report --fail-under=70
+        if: matrix.test-scenario == 'monorepo'  # Only check coverage once
+  
+  dogfood-executable:
+    name: Test Self-Built Executable
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+        if: runner.os != 'Windows'
+      
+      - name: Install uv (Windows)
+        run: |
+          irm https://astral.sh/uv/install.ps1 | iex
+          echo "$env:USERPROFILE\.cargo\bin" >> $env:GITHUB_PATH
+        if: runner.os == 'Windows'
+        shell: powershell
+      
+      - name: Install uvmgr and build tools
+        run: |
+          pip install -e .
+          pip install pyinstaller
+      
+      - name: Build uvmgr executable
+        run: |
+          uvmgr build dogfood --version --platform
+      
+      - name: Test executable
+        run: |
+          ./dist/uvmgr* --version
+          ./dist/uvmgr* --help
+          ./dist/uvmgr* deps --help
+        if: runner.os != 'Windows'
+      
+      - name: Test executable (Windows)
+        run: |
+          ./dist/uvmgr*.exe --version
+          ./dist/uvmgr*.exe --help
+          ./dist/uvmgr*.exe deps --help
+        if: runner.os == 'Windows'
+        shell: powershell
+      
+      - name: Upload executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: uvmgr-executable-${{ matrix.os }}
+          path: dist/uvmgr*

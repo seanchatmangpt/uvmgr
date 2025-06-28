@@ -1,0 +1,109 @@
+name: project-command-instrumentation
+description: Instrumentation for project scaffolding commands
+version: 1.0.0
+author: weaver-forge
+extends: ../base-command.forge.yaml
+
+inputs:
+  command_module: project
+  has_subcommands: true
+  uses_subprocess: false
+
+outputs:
+  - path: src/uvmgr/commands/project.py
+    merge_strategy: patch
+    patches:
+      - description: Update imports to new instrumentation pattern
+        pattern: "from uvmgr.core.instrumentation import instrument_subcommand"
+        replacement: |
+          from uvmgr.core.instrumentation import instrument_command, add_span_attributes, add_span_event
+          from uvmgr.core.semconv import ProjectAttributes, ProjectOperations
+      
+      - description: Update new command instrumentation
+        pattern: "@instrument_subcommand\\(\"new\"\\)"
+        replacement: "@instrument_command(\"project_new\", track_args=True)"
+      
+      - description: Add project creation attributes
+        after: "typer_cli: bool = typer.Option\\(.*\\),\\s*\\):"
+        content: |
+              # Track project creation
+              add_span_attributes(
+                  **{
+                      ProjectAttributes.OPERATION: "create",
+                      ProjectAttributes.NAME: name,
+                      ProjectAttributes.TYPE: "python",
+                      "project.template": "uvmgr-copier",
+                      "project.include_fastapi": fastapi,
+                      "project.include_typer": typer_cli,
+                  }
+              )
+              add_span_event("project.create.started", {
+                  "name": name,
+                  "template": "uvmgr-copier",
+                  "features": {
+                      "fastapi": fastapi,
+                      "typer": typer_cli
+                  }
+              })
+      
+      - description: Track project creation result
+        after: "payload = project_ops.new\\(name, fastapi=fastapi, typer_cli=typer_cli\\)"
+        content: |
+              
+              # Track project creation metrics
+              add_span_attributes(**{
+                  "project.path": str(payload.get("path", "")),
+                  "project.files_created": payload.get("files_created", 0) if isinstance(payload, dict) else 0,
+              })
+              add_span_event("project.create.completed", {
+                  "name": name,
+                  "path": str(payload.get("path", "")),
+                  "success": True
+              })
+
+example_applied: |
+  @proj_app.command()
+  @instrument_command("project_new", track_args=True)
+  def new(
+      ctx: typer.Context,
+      name: str = typer.Argument(..., help="Directory / project name"),
+      fastapi: bool = typer.Option(False, "--fastapi", help="Include FastAPI API skeleton"),
+      typer_cli: bool = typer.Option(True, "--typer/--no-typer", help="Include Typer CLI skeleton"),
+  ):
+      # Track project creation
+      add_span_attributes(
+          **{
+              ProjectAttributes.OPERATION: "create",
+              ProjectAttributes.NAME: name,
+              ProjectAttributes.TYPE: "python",
+              "project.template": "uvmgr-copier",
+              "project.include_fastapi": fastapi,
+              "project.include_typer": typer_cli,
+          }
+      )
+      add_span_event("project.create.started", {
+          "name": name,
+          "template": "uvmgr-copier",
+          "features": {
+              "fastapi": fastapi,
+              "typer": typer_cli
+          }
+      })
+      
+      payload = project_ops.new(name, fastapi=fastapi, typer_cli=typer_cli)
+      
+      # Track project creation metrics
+      add_span_attributes(**{
+          "project.path": str(payload.get("path", "")),
+          "project.files_created": payload.get("files_created", 0) if isinstance(payload, dict) else 0,
+      })
+      add_span_event("project.create.completed", {
+          "name": name,
+          "path": str(payload.get("path", "")),
+          "success": True
+      })
+      
+      if ctx.meta.get("json"):
+          dump_json(payload)
+      else:
+          colour(f"✔ created project in {payload['path']}", "green")

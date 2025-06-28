@@ -1,0 +1,36 @@
+# Prometheus configuration for uvmgr metrics
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'uvmgr-monitor'
+
+scrape_configs:
+  # Scrape metrics from OTEL collector
+  - job_name: 'otel-collector'
+    static_configs:
+      - targets: ['otel-collector:8889']
+        labels:
+          service: 'uvmgr'
+          
+  # Scrape collector's own metrics
+  - job_name: 'otel-collector-self'
+    static_configs:
+      - targets: ['otel-collector:8888']
+        labels:
+          service: 'otel-collector'
+
+# Example alerting rules (can be expanded)
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []  # Add alertmanager targets if needed
+
+rule_files:
+  # - 'alerts.yml'
+
+# Example recording rules for uvmgr metrics
+# These pre-calculate commonly used queries
+# rule_files:
+#   - 'recording_rules.yml'

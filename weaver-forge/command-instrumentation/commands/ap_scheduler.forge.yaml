@@ -1,0 +1,176 @@
+name: ap-scheduler-command-instrumentation
+description: Instrumentation for APScheduler job management commands
+version: 1.0.0
+author: weaver-forge
+extends: ../base-command.forge.yaml
+
+inputs:
+  command_module: ap_scheduler
+  has_subcommands: true
+  uses_subprocess: false
+
+outputs:
+  - path: src/uvmgr/commands/ap_scheduler.py
+    merge_strategy: patch
+    patches:
+      - description: Update imports to new instrumentation pattern
+        pattern: "from uvmgr.core.instrumentation import instrument_subcommand"
+        replacement: |
+          from uvmgr.core.instrumentation import instrument_command, add_span_attributes, add_span_event
+          from uvmgr.core.semconv import SchedulerAttributes, SchedulerOperations
+      
+      - description: Update add instrumentation
+        pattern: "@instrument_subcommand\\(\"ap-scheduler\"\\)\\s*def add\\("
+        replacement: |
+          @instrument_command("ap_scheduler_add", track_args=True)
+          def add(
+      
+      - description: Add attributes to add command
+        after: "cmd: str = typer.Argument\\(.*\\),\\s*\\):"
+        content: |
+              # Track scheduler job addition
+              job_type = "cron" if cron else "interval"
+              add_span_attributes(
+                  **{
+                      SchedulerAttributes.OPERATION: "add_job",
+                      SchedulerAttributes.JOB_ID: job_id,
+                      SchedulerAttributes.JOB_TYPE: job_type,
+                      "scheduler.command": cmd,
+                      "scheduler.cron_expression": cron if cron else None,
+                      "scheduler.interval_seconds": every if every else None,
+                  }
+              )
+              add_span_event("scheduler.job.add.started", {
+                  "job_id": job_id,
+                  "type": job_type,
+                  "trigger": cron if cron else f"every {every}s"
+              })
+      
+      - description: Track job addition result
+        after: "if cron:"
+        find_pattern: "ops_aps.add_cron\\(job_id, cron, cmd\\)"
+        content: |
+              add_span_event("scheduler.job.add.cron", {"job_id": job_id, "cron": cron})
+              ops_aps.add_cron(job_id, cron, cmd)
+              add_span_event("scheduler.job.add.completed", {"job_id": job_id, "type": "cron"})
+      
+      - description: Track interval job
+        after: "elif every:"
+        find_pattern: "ops_aps.add_interval\\(job_id, every, cmd\\)"
+        content: |
+              add_span_event("scheduler.job.add.interval", {"job_id": job_id, "interval": every})
+              ops_aps.add_interval(job_id, every, cmd)
+              add_span_event("scheduler.job.add.completed", {"job_id": job_id, "type": "interval"})
+      
+      - description: Update remove instrumentation
+        pattern: "@instrument_subcommand\\(\"ap-scheduler\"\\)\\s*def remove\\(job_id: str\\):"
+        replacement: |
+          @instrument_command("ap_scheduler_remove", track_args=True)
+          def remove(job_id: str):
+      
+      - description: Add remove attributes
+        after: "def remove\\(job_id: str\\):"
+        content: |
+              # Track scheduler job removal
+              add_span_attributes(
+                  **{
+                      SchedulerAttributes.OPERATION: "remove_job",
+                      SchedulerAttributes.JOB_ID: job_id,
+                  }
+              )
+              add_span_event("scheduler.job.remove.started", {"job_id": job_id})
+      
+      - description: Track removal completion
+        after: "ops_aps.remove\\(job_id\\)"
+        content: |
+              add_span_event("scheduler.job.remove.completed", {"job_id": job_id})
+      
+      - description: Update list instrumentation
+        pattern: "@instrument_subcommand\\(\"ap-scheduler\"\\)\\s*def list_\\("
+        replacement: |
+          @instrument_command("ap_scheduler_list", track_args=True)
+          def list_(
+      
+      - description: Add list attributes
+        after: "def list_\\(json_: bool = typer.Option\\(.*\\)\\):"
+        content: |
+              # Track scheduler job listing
+              add_span_attributes(
+                  **{
+                      SchedulerAttributes.OPERATION: "list_jobs",
+                      "scheduler.output_format": "json" if json_ else "console",
+                  }
+              )
+              add_span_event("scheduler.jobs.list.started")
+      
+      - description: Track job count
+        after: "jobs = ops_aps.list_jobs\\(\\)"
+        content: |
+              
+              # Track job inventory
+              add_span_attributes(**{
+                  SchedulerAttributes.JOB_COUNT: len(jobs)
+              })
+              add_span_event("scheduler.jobs.list.completed", {
+                  "job_count": len(jobs),
+                  "jobs": ",".join(jobs[:5]) if jobs else ""  # First 5 job IDs
+              })
+      
+      - description: Update run instrumentation
+        pattern: "@instrument_subcommand\\(\"ap-scheduler\"\\)\\s*def run\\(\\):"
+        replacement: |
+          @instrument_command("ap_scheduler_run", track_args=True)
+          def run():
+      
+      - description: Add run attributes
+        after: "def run\\(\\):"
+        content: |
+              # Track scheduler execution
+              add_span_attributes(
+                  **{
+                      SchedulerAttributes.OPERATION: "run",
+                      SchedulerAttributes.STATE: "starting",
+                  }
+              )
+              add_span_event("scheduler.run.started", {
+                  "mode": "blocking",
+                  "scheduler": "apscheduler"
+              })
+
+example_applied: |
+  @app_aps.command("add")
+  @instrument_command("ap_scheduler_add", track_args=True)
+  def add(
+      job_id: str,
+      cron: str = typer.Option(None, "--cron", help="crontab expression"),
+      every: int = typer.Option(None, "--every", help="seconds"),
+      cmd: str = typer.Argument(..., help="Command string to run"),
+  ):
+      # Track scheduler job addition
+      job_type = "cron" if cron else "interval"
+      add_span_attributes(
+          **{
+              SchedulerAttributes.OPERATION: "add_job",
+              SchedulerAttributes.JOB_ID: job_id,
+              SchedulerAttributes.JOB_TYPE: job_type,
+              "scheduler.command": cmd,
+              "scheduler.cron_expression": cron if cron else None,
+              "scheduler.interval_seconds": every if every else None,
+          }
+      )
+      add_span_event("scheduler.job.add.started", {
+          "job_id": job_id,
+          "type": job_type,
+          "trigger": cron if cron else f"every {every}s"
+      })
+      
+      if cron:
+          add_span_event("scheduler.job.add.cron", {"job_id": job_id, "cron": cron})
+          ops_aps.add_cron(job_id, cron, cmd)
+          add_span_event("scheduler.job.add.completed", {"job_id": job_id, "type": "cron"})
+      elif every:
+          add_span_event("scheduler.job.add.interval", {"job_id": job_id, "interval": every})
+          ops_aps.add_interval(job_id, every, cmd)
+          add_span_event("scheduler.job.add.completed", {"job_id": job_id, "type": "interval"})
+      else:
+          raise typer.BadParameter("Either --cron or --every required")

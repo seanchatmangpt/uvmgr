@@ -1,0 +1,77 @@
+groups:
+  - id: user
+    type: attribute_group
+    brief: 'User identity and authentication attributes'
+    prefix: user
+    attributes:
+      - id: id
+        type: string
+        brief: 'Unique user identifier'
+        note: 'This should be a stable identifier that doesn\'t change'
+        examples: ['12345', 'user-abc-123', 'john.doe@example.com']
+        requirement_level: required
+        stability: stable
+        
+      - id: type
+        type: 
+          allow_custom_values: false
+          members:
+            - id: guest
+              value: 'guest'
+              brief: 'Anonymous guest user'
+            - id: registered
+              value: 'registered'
+              brief: 'Registered user with account'
+            - id: admin
+              value: 'admin'
+              brief: 'Administrator user'
+            - id: service
+              value: 'service'
+              brief: 'Service account'
+        brief: 'Type of user account'
+        requirement_level: required
+        stability: stable
+        
+      - id: subscription_tier
+        type: string
+        brief: 'User subscription level'
+        note: 'The subscription tier determines feature access'
+        examples: ['free', 'basic', 'premium', 'enterprise']
+        requirement_level: recommended
+        stability: stable
+        
+      - id: registration_date
+        type: string
+        brief: 'ISO 8601 date when user registered'
+        note: 'Format: YYYY-MM-DD'
+        examples: ['2024-01-15', '2023-12-25']
+        requirement_level: optional
+        stability: stable
+
+  - id: auth
+    type: attribute_group
+    brief: 'Authentication and authorization attributes'
+    prefix: auth
+    attributes:
+      - id: method
+        type: string
+        brief: 'Authentication method used'
+        note: 'How the user authenticated to the system'
+        examples: ['password', 'oauth2', 'saml', 'api_key', 'mfa']
+        requirement_level: required
+        stability: stable
+        
+      - id: provider
+        type: string
+        brief: 'Authentication provider'
+        note: 'External provider used for authentication'
+        examples: ['google', 'github', 'okta', 'auth0', 'internal']
+        requirement_level: recommended
+        stability: stable
+        
+      - id: session_id
+        type: string
+        brief: 'Authentication session identifier'
+        note: 'Unique identifier for the current auth session'
+        requirement_level: recommended
+        stability: stable

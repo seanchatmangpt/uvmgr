@@ -1,0 +1,178 @@
+name: tool-command-instrumentation
+description: Instrumentation for tool management commands
+version: 1.0.0
+author: weaver-forge
+extends: ../base-command.forge.yaml
+
+inputs:
+  command_module: tool
+  has_subcommands: true
+  uses_subprocess: false
+
+outputs:
+  - path: src/uvmgr/commands/tool.py
+    merge_strategy: patch
+    patches:
+      - description: Update imports to new instrumentation pattern
+        pattern: "from uvmgr.core.instrumentation import instrument_subcommand"
+        replacement: |
+          from uvmgr.core.instrumentation import instrument_command, add_span_attributes, add_span_event
+          from uvmgr.core.semconv import ToolAttributes, ToolOperations
+      
+      - description: Update run instrumentation
+        pattern: "@instrument_subcommand\\(\"tool\"\\)\\s*def run\\("
+        replacement: |
+          @instrument_command("tool_run", track_args=True)
+          def run(
+      
+      - description: Add tool run attributes
+        after: "\"\"\"Execute an installed console-script.\"\"\""
+        content: |
+              # Track tool execution
+              if pkg_and_args:
+                  command, *args = pkg_and_args
+                  add_span_attributes(
+                      **{
+                          ToolAttributes.OPERATION: "run",
+                          ToolAttributes.NAME: command,
+                          "tool.args_count": len(args),
+                          "tool.command_line": " ".join(pkg_and_args),
+                      }
+                  )
+                  add_span_event("tool.run.started", {
+                      "tool": command,
+                      "args": " ".join(args) if args else ""
+                  })
+      
+      - description: Track tool execution completion
+        after: "tools_ops.run\\(command, args\\)"
+        content: |
+              add_span_event("tool.run.completed", {
+                  "tool": command,
+                  "success": True
+              })
+      
+      - description: Update install instrumentation
+        pattern: "@instrument_subcommand\\(\"tool\"\\)\\s*def install\\("
+        replacement: |
+          @instrument_command("tool_install", track_args=True)
+          def install(
+      
+      - description: Add tool install attributes
+        after: "\"\"\"Install additional tools via \\*uv pip install\\*.\"\"\""
+        content: |
+              # Track tool installation
+              add_span_attributes(
+                  **{
+                      ToolAttributes.OPERATION: "install",
+                      "tool.package_count": len(pkgs),
+                      "tool.packages": ",".join(pkgs),
+                  }
+              )
+              add_span_event("tool.install.started", {
+                  "packages": pkgs,
+                  "count": len(pkgs)
+              })
+      
+      - description: Track install completion
+        after: "tools_ops.install\\(pkgs\\)"
+        content: |
+              add_span_event("tool.install.completed", {
+                  "packages": pkgs,
+                  "success": True
+              })
+      
+      - description: Update dir instrumentation
+        pattern: "@instrument_subcommand\\(\"tool\"\\)\\s*def dir_\\(\\)"
+        replacement: |
+          @instrument_command("tool_dir", track_args=True)
+          def dir_()
+      
+      - description: Add tool dir attributes
+        after: "\"\"\"Print the venv's \\*bin\\* directory that hosts console-scripts.\"\"\""
+        content: |
+              # Track tool directory query
+              add_span_attributes(
+                  **{
+                      ToolAttributes.OPERATION: "dir",
+                  }
+              )
+              add_span_event("tool.dir.query", {})
+      
+      - description: Track dir result
+        after: "colour\\(tools_ops.tool_dir\\(\\), \"cyan\"\\)"
+        content: |
+          tool_directory = tools_ops.tool_dir()
+          add_span_attributes(**{"tool.directory": tool_directory})
+          add_span_event("tool.dir.result", {"directory": tool_directory})
+          
+          colour(tool_directory, "cyan")
+      
+      - description: Fix dir result display
+        pattern: "colour\\(tools_ops.tool_dir\\(\\), \"cyan\"\\)"
+        replacement: |
+          tool_directory = tools_ops.tool_dir()
+          add_span_attributes(**{"tool.directory": tool_directory})
+          add_span_event("tool.dir.result", {"directory": tool_directory})
+          
+          colour(tool_directory, "cyan")
+
+example_applied: |
+  @tool_app.command("run")
+  @instrument_command("tool_run", track_args=True)
+  def run(
+      pkg_and_args: list[str] = typer.Argument(...),
+  ):
+      \"\"\"Execute an installed console-script.\"\"\"
+      # Track tool execution
+      if pkg_and_args:
+          command, *args = pkg_and_args
+          add_span_attributes(
+              **{
+                  ToolAttributes.OPERATION: "run",
+                  ToolAttributes.NAME: command,
+                  "tool.args_count": len(args),
+                  "tool.command_line": " ".join(pkg_and_args),
+              }
+          )
+          add_span_event("tool.run.started", {
+              "tool": command,
+              "args": " ".join(args) if args else ""
+          })
+      
+      if not pkg_and_args:
+          typer.echo("No command supplied", err=True)
+          raise typer.Exit(1)
+      
+      command, *args = pkg_and_args
+      tools_ops.run(command, args)
+      add_span_event("tool.run.completed", {
+          "tool": command,
+          "success": True
+      })
+  
+  
+  @tool_app.command("install")
+  @instrument_command("tool_install", track_args=True)  
+  def install(
+      pkgs: list[str] = typer.Argument(...),
+  ):
+      \"\"\"Install additional tools via *uv pip install*.\"\"\"
+      # Track tool installation
+      add_span_attributes(
+          **{
+              ToolAttributes.OPERATION: "install",
+              "tool.package_count": len(pkgs),
+              "tool.packages": ",".join(pkgs),
+          }
+      )
+      add_span_event("tool.install.started", {
+          "packages": pkgs,
+          "count": len(pkgs)
+      })
+      
+      tools_ops.install(pkgs)
+      add_span_event("tool.install.completed", {
+          "packages": pkgs,
+          "success": True
+      })

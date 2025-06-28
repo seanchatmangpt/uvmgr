@@ -1,0 +1,147 @@
+name: exec-command-instrumentation
+description: Instrumentation for Python script execution commands
+version: 1.0.0
+author: weaver-forge
+extends: ../base-command.forge.yaml
+
+inputs:
+  command_module: exec
+  has_subcommands: true
+  uses_subprocess: true  # Uses uv run under the hood
+
+outputs:
+  - path: src/uvmgr/commands/exec.py
+    merge_strategy: patch
+    patches:
+      - description: Update imports to new instrumentation pattern
+        pattern: "from uvmgr.core.instrumentation import instrument_subcommand"
+        replacement: |
+          from uvmgr.core.instrumentation import instrument_command, add_span_attributes, add_span_event
+          from uvmgr.core.semconv import ProcessAttributes, ProcessOperations
+      
+      - description: Update fallback instrumentation
+        pattern: "@instrument_subcommand\\(\"exec\"\\)"
+        replacement: "@instrument_command(\"exec_fallback\", track_args=True)"
+      
+      - description: Add attributes to fallback command
+        after: "\"\"\"\\s*Fallback: if the user runs"
+        find_end: "\"\"\""
+        append: |
+              # Track execution attributes
+              if args:
+                  add_span_attributes(
+                      **{
+                          ProcessAttributes.OPERATION: "exec",
+                          ProcessAttributes.EXECUTABLE: "python",
+                          "exec.target": args[0],
+                          "exec.argv_count": len(args) - 1,
+                          "exec.no_project": no_project,
+                          "exec.with_deps_count": len(with_deps) if with_deps else 0,
+                      }
+                  )
+              
+              add_span_event("exec.started", {"exec.mode": "fallback"})
+      
+      - description: Track stdin execution
+        after: "# Handle stdin case"
+        find_pattern: "if first == \"-\":"
+        content: |
+              add_span_event("exec.stdin_mode", {"exec.has_args": len(args) > 1})
+              # Handle stdin case
+              if first == "-":
+      
+      - description: Track script file execution
+        after: "# Handle script file case"
+        find_pattern: "if first.endswith\\(\".py\"\\)"
+        content: |
+              add_span_event("exec.file_mode", {
+                  "exec.script": first,
+                  "exec.exists": pathlib.Path(first).exists()
+              })
+              # Handle script file case
+              if first.endswith(".py")
+      
+      - description: Update script command instrumentation
+        pattern: "@instrument_subcommand\\(\"exec\"\\)\\s*def script\\("
+        replacement: |
+          @instrument_command("exec_script", track_args=True)
+          def script(
+      
+      - description: Add script command attributes
+        after: "Execute a Python script using uv run."
+        find_end: "\"\"\""
+        append: |
+              # Track script execution
+              add_span_attributes(
+                  **{
+                      ProcessAttributes.OPERATION: "exec_script",
+                      ProcessAttributes.EXECUTABLE: "python",
+                      ProcessAttributes.COMMAND_LINE: f"uv run {path}",
+                      "exec.script_path": str(path),
+                      "exec.script_name": path.name,
+                      "exec.argv_count": len(argv) if argv else 0,
+                      "exec.no_project": no_project,
+                      "exec.with_deps": ",".join(with_deps) if with_deps else "",
+                  }
+              )
+              
+              # Check for inline metadata
+              try:
+                  content = path.read_text()
+                  has_inline_metadata = "# /// script" in content
+                  add_span_attributes(**{"exec.has_inline_metadata": has_inline_metadata})
+              except:
+                  pass
+              
+              add_span_event("exec.script.started", {
+                  "script": str(path),
+                  "args": " ".join(argv) if argv else ""
+              })
+
+example_applied: |
+  @exec_app.command("script")
+  @instrument_command("exec_script", track_args=True)
+  def script(
+      path: pathlib.Path = typer.Argument(...),
+      argv: list[str] = typer.Argument(None),
+      no_project: bool = typer.Option(False),
+      with_deps: list[str] = typer.Option(None),
+  ):
+      """
+      Execute a Python script using uv run.
+      
+      The script will be executed in an environment managed by uv...
+      """
+      # Track script execution
+      add_span_attributes(
+          **{
+              ProcessAttributes.OPERATION: "exec_script",
+              ProcessAttributes.EXECUTABLE: "python",
+              ProcessAttributes.COMMAND_LINE: f"uv run {path}",
+              "exec.script_path": str(path),
+              "exec.script_name": path.name,
+              "exec.argv_count": len(argv) if argv else 0,
+              "exec.no_project": no_project,
+              "exec.with_deps": ",".join(with_deps) if with_deps else "",
+          }
+      )
+      
+      # Check for inline metadata
+      try:
+          content = path.read_text()
+          has_inline_metadata = "# /// script" in content
+          add_span_attributes(**{"exec.has_inline_metadata": has_inline_metadata})
+      except:
+          pass
+      
+      add_span_event("exec.script.started", {
+          "script": str(path),
+          "args": " ".join(argv) if argv else ""
+      })
+      
+      exec_ops.script(
+          path=path,
+          argv=argv,
+          no_project=no_project,
+          with_deps=with_deps,
+      )

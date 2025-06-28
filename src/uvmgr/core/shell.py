@@ -5,12 +5,12 @@ uvmgr.core.shell
 Utility helpers that wrap **Rich** so every layer of *uvmgr* can print
 pretty output without repeating boiler-plate.
 
-• `colour(text, style)`     – one-liner style wrapper  
-• `dump_json(obj)`          – syntax-highlighted JSON  
-• `markdown(md)`            – render Markdown with headings, lists, etc.  
-• `rich_table(headers, rows)` – quick table helper  
-• `progress_bar(total)`     – context-manager for a progress bar  
-• `timed(fn)`               – decorator that times a call and prints ✔ …s  
+• `colour(text, style)`     – one-liner style wrapper
+• `dump_json(obj)`          – syntax-highlighted JSON
+• `markdown(md)`            – render Markdown with headings, lists, etc.
+• `rich_table(headers, rows)` – quick table helper
+• `progress_bar(total)`     – context-manager for a progress bar
+• `timed(fn)`               – decorator that times a call and prints ✔ …s
 • `install_rich()`          – enable Rich tracebacks
 
 All functions follow the *happy-path only* rule: no error handling, no
@@ -20,6 +20,7 @@ return values unless useful.
 from __future__ import annotations
 
 import json
+import sys
 import time
 from collections.abc import Callable, Iterable, Sequence
 from functools import wraps
@@ -34,6 +35,7 @@ from rich.traceback import install as _install_tb
 
 __all__ = [
     "colour",
+    "colour_stderr",
     "dump_json",
     "install_rich",
     "markdown",
@@ -44,6 +46,8 @@ __all__ = [
 
 # One global console instance – reuse it everywhere
 _console = Console(highlight=False)
+# Console for stderr output (for MCP servers)
+_console_stderr = Console(highlight=False, file=sys.stderr)
 
 
 # --------------------------------------------------------------------------- #
@@ -57,6 +61,11 @@ def install_rich(show_locals: bool = False) -> None:
 def colour(text: str, style: str = "green", *, nl: bool = True) -> None:
     """Print *text* in *style* colour (defaults to green)."""
     _console.print(text, style=style, end="\n" if nl else "")
+
+
+def colour_stderr(text: str, style: str = "green", *, nl: bool = True) -> None:
+    """Print *text* in *style* colour to stderr (for MCP servers)."""
+    _console_stderr.print(text, style=style, end="\n" if nl else "")
 
 
 def dump_json(obj: Any) -> None:
@@ -79,6 +88,7 @@ def timed(fn: Callable[..., Any]) -> Callable[..., Any]:
     def build():
         ...
     """
+
     @wraps(fn)
     def _wrap(*a, **kw):
         t0 = time.perf_counter()
@@ -112,6 +122,7 @@ def progress_bar(total: int):
             work()
             advance()
     """
+
     class _Ctx:
         def __enter__(self):
             self._p = Progress()

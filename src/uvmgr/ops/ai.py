@@ -6,7 +6,6 @@ Returns JSON-safe data for the CLI layer.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List
 
 from uvmgr.core.fs import safe_write
 from uvmgr.core.shell import timed
@@ -36,7 +35,7 @@ def fix_tests(model: str, out_patch: Path = Path("fix.patch")) -> str:
 
 
 @timed
-def list_models() -> List[str]:
+def list_models() -> list[str]:
     """List all available Ollama models."""
     return _rt.list_ollama_models()
 

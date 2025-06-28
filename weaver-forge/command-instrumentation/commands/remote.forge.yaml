@@ -1,0 +1,77 @@
+name: remote-command-instrumentation
+description: Instrumentation for remote execution commands
+version: 1.0.0
+author: weaver-forge
+extends: ../base-command.forge.yaml
+
+inputs:
+  command_module: remote
+  has_subcommands: true
+  uses_subprocess: false
+
+outputs:
+  - path: src/uvmgr/commands/remote.py
+    merge_strategy: patch
+    patches:
+      - description: Add instrumentation imports
+        after: "import typer"
+        content: |
+          
+          from uvmgr.core.instrumentation import instrument_command, add_span_attributes, add_span_event
+          from uvmgr.core.semconv import RemoteAttributes, RemoteOperations
+      
+      - description: Instrument run command
+        pattern: "@remote_app.command\\(\"run\"\\)\\s*def _run\\(host: str, cmd: str\\):"
+        replacement: |
+          @remote_app.command("run")
+          @instrument_command("remote_run", track_args=True)
+          def _run(host: str, cmd: str):
+      
+      - description: Add remote execution attributes
+        after: "def _run\\(host: str, cmd: str\\):"
+        content: |
+              # Track remote execution
+              add_span_attributes(
+                  **{
+                      RemoteAttributes.OPERATION: "run",
+                      RemoteAttributes.HOST: host,
+                      RemoteAttributes.COMMAND: cmd,
+                      "remote.protocol": "ssh",  # Assuming SSH based on context
+                  }
+              )
+              add_span_event("remote.run.started", {
+                  "host": host,
+                  "command": cmd[:100] + "..." if len(cmd) > 100 else cmd
+              })
+      
+      - description: Track remote execution completion
+        after: "remote_ops.run\\(host, cmd\\)"
+        content: |
+              add_span_event("remote.run.completed", {
+                  "host": host,
+                  "success": True
+              })
+
+example_applied: |
+  @remote_app.command("run")
+  @instrument_command("remote_run", track_args=True)
+  def _run(host: str, cmd: str):
+      # Track remote execution
+      add_span_attributes(
+          **{
+              RemoteAttributes.OPERATION: "run",
+              RemoteAttributes.HOST: host,
+              RemoteAttributes.COMMAND: cmd,
+              "remote.protocol": "ssh",  # Assuming SSH based on context
+          }
+      )
+      add_span_event("remote.run.started", {
+          "host": host,
+          "command": cmd[:100] + "..." if len(cmd) > 100 else cmd
+      })
+      
+      remote_ops.run(host, cmd)
+      add_span_event("remote.run.completed", {
+          "host": host,
+          "success": True
+      })

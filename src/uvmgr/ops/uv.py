@@ -9,8 +9,7 @@ Thin orchestration wrapper around *runtime.uv*.
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Sequence
+from collections.abc import Sequence
 
 from uvmgr.core.shell import timed
 from uvmgr.runtime import uv as _rt

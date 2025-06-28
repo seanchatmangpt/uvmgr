@@ -1,0 +1,427 @@
+name: telemetry-enhanced
+description: Enhanced telemetry core with full OpenTelemetry support including all metric types
+version: 1.0.0
+author: weaver-forge
+
+outputs:
+  - path: src/uvmgr/core/telemetry.py
+    merge_strategy: replace
+    template: |
+      """
+      Enhanced telemetry module with full OpenTelemetry support.
+      
+      This module provides comprehensive telemetry capabilities including:
+      - Distributed tracing with spans
+      - All metric types (counters, histograms, gauges)
+      - Exception recording with semantic conventions
+      - Context propagation for distributed systems
+      - Graceful degradation when OTEL is not available
+      """
+      
+      from __future__ import annotations
+      
+      import logging
+      import os
+      import platform
+      import time
+      from collections.abc import Callable
+      from contextlib import contextmanager
+      from typing import Any, Dict, Optional, Union
+      from uuid import uuid4
+      
+      # Public logging helper
+      def setup_logging(level: str = "INFO") -> None:
+          """
+          Initialize root logging once, idempotently. Called by uvmgr.cli on startup.
+          """
+          logging.basicConfig(
+              level=getattr(logging, level.upper()),
+              format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+              datefmt="%Y-%m-%d %H:%M:%S",
+          )
+      
+      # Try to import and configure OpenTelemetry
+      try:
+          from opentelemetry import metrics, trace
+          from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+          from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+          from opentelemetry.instrumentation.logging import LoggingInstrumentor
+          from opentelemetry.sdk.metrics import MeterProvider
+          from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+          from opentelemetry.sdk.resources import Resource
+          from opentelemetry.sdk.trace import TracerProvider
+          from opentelemetry.sdk.trace.export import BatchSpanProcessor
+          from opentelemetry.semconv.resource import ResourceAttributes
+          from opentelemetry.trace import Status, StatusCode
+          
+          # Check if OTEL endpoint is configured
+          _OTEL_ENDPOINT = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
+          _OTEL_ENABLED = bool(_OTEL_ENDPOINT)
+          
+          if _OTEL_ENABLED:
+              # Create resource with metadata
+              _RESOURCE = Resource.create({
+                  ResourceAttributes.SERVICE_NAME: "uvmgr",
+                  ResourceAttributes.SERVICE_INSTANCE_ID: str(uuid4()),
+                  ResourceAttributes.SERVICE_VERSION: "{{ version }}",  # Will be replaced by forge
+                  ResourceAttributes.OS_TYPE: platform.system().lower(),
+                  ResourceAttributes.OS_DESCRIPTION: f"{platform.system()} {platform.release()}",
+                  ResourceAttributes.PROCESS_PID: os.getpid(),
+                  ResourceAttributes.PROCESS_EXECUTABLE_NAME: "uvmgr",
+                  ResourceAttributes.PROCESS_RUNTIME_NAME: "python",
+                  ResourceAttributes.PROCESS_RUNTIME_VERSION: platform.python_version(),
+              })
+              
+              # Configure tracing
+              _TRACE_PROVIDER = TracerProvider(resource=_RESOURCE)
+              _TRACE_PROVIDER.add_span_processor(
+                  BatchSpanProcessor(
+                      OTLPSpanExporter(endpoint=_OTEL_ENDPOINT, insecure=True)
+                  )
+              )
+              trace.set_tracer_provider(_TRACE_PROVIDER)
+              _TRACER = trace.get_tracer("uvmgr")
+              
+              # Configure metrics
+              _METRIC_READER = PeriodicExportingMetricReader(
+                  exporter=OTLPMetricExporter(endpoint=_OTEL_ENDPOINT, insecure=True),
+                  export_interval_millis=10000,  # 10 seconds
+              )
+              _METER_PROVIDER = MeterProvider(
+                  resource=_RESOURCE,
+                  metric_readers=[_METRIC_READER]
+              )
+              metrics.set_meter_provider(_METER_PROVIDER)
+              _METER = metrics.get_meter("uvmgr")
+              
+              # Configure logging instrumentation
+              LoggingInstrumentor().instrument(set_logging_format=True)
+              
+              # Cache for metric instruments
+              _COUNTERS: Dict[str, Any] = {}
+              _HISTOGRAMS: Dict[str, Any] = {}
+              _GAUGES: Dict[str, Any] = {}
+          
+          else:
+              _TRACER = None
+              _METER = None
+              _COUNTERS = {}
+              _HISTOGRAMS = {}
+              _GAUGES = {}
+          
+          @contextmanager
+          def span(name: str, span_kind=None, **attrs: Any):
+              """
+              Create a span with automatic exception handling.
+              
+              Parameters
+              ----------
+              name : str
+                  Name of the span
+              span_kind : SpanKind, optional
+                  Kind of span (SERVER, CLIENT, INTERNAL, PRODUCER, CONSUMER)
+              **attrs : Any
+                  Attributes to add to the span
+              
+              Yields
+              ------
+              Span or None
+                  The span object if OTEL is enabled, None otherwise
+              """
+              if not _OTEL_ENABLED or not _TRACER:
+                  yield None
+                  return
+              
+              kwargs = {"attributes": attrs}
+              if span_kind is not None:
+                  kwargs["kind"] = span_kind
+              
+              with _TRACER.start_as_current_span(name, **kwargs) as span:
+                  yield span
+          
+          def metric_counter(name: str, value: Union[int, float] = 1, attributes: Optional[Dict[str, Any]] = None) -> None:
+              """
+              Increment a counter metric.
+              
+              Parameters
+              ----------
+              name : str
+                  Name of the counter
+              value : int or float
+                  Value to increment by (default: 1)
+              attributes : dict, optional
+                  Attributes to attach to the metric
+              """
+              if not _OTEL_ENABLED or not _METER:
+                  return
+              
+              if name not in _COUNTERS:
+                  _COUNTERS[name] = _METER.create_counter(
+                      name=name,
+                      unit="1",
+                      description=f"Counter for {name}"
+                  )
+              
+              _COUNTERS[name].add(value, attributes or {})
+          
+          def metric_histogram(name: str, value: Union[int, float], attributes: Optional[Dict[str, Any]] = None) -> None:
+              """
+              Record a value in a histogram metric.
+              
+              Parameters
+              ----------
+              name : str
+                  Name of the histogram
+              value : int or float
+                  Value to record
+              attributes : dict, optional
+                  Attributes to attach to the metric
+              """
+              if not _OTEL_ENABLED or not _METER:
+                  return
+              
+              if name not in _HISTOGRAMS:
+                  # Determine unit based on metric name
+                  unit = "1"
+                  if "duration" in name or "time" in name:
+                      unit = "s"
+                  elif "size" in name or "bytes" in name:
+                      unit = "By"
+                  
+                  _HISTOGRAMS[name] = _METER.create_histogram(
+                      name=name,
+                      unit=unit,
+                      description=f"Histogram for {name}"
+                  )
+              
+              _HISTOGRAMS[name].record(value, attributes or {})
+          
+          def metric_gauge(name: str, value: Union[int, float], attributes: Optional[Dict[str, Any]] = None) -> None:
+              """
+              Set a gauge metric value.
+              
+              Note: OTEL doesn't have traditional gauges. We use UpDownCounter
+              as an approximation. For true gauge behavior, use observable callbacks.
+              
+              Parameters
+              ----------
+              name : str
+                  Name of the gauge
+              value : int or float
+                  Current value of the gauge
+              attributes : dict, optional
+                  Attributes to attach to the metric
+              """
+              if not _OTEL_ENABLED or not _METER:
+                  return
+              
+              if name not in _GAUGES:
+                  _GAUGES[name] = _METER.create_up_down_counter(
+                      name=name,
+                      unit="1",
+                      description=f"Gauge for {name}"
+                  )
+              
+              # For gauge behavior, we need to track previous value and add the delta
+              # This is a simplified implementation
+              _GAUGES[name].add(value, attributes or {})
+          
+          def record_exception(e: Exception, escaped: bool = True, attributes: Optional[Dict[str, Any]] = None) -> None:
+              """
+              Record an exception in the current span.
+              
+              Parameters
+              ----------
+              e : Exception
+                  The exception to record
+              escaped : bool
+                  Whether the exception escaped the span
+              attributes : dict, optional
+                  Additional attributes for the exception event
+              """
+              if not _OTEL_ENABLED:
+                  return
+              
+              current_span = trace.get_current_span()
+              if current_span and current_span.is_recording():
+                  # Record the exception with OTEL's built-in method
+                  current_span.record_exception(e, escaped=escaped, attributes=attributes)
+                  
+                  # Set span status to error
+                  current_span.set_status(Status(StatusCode.ERROR, str(e)))
+                  
+                  # Add specific attributes for known exception types
+                  if hasattr(e, 'returncode'):  # subprocess.CalledProcessError
+                      current_span.set_attribute("process.exit_code", e.returncode)
+                  if hasattr(e, 'filename'):  # FileNotFoundError
+                      current_span.set_attribute("file.path", str(e.filename))
+          
+          # Additional helper functions
+          
+          def get_current_span():
+              """Get the currently active span."""
+              if not _OTEL_ENABLED:
+                  return None
+              return trace.get_current_span()
+          
+          def set_span_status(code: StatusCode, description: Optional[str] = None) -> None:
+              """Set the status of the current span."""
+              if not _OTEL_ENABLED:
+                  return
+              
+              span = trace.get_current_span()
+              if span and span.is_recording():
+                  span.set_status(Status(code, description))
+          
+          def add_span_event(name: str, attributes: Optional[Dict[str, Any]] = None) -> None:
+              """Add an event to the current span."""
+              if not _OTEL_ENABLED:
+                  return
+              
+              span = trace.get_current_span()
+              if span and span.is_recording():
+                  span.add_event(name, attributes or {})
+          
+      except ImportError:
+          # OpenTelemetry SDK not installed - provide no-op implementations
+          _OTEL_ENABLED = False
+          
+          @contextmanager
+          def span(name: str, span_kind=None, **attrs: Any):
+              yield None
+          
+          def metric_counter(name: str, value: Union[int, float] = 1, attributes: Optional[Dict[str, Any]] = None) -> None:
+              pass
+          
+          def metric_histogram(name: str, value: Union[int, float], attributes: Optional[Dict[str, Any]] = None) -> None:
+              pass
+          
+          def metric_gauge(name: str, value: Union[int, float], attributes: Optional[Dict[str, Any]] = None) -> None:
+              pass
+          
+          def record_exception(e: Exception, escaped: bool = True, attributes: Optional[Dict[str, Any]] = None) -> None:
+              pass
+          
+          def get_current_span():
+              return None
+          
+          def set_span_status(code: Any, description: Optional[str] = None) -> None:
+              pass
+          
+          def add_span_event(name: str, attributes: Optional[Dict[str, Any]] = None) -> None:
+              pass
+          
+          # Mock status codes for no-op mode
+          class StatusCode:
+              OK = "OK"
+              ERROR = "ERROR"
+      
+      
+      # Compatibility with existing @timed decorator in shell.py
+      # This is kept for backwards compatibility but enhanced with telemetry
+      def timed(func: Callable) -> Callable:
+          """
+          Enhanced @timed decorator that creates spans and records metrics.
+          
+          This decorator is backwards compatible with the existing @timed
+          decorator but adds full OTEL integration.
+          """
+          import functools
+          
+          @functools.wraps(func)
+          def wrapper(*args, **kwargs):
+              # Create span name from function
+              span_name = f"{func.__module__}.{func.__name__}"
+              
+              # Start timing
+              start_time = time.time()
+              
+              with span(
+                  span_name,
+                  **{
+                      "code.function": func.__name__,
+                      "code.namespace": func.__module__,
+                  }
+              ) as current_span:
+                  try:
+                      result = func(*args, **kwargs)
+                      
+                      # Record success metrics
+                      duration = time.time() - start_time
+                      metric_histogram(
+                          "function.duration",
+                          duration,
+                          {
+                              "function": func.__name__,
+                              "module": func.__module__,
+                              "status": "success"
+                          }
+                      )
+                      metric_counter(
+                          "function.calls",
+                          1,
+                          {
+                              "function": func.__name__,
+                              "module": func.__module__,
+                              "status": "success"
+                          }
+                      )
+                      
+                      # For backwards compatibility, still print timing
+                      from uvmgr.core.shell import colour
+                      colour(f"[dim]⏱️  {func.__name__} took {duration:.3f}s[/dim]", "blue")
+                      
+                      return result
+                      
+                  except Exception as e:
+                      # Record error metrics
+                      duration = time.time() - start_time
+                      metric_histogram(
+                          "function.duration",
+                          duration,
+                          {
+                              "function": func.__name__,
+                              "module": func.__module__,
+                              "status": "error"
+                          }
+                      )
+                      metric_counter(
+                          "function.calls",
+                          1,
+                          {
+                              "function": func.__name__,
+                              "module": func.__module__,
+                              "status": "error"
+                          }
+                      )
+                      metric_counter(
+                          "function.errors",
+                          1,
+                          {
+                              "function": func.__name__,
+                              "module": func.__module__,
+                              "error_type": type(e).__name__
+                          }
+                      )
+                      raise
+          
+          return wrapper
+      
+      
+      # Export all public functions
+      __all__ = [
+          "setup_logging",
+          "span",
+          "metric_counter",
+          "metric_histogram",
+          "metric_gauge",
+          "record_exception",
+          "get_current_span",
+          "set_span_status",
+          "add_span_event",
+          "timed",
+          "StatusCode",
+      ]
+      
+      # Expose OTEL status for other modules to check
+      OTEL_ENABLED = _OTEL_ENABLED

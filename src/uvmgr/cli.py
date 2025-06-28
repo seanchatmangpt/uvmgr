@@ -12,17 +12,14 @@ Root Typer application.
 from __future__ import annotations
 
 import importlib
+import os
 import sys
-from pathlib import Path
-from typing import Any
 
 import typer
 
-from uvmgr.core.shell import colour, dump_json
-from uvmgr.logging_config import setup_logging
 from uvmgr.cli_utils import handle_cli_exception
+from uvmgr.logging_config import setup_logging
 
-import os
 os.environ.setdefault("LITELLM_LOCAL_MODEL_COST_MAP", "True")
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -40,14 +37,15 @@ app = typer.Typer(
     context_settings={"allow_extra_args": True},
 )
 
+
 # Record JSON preference in ctx.meta so sub-commands can honour it -------------
-def _json_cb(ctx: typer.Context, value: bool):  # noqa: D401
+def _json_cb(ctx: typer.Context, value: bool):
     if value:
         ctx.meta["json"] = True
 
 
 @app.callback()
-def _root(                              # noqa: D401
+def _root(
     ctx: typer.Context,
     json_: bool = typer.Option(
         False,
@@ -83,10 +81,10 @@ for verb in commands_pkg.__all__:
 
 if __name__ == "__main__":
     import sys
+
     debug = "--debug" in sys.argv
     try:
         # ... main CLI logic ...
         pass
     except Exception as e:
         handle_cli_exception(e, debug=debug)
-

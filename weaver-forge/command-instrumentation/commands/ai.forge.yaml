@@ -1,0 +1,228 @@
+name: ai-command-instrumentation
+description: Instrumentation for AI/LLM interaction commands
+version: 1.0.0
+author: weaver-forge
+extends: ../base-command.forge.yaml
+
+inputs:
+  command_module: ai
+  has_subcommands: true
+  uses_subprocess: false
+
+outputs:
+  - path: src/uvmgr/commands/ai.py
+    merge_strategy: patch
+    patches:
+      - description: Update imports to new instrumentation pattern
+        pattern: "from uvmgr.core.instrumentation import instrument_subcommand"
+        replacement: |
+          from uvmgr.core.instrumentation import instrument_command, add_span_attributes, add_span_event
+          from uvmgr.core.semconv import AIAttributes, AIOperations
+      
+      - description: Update list_models instrumentation
+        pattern: "@instrument_subcommand\\(\"ai.ollama\"\\)\\s*def list_models\\("
+        replacement: |
+          @instrument_command("ai_ollama_list", track_args=True)
+          def list_models(
+      
+      - description: Add list_models attributes
+        after: "\"\"\"List all available Ollama models.\"\"\""
+        content: |
+              # Track Ollama list operation
+              add_span_attributes(
+                  **{
+                      AIAttributes.OPERATION: "list_models",
+                      AIAttributes.PROVIDER: "ollama",
+                  }
+              )
+              add_span_event("ai.ollama.list.started")
+      
+      - description: Track model count
+        after: "models = ai_ops.list_models\\(\\)"
+        content: |
+              
+              # Track model inventory
+              add_span_attributes(**{
+                  "ai.ollama.model_count": len(models) if models else 0
+              })
+              add_span_event("ai.ollama.list.completed", {
+                  "model_count": len(models) if models else 0,
+                  "models": ",".join(models[:5]) if models else ""  # First 5 models
+              })
+      
+      - description: Update delete_model instrumentation
+        pattern: "@instrument_subcommand\\(\"ai.ollama\"\\)\\s*def delete_model\\("
+        replacement: |
+          @instrument_command("ai_ollama_delete", track_args=True)
+          def delete_model(
+      
+      - description: Add delete_model attributes
+        after: "\"\"\"Delete an Ollama model.\"\"\""
+        content: |
+              # Track Ollama delete operation
+              add_span_attributes(
+                  **{
+                      AIAttributes.OPERATION: "delete_model",
+                      AIAttributes.PROVIDER: "ollama",
+                      AIAttributes.MODEL: model,
+                      "ai.force_delete": force,
+                  }
+              )
+              add_span_event("ai.ollama.delete.started", {"model": model})
+      
+      - description: Track delete result
+        after: "if ai_ops.delete_model\\(model\\):"
+        content: |
+              add_span_event("ai.ollama.delete.success", {"model": model})
+      
+      - description: Update ask instrumentation
+        pattern: "@instrument_subcommand\\(\"ai\"\\)\\s*def ask\\("
+        replacement: |
+          @instrument_command("ai_ask", track_args=True)
+          def ask(
+      
+      - description: Add ask attributes
+        after: "prompt: str = typer.Argument\\(.*\\),\\s*model: str = typer.Option\\(.*\\),\\s*\\):"
+        content: |
+              # Track AI ask operation
+              add_span_attributes(
+                  **{
+                      AIAttributes.OPERATION: "ask",
+                      AIAttributes.MODEL: model,
+                      AIAttributes.PROVIDER: model.split("/")[0] if "/" in model else "unknown",
+                      "ai.prompt_length": len(prompt),
+                      "ai.prompt_words": len(prompt.split()),
+                  }
+              )
+              add_span_event("ai.ask.started", {
+                  "model": model,
+                  "prompt_preview": prompt[:100] + "..." if len(prompt) > 100 else prompt
+              })
+      
+      - description: Track ask response
+        after: "reply = ai_ops.ask\\(model, prompt\\)"
+        content: |
+              
+              # Track response metrics
+              add_span_attributes(**{
+                  "ai.response_length": len(reply),
+                  "ai.response_words": len(reply.split()),
+              })
+              add_span_event("ai.ask.completed", {
+                  "response_length": len(reply),
+                  "success": True
+              })
+      
+      - description: Update plan instrumentation
+        pattern: "@instrument_subcommand\\(\"ai\"\\)\\s*def plan\\("
+        replacement: |
+          @instrument_command("ai_plan", track_args=True)
+          def plan(
+      
+      - description: Add plan attributes
+        after: "out: pathlib.Path \\| None = typer.Option\\(.*\\),\\s*\\):"
+        content: |
+              # Track AI plan operation
+              add_span_attributes(
+                  **{
+                      AIAttributes.OPERATION: "plan",
+                      AIAttributes.MODEL: model,
+                      AIAttributes.PROVIDER: model.split("/")[0] if "/" in model else "unknown",
+                      "ai.topic": topic,
+                      "ai.output_file": str(out) if out else None,
+                  }
+              )
+              add_span_event("ai.plan.started", {
+                  "model": model,
+                  "topic": topic,
+                  "has_output_file": out is not None
+              })
+      
+      - description: Track plan result
+        after: "md = ai_ops.plan\\(model, topic, out\\)"
+        content: |
+              
+              # Track plan generation metrics
+              add_span_attributes(**{
+                  "ai.plan_length": len(md),
+                  "ai.plan_sections": md.count("##"),  # Count markdown sections
+              })
+              add_span_event("ai.plan.completed", {
+                  "plan_length": len(md),
+                  "output_file": str(out) if out else None
+              })
+      
+      - description: Update fix_tests instrumentation
+        pattern: "@instrument_subcommand\\(\"ai\"\\)\\s*def fix_tests\\("
+        replacement: |
+          @instrument_command("ai_fix_tests", track_args=True)
+          def fix_tests(
+      
+      - description: Add fix_tests attributes
+        after: "patch: pathlib.Path = typer.Option\\(.*\\),\\s*\\):"
+        content: |
+              # Track AI fix-tests operation
+              add_span_attributes(
+                  **{
+                      AIAttributes.OPERATION: "fix_tests",
+                      AIAttributes.MODEL: model,
+                      AIAttributes.PROVIDER: model.split("/")[0] if "/" in model else "unknown",
+                      "ai.patch_file": str(patch),
+                  }
+              )
+              add_span_event("ai.fix_tests.started", {
+                  "model": model,
+                  "patch_file": str(patch)
+              })
+      
+      - description: Track fix result
+        after: "diff = ai_ops.fix_tests\\(model, patch\\)"
+        content: |
+              
+              # Track fix results
+              add_span_attributes(**{
+                  "ai.fix_generated": bool(diff),
+                  "ai.patch_size": len(diff) if diff else 0,
+              })
+              add_span_event("ai.fix_tests.completed", {
+                  "fix_generated": bool(diff),
+                  "patch_file": str(patch) if diff else None
+              })
+
+example_applied: |
+  @ai_app.command("ask")
+  @instrument_command("ai_ask", track_args=True)
+  def ask(
+      ctx: typer.Context,
+      prompt: str = typer.Argument(..., show_default=False),
+      model: str = typer.Option(_DEFAULT_MODEL, "--model", "-m"),
+  ):
+      # Track AI ask operation
+      add_span_attributes(
+          **{
+              AIAttributes.OPERATION: "ask",
+              AIAttributes.MODEL: model,
+              AIAttributes.PROVIDER: model.split("/")[0] if "/" in model else "unknown",
+              "ai.prompt_length": len(prompt),
+              "ai.prompt_words": len(prompt.split()),
+          }
+      )
+      add_span_event("ai.ask.started", {
+          "model": model,
+          "prompt_preview": prompt[:100] + "..." if len(prompt) > 100 else prompt
+      })
+      
+      reply = ai_ops.ask(model, prompt)
+      
+      # Track response metrics
+      add_span_attributes(**{
+          "ai.response_length": len(reply),
+          "ai.response_words": len(reply.split()),
+      })
+      add_span_event("ai.ask.completed", {
+          "response_length": len(reply),
+          "success": True
+      })
+      
+      _maybe_json(ctx, {"reply": reply})
+      colour(reply, "cyan")

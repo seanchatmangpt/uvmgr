@@ -1,0 +1,53 @@
+# OpenTelemetry Weaver Configuration for uvmgr
+
+[general]
+# Registry settings
+registry_path = "registry"
+output_path = "generated"
+
+[templates]
+# Template paths and settings
+template_path = "templates"
+default_templates = ["python", "markdown"]
+
+[python]
+# Python code generation settings
+output_file = "../src/uvmgr/core/semconv.py"
+module_name = "uvmgr.core.semconv"
+class_prefix = ""
+class_suffix = "Attributes"
+
+[markdown]
+# Markdown documentation settings
+output_dir = "docs"
+include_toc = true
+include_examples = true
+
+[validation]
+# Validation rules
+strict_mode = true
+allow_custom_attributes = false
+require_stability = true
+require_note = true
+
+[filters]
+# Jinja2 filters for templates
+[filters.pascal_case]
+description = "Convert to PascalCase"
+example = "my_attribute -> MyAttribute"
+
+[filters.slugify]
+description = "Convert to URL-friendly slug"
+example = "My Group -> my-group"
+
+[filters.format_type]
+description = "Format attribute type for display"
+example = "string[] -> string array"
+
+[filters.format_requirement]
+description = "Format requirement level"
+example = "conditionally_required -> Conditionally Required"
+
+[filters.code_format]
+description = "Format code examples"
+example = "example -> `example`"
