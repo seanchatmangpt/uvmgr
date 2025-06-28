@@ -67,3 +67,7 @@ dist/
 
 # uvmgr local history
 .lh/
+
+# Build artifacts
+build/
+*.spec
