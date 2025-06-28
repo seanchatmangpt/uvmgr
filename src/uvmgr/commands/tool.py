@@ -1,17 +1,68 @@
 """
-uvmgr.commands.tool_enhanced
-============================
+uvmgr.commands.tool - Advanced Tool Management
+=============================================
 
 Enhanced tool management with uvx integration and value-add features.
 
-This module extends the basic tool functionality with:
-• uvx isolated tool environments
-• Smart tool recommendations
-• Tool health checking
-• Profile management
-• OTEL instrumentation throughout
+This module extends the basic tool functionality with comprehensive tool
+management capabilities including isolated environments, smart recommendations,
+health checking, and profile management.
 
-Legacy venv commands are preserved for backwards compatibility.
+Key Features
+-----------
+• **uvx Integration**: Isolated tool environments for clean execution
+• **Smart Recommendations**: Tool suggestions based on project context
+• **Health Checking**: Tool status and environment validation
+• **Profile Management**: Tool sets for different development scenarios
+• **Legacy Support**: Backwards compatibility with venv-based tools
+• **Telemetry Integration**: Full OpenTelemetry instrumentation
+
+Available Commands
+-----------------
+Legacy Commands (venv-based)
+- **run**: Execute tools in project virtual environment
+- **install**: Install tools in project virtual environment
+- **dir**: Show virtual environment bin directory
+
+uvx Commands (isolated environments)
+- **uvx-install**: Install tools with uvx in isolated environment
+- **uvx-run**: Run tools with uvx (auto-installs if needed)
+- **uvx-list**: List all uvx-installed tools
+- **uvx-uninstall**: Remove uvx-installed tools
+- **uvx-upgrade**: Upgrade uvx-installed tools
+
+Advanced Features
+- **recommend**: Get tool recommendations by category
+- **health**: Check tool health and environment status
+- **sync**: Synchronize tool profiles
+
+Tool Categories
+--------------
+- **linting**: Code quality and linting tools
+- **formatting**: Code formatting and style tools
+- **testing**: Testing frameworks and utilities
+- **development**: Development workflow tools
+- **documentation**: Documentation generation tools
+
+Examples
+--------
+    >>> # Run tool in project venv
+    >>> uvmgr tool run black --check src/
+    >>> 
+    >>> # Install tool with uvx
+    >>> uvmgr tool uvx-install ruff --python 3.11
+    >>> 
+    >>> # Get recommendations
+    >>> uvmgr tool recommend linting
+    >>> 
+    >>> # Sync development profile
+    >>> uvmgr tool sync --profile dev --install
+
+See Also
+--------
+- :mod:`uvmgr.ops.tools` : Tool operations
+- :mod:`uvmgr.ops.uvx` : uvx operations
+- :mod:`uvmgr.core.telemetry` : Telemetry and observability
 """
 
 from __future__ import annotations

@@ -1,7 +1,53 @@
 """
-uvmgr.core.config – env override & typed TOML loader.
+uvmgr.core.config - Configuration Management
+===========================================
 
-Enhanced with comprehensive OpenTelemetry instrumentation for configuration operations monitoring.
+Environment override and typed TOML loader with comprehensive telemetry.
+
+This module provides flexible configuration management that supports both
+environment variables and TOML files, with automatic validation using
+Pydantic models. All operations are instrumented with OpenTelemetry for
+monitoring configuration loading and lookup patterns.
+
+Key Features
+-----------
+• **Environment Priority**: Environment variables override TOML settings
+• **TOML Support**: Load configuration from TOML files
+• **Type Validation**: Pydantic model validation for configuration
+• **Telemetry Integration**: Full OpenTelemetry instrumentation
+• **Performance Monitoring**: Duration tracking for configuration operations
+• **Error Handling**: Comprehensive error tracking and metrics
+
+Available Functions
+------------------
+- **env_or()**: Get configuration value from environment or TOML with fallback
+- **load_toml()**: Load and validate TOML configuration file
+
+Configuration Sources (Priority Order)
+-------------------------------------
+1. **Environment Variables**: Direct environment variable lookup
+2. **TOML File**: Configuration from ~/.config/uvmgr/env.toml
+3. **Default Values**: Fallback to provided default
+
+Examples
+--------
+    >>> from uvmgr.core.config import env_or, load_toml
+    >>> from pydantic import BaseModel
+    >>> 
+    >>> # Get configuration with fallback
+    >>> api_key = env_or("API_KEY", "default_key")
+    >>> 
+    >>> # Load typed configuration
+    >>> class AppConfig(BaseModel):
+    >>>     debug: bool = False
+    >>>     port: int = 8000
+    >>> 
+    >>> config = load_toml(Path("config.toml"), AppConfig)
+
+See Also
+--------
+- :mod:`uvmgr.core.paths` : Path management
+- :mod:`uvmgr.core.telemetry` : Telemetry and observability
 """
 
 from __future__ import annotations

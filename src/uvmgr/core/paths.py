@@ -1,9 +1,47 @@
 """
-uvmgr.core.paths
-----------------
-Authoritative filesystem locations & helpers.
+uvmgr.core.paths - Path Management and Filesystem Locations
+==========================================================
 
-Enhanced with comprehensive OpenTelemetry instrumentation for filesystem operations monitoring.
+Authoritative filesystem locations & helpers for the uvmgr application.
+
+This module provides centralized path management for configuration, cache,
+virtual environments, and project structure. All operations are instrumented
+with OpenTelemetry for comprehensive monitoring and observability.
+
+Key Features
+-----------
+• **Standardized Paths**: Consistent location management across platforms
+• **Telemetry Integration**: Full OpenTelemetry instrumentation for monitoring
+• **Caching**: Efficient path resolution with caching for performance
+• **Cross-platform**: Windows and Unix path handling
+• **Automatic Creation**: Ensures required directories exist
+
+Constants
+---------
+CONFIG_DIR : Path
+    User configuration directory (~/.config/uvmgr)
+CACHE_DIR : Path
+    Application cache directory (~/.uvmgr_cache)
+VENV_DIR : Path
+    Virtual environment directory (.venv)
+
+Examples
+--------
+    >>> from uvmgr.core.paths import project_root, venv_path, bin_path
+    >>> 
+    >>> # Get project root
+    >>> root = project_root()
+    >>> 
+    >>> # Get virtual environment path
+    >>> venv = venv_path()
+    >>> 
+    >>> # Get executable path
+    >>> python_exe = bin_path("python")
+
+See Also
+--------
+- :mod:`uvmgr.core.fs` : File system operations
+- :mod:`uvmgr.core.telemetry` : Telemetry and observability
 """
 
 from __future__ import annotations

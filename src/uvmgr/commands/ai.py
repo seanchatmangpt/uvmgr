@@ -1,5 +1,59 @@
 """
-Typer sub-app:  uvmgr ai …
+uvmgr.commands.ai - AI-Assisted Development
+=========================================
+
+Local or remote Language-Model helpers for AI-assisted development.
+
+This module provides CLI commands for interacting with AI models to assist
+with development tasks, including code generation, planning, and problem
+solving. Supports both local models (via Ollama) and remote AI services.
+
+Key Features
+-----------
+• **Ollama Integration**: Local AI model management and interaction
+• **Multiple Operations**: Ask, plan, and fix-tests capabilities
+• **Model Management**: List, delete, and manage local models
+• **Code Assistance**: AI-powered code generation and fixes
+• **Planning Tools**: AI-assisted project planning and documentation
+• **Telemetry Integration**: Full OpenTelemetry instrumentation
+
+Available Commands
+-----------------
+AI Operations
+- **ask**: Ask questions to AI models
+- **plan**: Generate project plans and documentation
+- **fix-tests**: AI-assisted test fixing and generation
+
+Ollama Management
+- **ollama list**: List available Ollama models
+- **ollama delete**: Remove Ollama models
+
+Default Models
+-------------
+- **Default**: ollama/phi3:medium-128k
+- **Custom**: Specify any model with --model option
+
+Examples
+--------
+    >>> # Ask AI for help
+    >>> uvmgr ai ask "How do I create a Python package?"
+    >>> 
+    >>> # Generate project plan
+    >>> uvmgr ai plan "Build a web API with FastAPI"
+    >>> 
+    >>> # Fix failing tests
+    >>> uvmgr ai fix-tests --patch fix.patch
+    >>> 
+    >>> # List Ollama models
+    >>> uvmgr ai ollama list
+    >>> 
+    >>> # Delete model
+    >>> uvmgr ai ollama delete llama2:7b
+
+See Also
+--------
+- :mod:`uvmgr.ops.ai` : AI operations
+- :mod:`uvmgr.core.telemetry` : Telemetry and observability
 """
 
 from __future__ import annotations

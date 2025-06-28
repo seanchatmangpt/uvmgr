@@ -1,3 +1,58 @@
+"""
+uvmgr.commands.project - Project Creation and Management
+======================================================
+
+Project scaffolding with Substrate-inspired features and comprehensive templates.
+
+This module provides CLI commands for creating new Python projects with
+various templates and configurations, including Substrate-inspired features
+for modern Python development workflows.
+
+Key Features
+-----------
+• **Multiple Templates**: Basic, Substrate, FastAPI, CLI templates
+• **Substrate Features**: Modern development workflow integration
+• **DevOps Integration**: GitHub Actions, DevContainers, pre-commit hooks
+• **Code Quality**: Conventional commits and semantic versioning
+• **Telemetry Integration**: Full OpenTelemetry instrumentation
+
+Available Commands
+-----------------
+- **new**: Create a new project with customizable features
+- **substrate**: Create a Substrate-inspired project with all features
+
+Template Options
+---------------
+- **basic**: Simple Python project structure
+- **substrate**: Full-featured modern Python project
+- **fastapi**: FastAPI web application template
+- **cli**: Command-line application template
+
+Substrate Features
+-----------------
+- **DevContainers**: Containerized development environment
+- **GitHub Actions**: Automated CI/CD pipelines
+- **Pre-commit Hooks**: Code quality enforcement
+- **Conventional Commits**: Standardized commit messages
+- **Semantic Versioning**: Automated version management
+
+Examples
+--------
+    >>> # Create basic project
+    >>> uvmgr project new my-app
+    >>> 
+    >>> # Create Substrate project
+    >>> uvmgr project substrate my-app --fastapi
+    >>> 
+    >>> # Create with specific features
+    >>> uvmgr project new my-app --template fastapi --github-actions
+
+See Also
+--------
+- :mod:`uvmgr.ops.project` : Project operations
+- :mod:`uvmgr.core.telemetry` : Telemetry and observability
+"""
+
 import typer
 
 from uvmgr.core.instrumentation import add_span_attributes, add_span_event, instrument_command

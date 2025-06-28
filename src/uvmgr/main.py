@@ -1,13 +1,30 @@
 """
-uvmgr.main
-==========
+uvmgr.main - Main Application Entry Point
+========================================
 
 Compatibility shim for command-modules that expect ::
 
     from uvmgr import main as cli_root  # or
     from .. import main as cli_root
 
-It simply re-exports the root Typer *app* defined in **uvmgr.cli**.
+This module re-exports the root Typer *app* defined in **uvmgr.cli** and sets up
+essential environment variables and logging configuration for the application.
+
+Environment Setup
+----------------
+- Sets default LiteLLM configuration for local model cost mapping
+- Configures LiteLLM logging level to WARNING
+- Suppresses INFO logs from underlying libraries (LiteLLM, httpx)
+
+Usage
+-----
+    >>> from uvmgr import main
+    >>> app = main.app  # Access the Typer CLI application
+
+See Also
+--------
+- :mod:`uvmgr.cli` : Main CLI application definition
+- :mod:`uvmgr.core.telemetry` : Telemetry and logging setup
 """
 
 from __future__ import annotations

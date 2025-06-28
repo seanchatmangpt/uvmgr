@@ -1,18 +1,50 @@
 """
-uvmgr.commands.tool
-===================
+uvmgr.commands.tool_backup - Legacy Tool Management
+=================================================
 
-Light-weight wrapper that lets you
+Light-weight wrapper for running console-scripts in project virtual environment.
 
-  • run any console-script in the project’s virtual-env
-  • install additional tools on-the-fly
-  • locate the bin/ directory that hosts entry-points
+This module provides legacy tool management functionality for running
+console-scripts in the project's virtual environment, installing additional
+tools, and locating the bin directory. This is a backup/legacy version
+of the enhanced tool module.
+
+Key Features
+-----------
+• **Console Script Execution**: Run any console-script in project venv
+• **On-the-fly Installation**: Install additional tools as needed
+• **Bin Directory Location**: Find the directory hosting entry-points
+• **Virtual Environment Integration**: Seamless venv integration
+• **Telemetry Integration**: Full OpenTelemetry instrumentation
+
+Available Commands
+-----------------
+- **run**: Execute an installed console-script
+- **install**: Install additional tools via uv pip install
+- **dir**: Print the venv's bin directory location
 
 Examples
 --------
-uvmgr tool run black --version
-uvmgr tool install httpie
-uvmgr tool dir
+    >>> # Run a tool
+    >>> uvmgr tool run black --version
+    >>> 
+    >>> # Install a tool
+    >>> uvmgr tool install httpie
+    >>> 
+    >>> # Show bin directory
+    >>> uvmgr tool dir
+
+Notes
+-----
+This is a legacy/backup version of the tool module. For enhanced functionality
+including uvx integration, smart recommendations, and health checking, use
+the main tool module instead.
+
+See Also
+--------
+- :mod:`uvmgr.commands.tool` : Enhanced tool management
+- :mod:`uvmgr.ops.tools` : Tool operations
+- :mod:`uvmgr.core.telemetry` : Telemetry and observability
 """
 
 from __future__ import annotations
@@ -67,5 +99,5 @@ def install(
 @tool_app.command("dir")
 @instrument_command("tool_dir", track_args=True)
 def dir_() -> None:
-    """Print the venv’s *bin* directory that hosts console-scripts."""
+    """Print the venv's *bin* directory that hosts console-scripts."""
     colour(tools_ops.tool_dir(), "cyan")

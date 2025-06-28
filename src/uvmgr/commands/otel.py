@@ -1,7 +1,71 @@
 """
-Typer sub-app: uvmgr otel …
+uvmgr.commands.otel - OpenTelemetry Validation and Management
+==========================================================
 
 Commands for OpenTelemetry validation and management.
+
+This module provides comprehensive CLI commands for validating, testing,
+and managing OpenTelemetry instrumentation across the uvmgr codebase.
+Includes coverage analysis, validation testing, and semantic convention
+management.
+
+Key Features
+-----------
+• **Coverage Analysis**: Analyze telemetry instrumentation coverage
+• **Validation Testing**: Comprehensive OTEL validation tests
+• **Semantic Conventions**: Manage and validate semantic conventions
+• **Status Monitoring**: Check OTEL system status and health
+• **Demo Features**: Demonstrate OTEL capabilities
+• **Export Tools**: Export telemetry configuration and results
+
+Available Commands
+-----------------
+- **coverage**: Analyze telemetry instrumentation coverage
+- **validate**: Run comprehensive OTEL validation tests
+- **test**: Generate test spans and metrics
+- **semconv**: Manage semantic conventions
+- **status**: Check OTEL system status
+- **demo**: Demonstrate OTEL features
+- **export**: Export telemetry configuration
+
+Coverage Analysis
+----------------
+- **Function Analysis**: Check each function for telemetry instrumentation
+- **Layer-based Analysis**: Analyze coverage by code layer (Command, Operations, etc.)
+- **Threshold Validation**: Ensure minimum coverage requirements
+- **Detailed Reporting**: Show specific functions and their instrumentation status
+
+Validation Features
+------------------
+- **Span Creation**: Test span creation and management
+- **Metrics Collection**: Validate metrics collection and export
+- **Error Handling**: Test error tracking and exception recording
+- **Performance Tracking**: Validate performance monitoring
+- **Workflow Integration**: Test workflow and process tracking
+- **Exporter Testing**: Validate OTEL exporter functionality
+
+Examples
+--------
+    >>> # Analyze telemetry coverage
+    >>> uvmgr otel coverage --threshold 90
+    >>> 
+    >>> # Run comprehensive validation
+    >>> uvmgr otel validate --comprehensive
+    >>> 
+    >>> # Generate test spans
+    >>> uvmgr otel test --iterations 10
+    >>> 
+    >>> # Check system status
+    >>> uvmgr otel status
+    >>> 
+    >>> # Export configuration
+    >>> uvmgr otel export --format json
+
+See Also
+--------
+- :mod:`uvmgr.core.telemetry` : Core telemetry functionality
+- :mod:`uvmgr.core.semconv` : Semantic conventions
+- :mod:`uvmgr.core.instrumentation` : Instrumentation utilities
 """
 
 from __future__ import annotations

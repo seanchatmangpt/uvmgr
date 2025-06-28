@@ -1,22 +1,69 @@
 """
-uvmgr.core.shell
-================
+uvmgr.core.shell - Shell Output and Rich Utilities
+=================================================
 
 Utility helpers that wrap **Rich** so every layer of *uvmgr* can print
 pretty output without repeating boiler-plate.
 
-• `colour(text, style)`     – one-liner style wrapper
-• `dump_json(obj)`          – syntax-highlighted JSON
-• `markdown(md)`            – render Markdown with headings, lists, etc.
-• `rich_table(headers, rows)` – quick table helper
-• `progress_bar(total)`     – context-manager for a progress bar
-• `timed(fn)`               – decorator that times a call and prints ✔ …s
-• `install_rich()`          – enable Rich tracebacks
+This module provides a comprehensive set of utilities for beautiful terminal
+output, including colored text, JSON formatting, markdown rendering, progress
+bars, and timing decorators. All operations are instrumented with OpenTelemetry
+for monitoring and observability.
 
-Enhanced with comprehensive OpenTelemetry instrumentation for shell operations monitoring.
+Key Features
+-----------
+• **Rich Integration**: Beautiful terminal output with syntax highlighting
+• **Colored Output**: Easy color-coded text and error messages
+• **JSON Formatting**: Pretty-printed JSON with syntax highlighting
+• **Markdown Rendering**: Rich markdown display with formatting
+• **Progress Tracking**: Context-manager progress bars with telemetry
+• **Timing Decorators**: Function timing with automatic display
+• **Telemetry Integration**: Full OpenTelemetry instrumentation
 
+Available Functions
+------------------
+- **colour()**: Print colored text with telemetry
+- **colour_stderr()**: Print colored text to stderr
+- **dump_json()**: Pretty-print JSON with syntax highlighting
+- **markdown()**: Render markdown with Rich formatting
+- **timed()**: Decorator for timing function execution
+- **rich_table()**: Quick table rendering
+- **progress_bar()**: Context-manager progress bar
+- **install_rich()**: Enable Rich tracebacks
+
+Examples
+--------
+    >>> from uvmgr.core.shell import colour, dump_json, timed, progress_bar
+    >>> 
+    >>> # Colored output
+    >>> colour("Success!", "green")
+    >>> 
+    >>> # JSON formatting
+    >>> data = {"name": "uvmgr", "version": "1.0.0"}
+    >>> dump_json(data)
+    >>> 
+    >>> # Timing decorator
+    >>> @timed
+    >>> def build_project():
+    >>>     # ... build logic
+    >>>     pass
+    >>> 
+    >>> # Progress bar
+    >>> with progress_bar(100) as advance:
+    >>>     for i in range(100):
+    >>>         # ... work
+    >>>         advance()
+
+Notes
+-----
 All functions follow the *happy-path only* rule: no error handling, no
-return values unless useful.
+return values unless useful. Error handling is managed by the telemetry
+system and caller code.
+
+See Also
+--------
+- :mod:`uvmgr.core.telemetry` : Telemetry and observability
+- :mod:`uvmgr.core.instrumentation` : Instrumentation utilities
 """
 
 from __future__ import annotations
@@ -118,7 +165,7 @@ def markdown(md: str) -> None:
 
 def timed(fn: Callable[..., Any]) -> Callable[..., Any]:
     """
-    Decorator: run *fn*, then print “✔ fn_name 1.23s” in green.
+    Decorator: run *fn*, then print "✔ fn_name 1.23s" in green.
 
     Usage
     -----

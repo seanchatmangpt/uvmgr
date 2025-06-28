@@ -141,8 +141,14 @@ install_uvmgr() {
     
     # Install uvmgr with all features
     if [ "$UVMGR_VERSION" = "latest" ]; then
-        print_status "Installing latest uvmgr from git..."
-        uv pip install "git+https://github.com/yourusername/uvmgr.git[mcp,ai,otel,build]"
+        print_status "Installing latest uvmgr from local development..."
+        # Try to install from parent directory if available
+        if [ -f "../../pyproject.toml" ] && grep -q "name = \"uvmgr\"" ../../pyproject.toml 2>/dev/null; then
+            uv pip install -e "../../[mcp,ai,otel,build]"
+        else
+            print_error "Local uvmgr not found. Please set UVMGR_VERSION to a published version."
+            exit 1
+        fi
     else
         print_status "Installing uvmgr version $UVMGR_VERSION..."
         uv pip install "uvmgr[mcp,ai,otel,build]==$UVMGR_VERSION"
@@ -271,19 +277,10 @@ enhance_existing_project() {
             # Create backup
             cp pyproject.toml pyproject.toml.backup
             
-            # Add uvmgr to dev dependencies
-            if grep -q "\[project.optional-dependencies\]" pyproject.toml; then
-                # Add to existing optional-dependencies
-                sed -i '/\[project\.optional-dependencies\]/,/^\[/ s/dev = \[/dev = [\n    "uvmgr[mcp,ai,otel,build]",/' pyproject.toml
-            elif grep -q "dev = \[" pyproject.toml; then
-                # Add to existing dev array
-                sed -i '/dev = \[/a\    "uvmgr[mcp,ai,otel,build]",' pyproject.toml
-            else
-                # Add new optional-dependencies section
-                echo "" >> pyproject.toml
-                echo "[project.optional-dependencies]" >> pyproject.toml
-                echo 'dev = ["uvmgr[mcp,ai,otel,build]"]' >> pyproject.toml
-            fi
+            # Add uvmgr to dev dependencies - simplified approach
+            echo "" >> pyproject.toml
+            echo "[project.optional-dependencies]" >> pyproject.toml
+            echo 'uvmgr-dev = ["uvmgr"]' >> pyproject.toml
             
             print_status "Added uvmgr to pyproject.toml"
         else

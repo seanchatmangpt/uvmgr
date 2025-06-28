@@ -1,7 +1,52 @@
 """
-uvmgr.core.history – command execution & artefact tracker with comprehensive telemetry.
+uvmgr.core.history - Command Execution and Artifact Tracking
+==========================================================
 
-Enhanced with comprehensive OpenTelemetry instrumentation for command history tracking.
+Command execution and artifact tracker with comprehensive telemetry.
+
+This module provides comprehensive tracking of command execution history,
+file artifacts, and usage statistics. All operations are instrumented with
+OpenTelemetry for monitoring user behavior and system performance.
+
+Key Features
+-----------
+• **Command Tracking**: Log command execution with metadata
+• **File History**: Track file artifacts and outputs
+• **Usage Statistics**: Generate usage statistics and analytics
+• **Interactive Menu**: User-friendly history browsing interface
+• **Telemetry Integration**: Full OpenTelemetry instrumentation
+• **Performance Monitoring**: Duration tracking for all operations
+
+Available Functions
+------------------
+- **log_command()**: Log command execution with metadata
+- **log_output()**: Log file output artifacts
+- **get_command_history()**: Retrieve command execution history
+- **get_command_stats()**: Generate usage statistics
+- **last_files()**: Get recently accessed files
+- **history_menu()**: Interactive file history browser
+- **clear_history()**: Clear command or file history
+
+Storage Locations
+----------------
+- **Command History**: ~/.config/uvmgr/command_history.json
+- **File History**: ~/.config/uvmgr/history.json
+
+Examples
+--------
+    >>> from uvmgr.core.history import log_command, get_command_stats
+    >>> 
+    >>> # Log command execution
+    >>> log_command("uvmgr deps install", exit_code=0, duration=2.5)
+    >>> 
+    >>> # Get usage statistics
+    >>> stats = get_command_stats()
+    >>> print(f"Total commands: {stats['total_commands']}")
+
+See Also
+--------
+- :mod:`uvmgr.core.paths` : Path management
+- :mod:`uvmgr.core.telemetry` : Telemetry and observability
 """
 
 from __future__ import annotations

@@ -1,7 +1,55 @@
 """
-uvmgr.core.process – thin subprocess wrapper with DRY/QUIET flags.
+uvmgr.core.process - Process Execution and Management
+===================================================
 
-Enhanced with comprehensive OpenTelemetry instrumentation for process execution monitoring.
+Thin subprocess wrapper with DRY/QUIET flags and comprehensive telemetry.
+
+This module provides a streamlined interface for executing external commands
+with built-in support for dry-run mode, quiet execution, and comprehensive
+OpenTelemetry instrumentation for monitoring process execution.
+
+Key Features
+-----------
+• **Simple Interface**: Clean API for command execution
+• **Dry Run Support**: Preview commands without execution (UVMGR_DRY=1)
+• **Quiet Mode**: Suppress output for automated execution (UVMGR_QUIET)
+• **Telemetry Integration**: Full OpenTelemetry instrumentation
+• **Error Handling**: Comprehensive error tracking and metrics
+• **Path Resolution**: Executable location utilities
+
+Available Functions
+------------------
+- **run()**: Execute command with optional output capture
+- **run_logged()**: Execute command with logging and display
+- **which()**: Find executable in PATH with telemetry
+
+Environment Variables
+--------------------
+UVMGR_DRY : str, optional
+    Set to "1" to enable dry-run mode (commands are displayed but not executed)
+UVMGR_QUIET : str, optional
+    Set to any value to suppress command output
+
+Examples
+--------
+    >>> from uvmgr.core.process import run, run_logged, which
+    >>> 
+    >>> # Basic command execution
+    >>> run(["python", "--version"])
+    >>> 
+    >>> # Capture output
+    >>> output = run(["echo", "hello"], capture=True)
+    >>> 
+    >>> # Logged execution with display
+    >>> run_logged(["ls", "-la"])
+    >>> 
+    >>> # Find executable
+    >>> python_path = which("python")
+
+See Also
+--------
+- :mod:`uvmgr.core.telemetry` : Telemetry and observability
+- :mod:`uvmgr.core.semconv` : Semantic conventions
 """
 
 from __future__ import annotations

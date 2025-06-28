@@ -1,7 +1,65 @@
 """
-Typer sub-app: uvmgr history …
+uvmgr.commands.history - Command History Management
+=================================================
 
 Commands for managing command history and analytics.
+
+This module provides comprehensive CLI commands for viewing, analyzing,
+and managing command execution history. Includes rich analytics, filtering,
+and export capabilities for understanding usage patterns.
+
+Key Features
+-----------
+• **History Viewing**: Rich display of command execution history
+• **Analytics**: Comprehensive usage statistics and patterns
+• **Filtering**: Filter by command, success status, and time range
+• **Export**: Export history data for external analysis
+• **Clear Management**: Selective clearing of history data
+• **Rich Display**: Beautiful terminal output with tables and panels
+
+Available Commands
+-----------------
+- **show**: Display command history with filtering options
+- **stats**: Show usage statistics and analytics
+- **clear**: Clear command and/or file history
+- **log**: Manually log a command execution
+- **export**: Export history data to JSON format
+
+Filtering Options
+----------------
+- **Command Filter**: Show only specific commands
+- **Success Filter**: Show only successful or failed commands
+- **Time Limit**: Limit number of entries displayed
+- **Date Range**: Filter by execution time
+
+Analytics Features
+-----------------
+- **Overall Statistics**: Total commands, success rate, average duration
+- **Recent Activity**: Last 24 hours activity and success rates
+- **Most Used Commands**: Command usage frequency analysis
+- **Performance Metrics**: Duration tracking and analysis
+
+Examples
+--------
+    >>> # Show recent command history
+    >>> uvmgr history show --limit 10
+    >>> 
+    >>> # Show only successful commands
+    >>> uvmgr history show --successful-only
+    >>> 
+    >>> # Show statistics
+    >>> uvmgr history stats
+    >>> 
+    >>> # Clear command history
+    >>> uvmgr history clear --commands --confirm
+    >>> 
+    >>> # Export history
+    >>> uvmgr history export --output history.json
+
+See Also
+--------
+- :mod:`uvmgr.core.history` : Core history functionality
+- :mod:`uvmgr.core.telemetry` : Telemetry and observability
 """
 
 from __future__ import annotations

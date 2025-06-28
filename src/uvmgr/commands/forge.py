@@ -1,7 +1,68 @@
 """
-Typer sub-app: uvmgr forge ...
+uvmgr.commands.forge - 8020 Weaver Forge Automation
+=================================================
 
 8020 Weaver Forge automation commands for streamlined development workflows.
+
+This module provides comprehensive CLI commands for automating development
+workflows using the 8020 Weaver Forge system. Includes validation, code
+generation, testing, and continuous integration capabilities.
+
+Key Features
+-----------
+• **Workflow Automation**: Complete development pipeline automation
+• **Validation**: Automated semantic convention validation
+• **Code Generation**: Automated code generation from conventions
+• **Testing**: Automated OTEL validation testing
+• **Watch Mode**: Continuous monitoring and re-execution
+• **Progress Tracking**: Rich progress indicators and metrics
+
+Available Commands
+-----------------
+- **workflow**: Execute complete 8020 Forge workflow
+- **init**: Initialize 8020 Forge project setup
+- **status**: Check Forge system status
+- **validate**: Run semantic convention validation
+- **generate**: Generate code from conventions
+- **test**: Run OTEL validation tests
+
+Workflow Steps
+-------------
+- **Validation**: Check semantic conventions with Weaver
+- **Generation**: Generate Python constants from conventions
+- **Testing**: Run OTEL validation to ensure integration
+- **Watch Mode**: Monitor for changes and re-run automatically
+
+Automation Features
+------------------
+- **Dry Run Mode**: Preview actions without execution
+- **Progress Tracking**: Real-time progress with rich UI
+- **Error Handling**: Graceful failure handling with recovery options
+- **Metrics Collection**: Comprehensive telemetry and performance tracking
+- **Continuous Integration**: Watch mode for development workflows
+
+Examples
+--------
+    >>> # Run complete workflow
+    >>> uvmgr forge workflow
+    >>> 
+    >>> # Run with specific steps
+    >>> uvmgr forge workflow --no-test
+    >>> 
+    >>> # Watch mode for development
+    >>> uvmgr forge workflow --watch
+    >>> 
+    >>> # Dry run to preview
+    >>> uvmgr forge workflow --dry-run
+    >>> 
+    >>> # Initialize new project
+    >>> uvmgr forge init --name myproject
+
+See Also
+--------
+- :mod:`uvmgr.commands.weaver` : Weaver semantic convention tools
+- :mod:`uvmgr.commands.otel` : OpenTelemetry validation
+- :mod:`uvmgr.core.telemetry` : Telemetry and observability
 """
 
 from __future__ import annotations

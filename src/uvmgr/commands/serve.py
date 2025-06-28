@@ -1,17 +1,80 @@
 """
-uvmgr mcp serve
-===============
+uvmgr.commands.serve - MCP Server for AI Integration
+==================================================
 
 Start the MCP (Model Context Protocol) server for AI assistant integration.
 
-The MCP server enables AI assistants like Claude to interact with your Python projects
-through a standardized protocol. It supports multiple transport methods:
+This module provides CLI commands for starting an MCP server that enables
+AI assistants like Claude to interact with Python projects through a
+standardized protocol. The server supports multiple transport methods
+for different use cases and deployment scenarios.
 
-- stdio: Direct communication through standard I/O (best for Claude Desktop)
-- SSE: Server-Sent Events for real-time streaming (good for web clients)
-- HTTP: RESTful HTTP endpoints for traditional API access
+Key Features
+-----------
+• **MCP Protocol**: Standardized AI assistant integration
+• **Multiple Transports**: stdio, SSE, and HTTP support
+• **Authentication**: Bearer token authentication for security
+• **Real-time Streaming**: Server-Sent Events for live communication
+• **Claude Integration**: Direct support for Claude Desktop and web
+• **Telemetry Integration**: Full OpenTelemetry instrumentation
 
-Each transport method has different use cases and configuration options.
+Available Commands
+-----------------
+- **serve**: Start the MCP server with configurable transport
+
+Transport Methods
+----------------
+- **stdio**: Direct communication through standard I/O
+  - Best for Claude Desktop integration
+  - No network configuration needed
+  - Default transport method
+
+- **SSE**: Server-Sent Events for real-time streaming
+  - Good for web clients and custom applications
+  - Requires host and port configuration
+  - Supports real-time updates
+
+- **HTTP**: RESTful HTTP endpoints
+  - Compatible with any HTTP client
+  - Supports authentication for secure deployments
+  - Traditional API access patterns
+
+Examples
+--------
+    >>> # Start server with stdio transport (for Claude Desktop)
+    >>> uvmgr mcp serve
+    >>> 
+    >>> # Start SSE server on custom port for web clients
+    >>> uvmgr mcp serve --transport sse --port 3000
+    >>> 
+    >>> # Start HTTP server with authentication
+    >>> uvmgr mcp serve --transport http --auth-token mytoken
+    >>> 
+    >>> # Allow external connections on HTTP server
+    >>> uvmgr mcp serve --transport http --host 0.0.0.0 --port 8080
+
+Claude Integration
+-----------------
+For Claude Desktop:
+1. Open Claude Desktop settings
+2. Go to 'Developer' > 'Edit Config'
+3. Add to 'mcpServers' section:
+   ```json
+   "uvmgr": {
+     "command": "python3.12",
+     "args": ["-m", "uvmgr", "mcp", "serve"]
+   }
+   ```
+
+For Claude.ai web interface:
+1. Click 'Add integration' in settings
+2. Integration name: uvmgr
+3. Integration URL: http://localhost:8000/sse (for SSE) or http://localhost:8000/mcp (for HTTP)
+
+See Also
+--------
+- :mod:`uvmgr.mcp` : MCP server implementation
+- :mod:`uvmgr.core.telemetry` : Telemetry and observability
 """
 
 import typer

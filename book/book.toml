@@ -1,0 +1,6 @@
+[book]
+title = "uvmgr User Guide"
+author = ["Sean Chatman"]
+description = "Comprehensive documentation for the uvmgr unified Python workflow engine."
+multilingual = false
+src = "src"

@@ -71,3 +71,6 @@ dist/
 # Build artifacts
 build/
 *.spec
+
+# External test projects
+external-test/

@@ -1,3 +1,39 @@
+"""
+uvmgr.commands.index - Package Index Management
+=============================================
+
+Manage extra package indexes for uv package management.
+
+This module provides CLI commands for managing additional package indexes
+beyond the default PyPI, allowing access to private repositories and
+alternative package sources.
+
+Key Features
+-----------
+• **Index Management**: Add and list package indexes
+• **Multiple Sources**: Support for private and alternative repositories
+• **uv Integration**: Seamless integration with uv package manager
+• **Telemetry Integration**: Full OpenTelemetry instrumentation
+
+Available Commands
+-----------------
+- **add**: Add a new package index URL
+- **list**: List all configured package indexes
+
+Examples
+--------
+    >>> # Add a private package index
+    >>> uvmgr index add https://pypi.company.com/simple/
+    >>> 
+    >>> # List all indexes
+    >>> uvmgr index list
+
+See Also
+--------
+- :mod:`uvmgr.ops.indexes` : Index operations
+- :mod:`uvmgr.core.telemetry` : Telemetry and observability
+"""
+
 import typer
 
 from uvmgr.core.instrumentation import add_span_attributes, add_span_event, instrument_command

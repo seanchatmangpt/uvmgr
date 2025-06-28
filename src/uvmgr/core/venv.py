@@ -1,7 +1,54 @@
 """
-uvmgr.core.venv – venv inspection & smart cmd rewrite.
+uvmgr.core.venv - Virtual Environment Management
+===============================================
 
-Enhanced with comprehensive OpenTelemetry instrumentation for virtual environment operations monitoring.
+Virtual environment inspection and smart command rewriting utilities.
+
+This module provides intelligent virtual environment detection and command
+adaptation to ensure proper execution within Python virtual environments.
+All operations are instrumented with OpenTelemetry for comprehensive monitoring.
+
+Key Features
+-----------
+• **Environment Detection**: Smart detection of virtual environment status
+• **Command Adaptation**: Automatic command rewriting for venv compatibility
+• **Python Detection**: Recognition of Python executables and files
+• **Path Management**: Environment PATH manipulation for venv binaries
+• **Telemetry Integration**: Full OpenTelemetry instrumentation
+
+Available Functions
+------------------
+- **is_venv()**: Check if running in a virtual environment
+- **is_python_exec()**: Detect Python executable tokens
+- **is_py_file()**: Detect Python file tokens
+- **prepend_env_path()**: Prepend venv bin directory to PATH
+- **adapt_cmd()**: Intelligently adapt commands for venv execution
+
+Command Adaptation Strategies
+---------------------------
+- **uvmgr_passthrough**: Pass through uvmgr/uv commands unchanged
+- **python_exec**: Wrap Python executables with `uv run --`
+- **python_file**: Wrap Python files with `uv run -- python`
+- **bin_dir_exec**: Prepend venv bin directory to PATH
+- **no_adaptation**: No changes needed
+
+Examples
+--------
+    >>> from uvmgr.core.venv import is_venv, adapt_cmd
+    >>> 
+    >>> # Check if in virtual environment
+    >>> if is_venv():
+    >>>     print("Running in venv")
+    >>> 
+    >>> # Adapt commands for venv
+    >>> adapt_cmd("python script.py")  # -> "uv run -- python script.py"
+    >>> adapt_cmd("pytest tests/")     # -> "uv run -- pytest tests/"
+    >>> adapt_cmd("uvmgr deps install") # -> "uvmgr deps install" (passthrough)
+
+See Also
+--------
+- :mod:`uvmgr.core.paths` : Path management
+- :mod:`uvmgr.core.telemetry` : Telemetry and observability
 """
 
 from __future__ import annotations

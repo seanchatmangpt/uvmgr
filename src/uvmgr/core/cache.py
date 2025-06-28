@@ -1,7 +1,50 @@
 """
-uvmgr.core.cache – SHA1 command-result cache.
+uvmgr.core.cache - Command Result Caching
+========================================
 
-Enhanced with comprehensive OpenTelemetry instrumentation for cache operations monitoring.
+SHA1 command-result cache with comprehensive telemetry instrumentation.
+
+This module provides a simple but effective caching system for command results
+using SHA1 hashing of command strings. Cache entries are stored in JSONL format
+for efficient appending and lookup operations.
+
+Key Features
+-----------
+• **SHA1 Hashing**: Fast and reliable command string hashing
+• **JSONL Storage**: Efficient append-only storage format
+• **Telemetry Integration**: Full OpenTelemetry instrumentation
+• **Performance Monitoring**: Duration tracking for all cache operations
+• **Hit/Miss Tracking**: Comprehensive cache performance metrics
+
+Available Functions
+------------------
+- **hash_cmd()**: Generate SHA1 hash for command string
+- **cache_hit()**: Check if command result exists in cache
+- **store_result()**: Store command result in cache
+
+Cache Storage
+------------
+- **Location**: ~/.uvmgr_cache/runs.jsonl
+- **Format**: JSONL (JSON Lines) with hash and timestamp
+- **Structure**: {"k": "sha1_hash", "ts": timestamp}
+
+Examples
+--------
+    >>> from uvmgr.core.cache import hash_cmd, cache_hit, store_result
+    >>> 
+    >>> # Check if command was previously executed
+    >>> cmd = "python --version"
+    >>> if cache_hit(cmd):
+    >>>     print("Command was cached")
+    >>> else:
+    >>>     # Execute command and store result
+    >>>     result = run(cmd)
+    >>>     store_result(cmd)
+
+See Also
+--------
+- :mod:`uvmgr.core.fs` : File system operations
+- :mod:`uvmgr.core.telemetry` : Telemetry and observability
 """
 
 from __future__ import annotations

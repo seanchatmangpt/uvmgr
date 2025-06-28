@@ -1,3 +1,40 @@
+"""
+uvmgr.commands.cache - Cache Management
+=====================================
+
+Manage uv cache operations and maintenance.
+
+This module provides CLI commands for managing the uv package cache,
+including viewing cache location and pruning unused cache entries.
+All operations are instrumented with OpenTelemetry for monitoring
+cache usage and performance.
+
+Key Features
+-----------
+• **Cache Location**: View uv cache directory location
+• **Cache Pruning**: Remove unused cache entries
+• **Telemetry Integration**: Full OpenTelemetry instrumentation
+• **Performance Monitoring**: Track cache operations and usage
+
+Available Commands
+-----------------
+- **dir**: Display uv cache directory location
+- **prune**: Remove unused cache entries to free space
+
+Examples
+--------
+    >>> # View cache directory
+    >>> uvmgr cache dir
+    >>> 
+    >>> # Prune unused cache entries
+    >>> uvmgr cache prune
+
+See Also
+--------
+- :mod:`uvmgr.ops.cache` : Cache operations
+- :mod:`uvmgr.core.telemetry` : Telemetry and observability
+"""
+
 import typer
 
 from uvmgr.core.instrumentation import add_span_attributes, add_span_event, instrument_command

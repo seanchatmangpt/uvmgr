@@ -1,8 +1,27 @@
 """
 Project Management Tools - Tools for creating and analyzing Python projects.
 
-This module provides tools for creating new Python projects and analyzing
-existing project structures.
+This module provides MCP tools for creating new Python projects and analyzing
+existing project structures. These tools enable AI assistants to help with
+project setup and analysis.
+
+Available Tools
+--------------
+- create_project : Create a new Python project with specified template
+- analyze_project : Analyze project structure and dependencies
+
+All tools integrate with uvmgr's project management operations and provide
+detailed feedback on project creation and analysis.
+
+Example
+-------
+    >>> from uvmgr.mcp.tools.project import create_project
+    >>> result = create_project("my-project", template="basic", fastapi=True)
+    >>> print(result)  # OperationResult string
+
+See Also
+--------
+- :mod:`uvmgr.ops.project` : Core project operations
 """
 
 from pathlib import Path
@@ -26,13 +45,59 @@ async def create_project(
 ) -> str:
     """
     Create a new Python project.
-
+    
+    This tool creates a new Python project with the specified name and template.
+    It sets up the project structure, configuration files, and optionally
+    includes FastAPI setup for web applications.
+    
     Parameters
     ----------
-    - ctx: MCP context
-    - name: Project name/directory
-    - template: Project template to use
-    - fastapi: Include FastAPI setup
+    ctx : Context
+        MCP context for the operation.
+    name : str
+        Name of the project to create. This will be used as the directory name
+        and project name in configuration files.
+    template : str, optional
+        Project template to use. Available templates include "basic", "cli",
+        "web", "library". Default is "basic".
+    fastapi : bool, optional
+        If True, include FastAPI setup in the project. This adds FastAPI
+        dependencies and basic web application structure. Default is False.
+    
+    Returns
+    -------
+    str
+        JSON-formatted string containing operation result with success status,
+        message, and details about the created project.
+    
+    Notes
+    -----
+    The tool automatically:
+    - Creates project directory structure
+    - Generates pyproject.toml with project configuration
+    - Sets up basic project files (README.md, .gitignore, etc.)
+    - Initializes git repository
+    - Creates virtual environment
+    - Optionally adds FastAPI dependencies and structure
+    
+    Project structure includes:
+    - src/ : Source code directory
+    - tests/ : Test files directory
+    - docs/ : Documentation directory
+    - pyproject.toml : Project configuration
+    - README.md : Project documentation
+    - .gitignore : Git ignore rules
+    
+    Example
+    -------
+    >>> # Create basic project
+    >>> result = await create_project("my-library", template="basic")
+    >>> 
+    >>> # Create FastAPI web project
+    >>> result = await create_project("my-api", template="web", fastapi=True)
+    >>> 
+    >>> # Create CLI project
+    >>> result = await create_project("my-cli", template="cli")
     """
     try:
         await ctx.info(f"Creating new project '{name}'...")

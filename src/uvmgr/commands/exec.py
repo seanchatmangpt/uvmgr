@@ -1,25 +1,61 @@
 """
-uvmgr exec – execute Python scripts with uv run.
+uvmgr.commands.exec - Python Script Execution
+===========================================
 
-This command provides a convenient way to run Python scripts using uv run,
-which automatically manages dependencies and virtual environments.
+Execute Python scripts with uv run for dependency management.
+
+This module provides CLI commands for executing Python scripts using uv run,
+which automatically manages dependencies and virtual environments. Supports
+both file-based scripts and stdin input with flexible dependency management.
+
+Key Features
+-----------
+• **uv Integration**: Automatic dependency management with uv run
+• **Flexible Input**: Support for file scripts and stdin input
+• **Dependency Management**: Automatic and manual dependency installation
+• **Project Isolation**: Option to exclude current project dependencies
+• **Telemetry Integration**: Full OpenTelemetry instrumentation
+
+Available Commands
+-----------------
+- **script**: Execute a Python script file
+- **fallback**: Execute scripts directly (default behavior)
+
+Execution Modes
+--------------
+- **File Scripts**: Execute Python files with automatic dependency resolution
+- **Stdin Input**: Execute Python code from standard input
+- **Inline Dependencies**: Support for # /// script metadata format
+- **Manual Dependencies**: Specify dependencies with --with option
 
 Examples
 --------
-Run a script:
-    uvmgr exec script.py
+    >>> # Run a script file
+    >>> uvmgr exec script.py
+    >>> 
+    >>> # Run with arguments
+    >>> uvmgr exec script.py arg1 arg2
+    >>> 
+    >>> # Run with additional dependencies
+    >>> uvmgr exec --with rich script.py
+    >>> 
+    >>> # Run without current project
+    >>> uvmgr exec --no-project script.py
+    >>> 
+    >>> # Run from stdin
+    >>> echo 'print("hello")' | uvmgr exec -
 
-Run a script with arguments:
-    uvmgr exec script.py arg1 arg2
+Dependency Resolution
+--------------------
+1. **Inline Metadata**: Scripts can specify dependencies using # /// format
+2. **Manual Dependencies**: Use --with option to specify additional packages
+3. **Project Dependencies**: Current project is installed by default
+4. **Isolation**: Use --no-project to exclude current project
 
-Run a script with dependencies:
-    uvmgr exec --with rich script.py
-
-Run a script without installing the current project:
-    uvmgr exec --no-project script.py
-
-Run a script from stdin:
-    echo 'print("hello")' | uvmgr exec -
+See Also
+--------
+- :mod:`uvmgr.ops.exec` : Execution operations
+- :mod:`uvmgr.core.telemetry` : Telemetry and observability
 """
 
 from __future__ import annotations

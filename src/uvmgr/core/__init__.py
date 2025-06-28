@@ -1,9 +1,42 @@
 """
-uvmgr.core
-----------
-Re-export public helpers for quick scripts:
+uvmgr.core - Core Utilities Package
+==================================
 
-    from uvmgr.core import run, auto_name, venv_path
+Core utility modules providing essential functionality for the uvmgr application.
+
+This package aggregates and re-exports public symbols from all core sub-modules,
+making them available directly from uvmgr.core for convenient access in scripts
+and other modules.
+
+Available Sub-modules
+--------------------
+- **paths**: Path manipulation and project structure utilities
+- **fs**: File system operations and file handling
+- **shell**: Shell command execution and JSON utilities
+- **venv**: Virtual environment management
+- **process**: Process execution and management
+- **config**: Configuration management and settings
+- **clipboard**: Clipboard operations
+- **history**: Command history and state management
+- **concurrency**: Concurrent execution utilities
+- **telemetry**: OpenTelemetry integration and observability
+- **cache**: Caching mechanisms and utilities
+- **lint**: Code linting and quality tools
+
+Usage
+-----
+    >>> from uvmgr.core import run, auto_name, venv_path
+    >>> from uvmgr.core import paths, fs, shell
+    >>> 
+    >>> # Use imported functions directly
+    >>> result = run(["python", "--version"])
+    >>> project_path = paths.project_root()
+
+See Also
+--------
+- :mod:`uvmgr.core.paths` : Path utilities
+- :mod:`uvmgr.core.fs` : File system operations
+- :mod:`uvmgr.core.telemetry` : Observability tools
 """
 
 from __future__ import annotations

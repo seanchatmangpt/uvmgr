@@ -1,7 +1,72 @@
 """
-Typer sub-app: uvmgr weaver …
+uvmgr.commands.weaver - OpenTelemetry Weaver Tools
+================================================
 
 OpenTelemetry Weaver command suite for semantic convention management.
+
+This module provides comprehensive CLI commands for managing OpenTelemetry
+semantic conventions using the Weaver tool. Includes installation, validation,
+code generation, and registry management capabilities.
+
+Key Features
+-----------
+• **Weaver Installation**: Install and manage OpenTelemetry Weaver
+• **Registry Validation**: Validate semantic convention registries
+• **Code Generation**: Generate code from semantic conventions
+• **Registry Management**: Search, resolve, and manage registries
+• **Documentation**: Generate documentation from conventions
+• **Version Control**: Compare and diff registry versions
+
+Available Commands
+-----------------
+- **install**: Install or update OpenTelemetry Weaver
+- **check**: Validate semantic convention registry
+- **generate**: Generate code from semantic conventions
+- **resolve**: Resolve and export registry data
+- **search**: Search for semantic conventions
+- **stats**: Show registry statistics
+- **diff**: Compare two registries
+- **init**: Initialize a new registry
+- **docs**: Generate documentation
+- **version**: Show Weaver version
+
+Registry Management
+------------------
+- **Validation**: Check registry compliance and consistency
+- **Search**: Find specific attributes, metrics, or spans
+- **Resolution**: Resolve dependencies and references
+- **Statistics**: Analyze registry size and complexity
+- **Comparison**: Diff between registry versions
+
+Code Generation
+--------------
+- **Python**: Generate Python constants and types
+- **Markdown**: Generate documentation
+- **Go**: Generate Go code (planned)
+- **Custom Templates**: Support for custom generation templates
+
+Examples
+--------
+    >>> # Install Weaver
+    >>> uvmgr weaver install
+    >>> 
+    >>> # Validate registry
+    >>> uvmgr weaver check --registry ./registry
+    >>> 
+    >>> # Generate Python constants
+    >>> uvmgr weaver generate python --output src/
+    >>> 
+    >>> # Search for attributes
+    >>> uvmgr weaver search "http.request"
+    >>> 
+    >>> # Generate documentation
+    >>> uvmgr weaver docs --output docs/
+
+See Also
+--------
+- :mod:`uvmgr.core.semconv` : Semantic conventions
+- :mod:`uvmgr.commands.otel` : OpenTelemetry validation
+- :mod:`uvmgr.core.telemetry` : Telemetry and observability
 """
 
 from __future__ import annotations

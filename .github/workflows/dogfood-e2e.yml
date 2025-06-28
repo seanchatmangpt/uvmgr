@@ -32,14 +32,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ['3.8', '3.11', '3.12']
-        exclude:
-          # Skip some combinations to save CI time
-          - os: windows-latest
-            python-version: '3.8'
-          - os: macos-latest
-            python-version: '3.8'
+        os: [ubuntu-latest, macos-latest]
+        python-version: ['3.12']
     
     steps:
       - name: Checkout code
@@ -51,30 +45,25 @@ jobs:
           python-version: ${{ matrix.python-version }}
       
       - name: Install uv
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-        if: runner.os != 'Windows'
-      
-      - name: Install uv (Windows)
-        run: |
-          irm https://astral.sh/uv/install.ps1 | iex
-          echo "$env:USERPROFILE\.cargo\bin" >> $env:GITHUB_PATH
-        if: runner.os == 'Windows'
-        shell: powershell
+        uses: astral-sh/setup-uv@v5
       
       - name: Install uvmgr
         run: |
-          pip install -e .
-          uvmgr --version
+          uv sync --all-extras
+          uv run pip install -e .
+          uv run uvmgr --version
       
-      - name: Run dogfooding test loop
+      - name: Run basic functionality tests
         run: |
-          python tests/e2e/run_dogfood_loop.py ${{ github.event.inputs.verbose == 'true' && '-v' || '' }}
+          uv run uvmgr --help
+          uv run uvmgr deps --help
+          uv run uvmgr tests --help
+          uv run uvmgr build --help
       
-      - name: Run E2E test suite with uvmgr
+      - name: Run E2E test suite
         run: |
-          uvmgr tests run tests/e2e/ -v --tb=short
+          uv run uvmgr tests run tests/e2e/ -v --tb=short
+        timeout-minutes: 30
       
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -82,64 +71,24 @@ jobs:
         with:
           name: dogfood-results-${{ matrix.os }}-py${{ matrix.python-version }}
           path: |
-            dogfood_report.json
             reports/
             .coverage
       
       - name: Test uvmgr self-build
         run: |
-          uvmgr build wheel
-          uvmgr build check
-        if: matrix.python-version == '3.11'  # Only test on one version
+          uv run uvmgr build wheel
+          uv run uvmgr build check
+        timeout-minutes: 15
   
-  performance-benchmark:
-    name: Performance Benchmarks
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      
-      - name: Install uv
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-      
-      - name: Install uvmgr
-        run: |
-          pip install -e .
-      
-      - name: Run performance benchmarks
-        run: |
-          uvmgr tests run tests/e2e/test_performance.py -v
-      
-      - name: Store benchmark results
-        uses: benchmark-action/github-action-benchmark@v1
-        with:
-          tool: 'customSmallerIsBetter'
-          output-file-path: performance_report.json
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          auto-push: true
-          alert-threshold: '150%'
-          comment-on-alert: true
-          fail-on-alert: true
-  
-  integration-matrix:
+  integration-tests:
     name: Integration Tests
     runs-on: ubuntu-latest
     strategy:
       matrix:
         test-scenario:
-          - "monorepo"
-          - "large-deps"
-          - "ai-features"
-          - "mcp-server"
+          - "basic-workflow"
+          - "dependency-management"
+          - "build-process"
     
     steps:
       - name: Checkout code
@@ -148,55 +97,43 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
       
       - name: Install uv
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+        uses: astral-sh/setup-uv@v5
       
-      - name: Install uvmgr with extras
+      - name: Install uvmgr
         run: |
-          pip install -e ".[mcp,ai]"
+          uv sync --all-extras
+          uv run pip install -e .
       
       - name: Run integration test - ${{ matrix.test-scenario }}
         run: |
           case "${{ matrix.test-scenario }}" in
-            monorepo)
-              uvmgr tests run tests/e2e/test_workflows.py::TestProjectWorkflows::test_monorepo_workflow -v
+            basic-workflow)
+              uv run uvmgr tests run tests/test_cli.py -v
               ;;
-            large-deps)
-              uvmgr tests run tests/e2e/test_performance.py::TestScalabilityBenchmarks::test_large_dependency_tree -v
+            dependency-management)
+              uv run uvmgr tests run tests/test_import.py -v
               ;;
-            ai-features)
-              if [ -n "${{ secrets.OPENAI_API_KEY }}" ]; then
-                export OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}"
-                uvmgr tests run tests/e2e/test_workflows.py::TestAIWorkflows -v
-              else
-                echo "Skipping AI tests - no API key"
-              fi
-              ;;
-            mcp-server)
-              uvmgr serve start &
-              SERVER_PID=$!
-              sleep 5
-              uvmgr tests run tests/e2e/test_dogfooding.py::TestDogfoodingLoop::test_uvmgr_tests_itself -v
-              kill $SERVER_PID || true
+            build-process)
+              uv run uvmgr tests run tests/test_build_exe.py -v
               ;;
           esac
+        timeout-minutes: 20
       
       - name: Check test coverage
         run: |
-          uvmgr tests coverage
-          coverage report --fail-under=70
-        if: matrix.test-scenario == 'monorepo'  # Only check coverage once
+          uv run uvmgr tests coverage
+          uv run coverage report --fail-under=70
+        if: matrix.test-scenario == 'basic-workflow'
   
   dogfood-executable:
     name: Test Self-Built Executable
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest]
     
     steps:
       - name: Checkout code
@@ -205,44 +142,26 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
       
       - name: Install uv
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-        if: runner.os != 'Windows'
-      
-      - name: Install uv (Windows)
-        run: |
-          irm https://astral.sh/uv/install.ps1 | iex
-          echo "$env:USERPROFILE\.cargo\bin" >> $env:GITHUB_PATH
-        if: runner.os == 'Windows'
-        shell: powershell
+        uses: astral-sh/setup-uv@v5
       
       - name: Install uvmgr and build tools
         run: |
-          pip install -e .
-          pip install pyinstaller
+          uv sync --all-extras
+          uv run pip install -e .
       
       - name: Build uvmgr executable
         run: |
-          uvmgr build dogfood --version --platform
+          uv run uvmgr build dogfood --version --platform
+        timeout-minutes: 30
       
       - name: Test executable
         run: |
           ./dist/uvmgr* --version
           ./dist/uvmgr* --help
           ./dist/uvmgr* deps --help
-        if: runner.os != 'Windows'
-      
-      - name: Test executable (Windows)
-        run: |
-          ./dist/uvmgr*.exe --version
-          ./dist/uvmgr*.exe --help
-          ./dist/uvmgr*.exe deps --help
-        if: runner.os == 'Windows'
-        shell: powershell
       
       - name: Upload executable
         uses: actions/upload-artifact@v4

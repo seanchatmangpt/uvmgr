@@ -1,7 +1,49 @@
 """
-uvmgr.core.fs – hashing, atomic writes, temp helpers.
+uvmgr.core.fs - File System Operations and Utilities
+==================================================
 
-Enhanced with comprehensive OpenTelemetry instrumentation for file system operations monitoring.
+File system operations including hashing, atomic writes, and temporary file helpers.
+
+This module provides safe and efficient file system operations with comprehensive
+OpenTelemetry instrumentation for monitoring file operations, performance metrics,
+and error tracking.
+
+Key Features
+-----------
+• **Safe Operations**: Atomic writes and safe file handling
+• **Hashing Utilities**: File, string, and byte data hashing
+• **Temporary Files**: Managed temporary file creation in cache
+• **Telemetry Integration**: Full OpenTelemetry instrumentation
+• **Performance Monitoring**: Duration and size metrics for all operations
+
+Available Functions
+------------------
+- **hash_file()**: Hash file contents with performance tracking
+- **hash_bytes()**: Hash byte data with metrics
+- **hash_str()**: Hash string data
+- **safe_write()**: Atomic file writing
+- **atomic_copy()**: Atomic file copying with telemetry
+- **auto_name()**: Generate timestamped filenames
+- **tempfile_in_cache()**: Create temporary files in cache directory
+
+Examples
+--------
+    >>> from uvmgr.core.fs import hash_file, safe_write, atomic_copy
+    >>> from pathlib import Path
+    >>> 
+    >>> # Hash a file
+    >>> file_hash = hash_file(Path("requirements.txt"))
+    >>> 
+    >>> # Safe atomic write
+    >>> safe_write(Path("config.json"), '{"key": "value"}')
+    >>> 
+    >>> # Atomic copy with telemetry
+    >>> atomic_copy(Path("source.txt"), Path("dest.txt"))
+
+See Also
+--------
+- :mod:`uvmgr.core.paths` : Path management
+- :mod:`uvmgr.core.telemetry` : Telemetry and observability
 """
 
 from __future__ import annotations

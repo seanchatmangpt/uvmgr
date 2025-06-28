@@ -1,7 +1,60 @@
 """
-uvmgr.commands.lint – linting sub-command.
+uvmgr.commands.lint - Code Quality and Linting
+=============================================
 
-Provides commands for running code quality checks using Ruff.
+Linting sub-commands for code quality checks and formatting using Ruff.
+
+This module provides comprehensive code quality tools using Ruff for
+linting, formatting, and automatic fixing of Python code. All operations
+are instrumented with OpenTelemetry for monitoring code quality metrics.
+
+Key Features
+-----------
+• **Ruff Integration**: Fast Python linter and formatter
+• **Multiple Operations**: Check, format, and fix capabilities
+• **Auto-fixing**: Automatic correction of common issues
+• **Path Support**: Flexible path specification for targeted checks
+• **JSON Output**: Structured output for automation
+• **Telemetry Integration**: Full OpenTelemetry instrumentation
+
+Available Commands
+-----------------
+- **check**: Run Ruff linter to find code quality issues
+- **format**: Format Python code using Ruff formatter
+- **fix**: Run both linter and formatter to fix all auto-fixable issues
+
+Operation Modes
+--------------
+- **Check Mode**: Identify issues without making changes
+- **Fix Mode**: Automatically correct fixable issues
+- **Format Mode**: Apply consistent code formatting
+- **Show Fixes**: Preview changes without applying them
+
+Examples
+--------
+    >>> # Check code quality
+    >>> uvmgr lint check src/
+    >>> 
+    >>> # Format code
+    >>> uvmgr lint format --check
+    >>> 
+    >>> # Fix all auto-fixable issues
+    >>> uvmgr lint fix
+    >>> 
+    >>> # Check with auto-fixing
+    >>> uvmgr lint check --fix
+
+Configuration
+------------
+Ruff configuration is read from:
+- `pyproject.toml` (recommended)
+- `ruff.toml`
+- `.ruff.toml`
+
+See Also
+--------
+- :mod:`uvmgr.core.lint` : Core linting utilities
+- :mod:`uvmgr.core.telemetry` : Telemetry and observability
 """
 
 from __future__ import annotations

@@ -1,3 +1,64 @@
+"""
+uvmgr.commands.ap_scheduler - Advanced Process Scheduler
+=====================================================
+
+Minimal APScheduler wrapper for task scheduling and automation.
+
+This module provides CLI commands for scheduling and managing recurring
+tasks using APScheduler, supporting both cron expressions and interval-based
+scheduling.
+
+Key Features
+-----------
+• **Task Scheduling**: Schedule recurring tasks with cron or interval
+• **Job Management**: Add, remove, and list scheduled jobs
+• **Cron Support**: Full crontab expression support
+• **Interval Scheduling**: Time-based interval scheduling
+• **Job Persistence**: Persistent job storage and management
+• **Telemetry Integration**: Full OpenTelemetry instrumentation
+
+Available Commands
+-----------------
+- **add**: Add a new scheduled job
+- **remove**: Remove a scheduled job
+- **list**: List all scheduled jobs
+- **run**: Start the scheduler daemon
+
+Scheduling Types
+---------------
+- **Cron Jobs**: Use crontab expressions for complex scheduling
+- **Interval Jobs**: Run jobs at fixed time intervals
+
+Examples
+--------
+    >>> # Add cron job
+    >>> uvmgr ap-scheduler add backup "0 2 * * *" "backup.sh"
+    >>> 
+    >>> # Add interval job
+    >>> uvmgr ap-scheduler add cleanup --every 3600 "cleanup.sh"
+    >>> 
+    >>> # List jobs
+    >>> uvmgr ap-scheduler list
+    >>> 
+    >>> # Remove job
+    >>> uvmgr ap-scheduler remove backup
+    >>> 
+    >>> # Start scheduler
+    >>> uvmgr ap-scheduler run
+
+Cron Expression Format
+---------------------
+Standard crontab format: minute hour day month weekday
+- `* * * * *` - Every minute
+- `0 2 * * *` - Daily at 2 AM
+- `0 9 * * 1` - Weekly on Monday at 9 AM
+
+See Also
+--------
+- :mod:`uvmgr.ops.aps` : APScheduler operations
+- :mod:`uvmgr.core.telemetry` : Telemetry and observability
+"""
+
 import typer
 
 from uvmgr.core.instrumentation import add_span_attributes, add_span_event, instrument_command

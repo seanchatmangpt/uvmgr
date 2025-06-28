@@ -27,7 +27,7 @@ from typing import Any, Dict, List, Optional
 from uvmgr.core.instrumentation import add_span_attributes, add_span_event
 from uvmgr.core.semconv import ToolAttributes, ToolOperations, UvxAttributes
 from uvmgr.core.shell import colour
-from uvmgr.runtime.uv import run_uv_command
+from uvmgr.core.telemetry import span
 
 
 @dataclass
@@ -112,7 +112,8 @@ def install_tool(package: str, python: Optional[str] = None, force: bool = False
     add_span_event("uvx_install_start", {"package": package})
     
     try:
-        result = run_uv_command(cmd)
+        with span("uvx.install", package=package):
+            result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode == 0:
             add_span_event("uvx_install_success", {"package": package})
             colour(f"✅ Installed {package} with uvx", "green")
@@ -158,7 +159,8 @@ def run_tool(tool: str, args: List[str], isolated: bool = True) -> bool:
         return tools_run(tool, args)
     
     try:
-        result = run_uv_command(cmd)
+        with span("uvx.run", tool=tool):
+            result = subprocess.run(cmd, capture_output=True, text=True)
         success = result.returncode == 0
         
         if success:
@@ -187,7 +189,8 @@ def list_tools() -> List[ToolInfo]:
     })
     
     try:
-        result = run_uv_command(["uvx", "list", "--format", "json"])
+        with span("uvx.list"):
+            result = subprocess.run(["uvx", "list", "--format", "json"], capture_output=True, text=True)
         if result.returncode != 0:
             add_span_event("uvx_list_failed", {"error": result.stderr})
             return []
@@ -236,7 +239,8 @@ def uninstall_tool(package: str) -> bool:
     add_span_event("uvx_uninstall_start", {"package": package})
     
     try:
-        result = run_uv_command(["uvx", "uninstall", package])
+        with span("uvx.uninstall", package=package):
+            result = subprocess.run(["uvx", "uninstall", package], capture_output=True, text=True)
         if result.returncode == 0:
             add_span_event("uvx_uninstall_success", {"package": package})
             colour(f"✅ Uninstalled {package}", "green")
@@ -326,7 +330,8 @@ def health_check() -> Dict[str, Any]:
     
     # Check if uvx is available
     try:
-        result = run_uv_command(["uvx", "--version"])
+        with span("uvx.version_check"):
+            result = subprocess.run(["uvx", "--version"], capture_output=True, text=True)
         if result.returncode == 0:
             health["uvx_available"] = True
             health["uvx_version"] = result.stdout.strip()

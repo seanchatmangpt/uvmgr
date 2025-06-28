@@ -1,3 +1,55 @@
+"""
+uvmgr.commands.build - Package and Executable Building
+====================================================
+
+Build wheel, source distributions, and standalone executables.
+
+This module provides CLI commands for building Python packages and standalone
+executables using various build tools including uv, PyInstaller, and other
+packaging utilities.
+
+Key Features
+-----------
+• **Package Building**: Wheel and source distribution creation
+• **Executable Building**: Standalone executables with PyInstaller
+• **Spec Generation**: Customizable PyInstaller spec files
+• **Self-Building**: Dogfood builds for uvmgr itself
+• **Telemetry Integration**: Full OpenTelemetry instrumentation
+
+Available Commands
+-----------------
+- **dist**: Build Python wheel and source distribution
+- **exe**: Build standalone executable using PyInstaller
+- **spec**: Generate PyInstaller spec file for customization
+- **dogfood**: Build uvmgr executable (self-build demonstration)
+
+Build Types
+----------
+- **Wheel/SDist**: Standard Python package distributions
+- **Executable**: Standalone executables for distribution
+- **Spec Files**: Customizable build configurations
+- **Self-Build**: Recursive builds for uvmgr itself
+
+Examples
+--------
+    >>> # Build package distribution
+    >>> uvmgr build dist --upload
+    >>> 
+    >>> # Build standalone executable
+    >>> uvmgr build exe --name my-app --onefile
+    >>> 
+    >>> # Generate spec file
+    >>> uvmgr build spec --outfile custom.spec
+    >>> 
+    >>> # Self-build uvmgr
+    >>> uvmgr build dogfood --version --test
+
+See Also
+--------
+- :mod:`uvmgr.ops.build` : Build operations
+- :mod:`uvmgr.core.telemetry` : Telemetry and observability
+"""
+
 import pathlib
 
 import typer

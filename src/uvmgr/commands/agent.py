@@ -1,8 +1,51 @@
 """
-uvmgr.commands.agent
-====================
+uvmgr.commands.agent - BPMN Workflow Execution
+============================================
 
-CLI wrapper around the agent orchestration layer.
+CLI wrapper around the agent orchestration layer for BPMN workflows.
+
+This module provides CLI commands for executing BPMN (Business Process
+Model and Notation) workflows, enabling automated process orchestration
+and workflow management.
+
+Key Features
+-----------
+• **BPMN Support**: Execute Business Process Model and Notation workflows
+• **Workflow Orchestration**: Automated process execution and management
+• **File Validation**: Automatic BPMN file validation
+• **Process Tracking**: Comprehensive workflow execution monitoring
+• **Telemetry Integration**: Full OpenTelemetry instrumentation
+
+Available Commands
+-----------------
+- **run**: Execute BPMN workflow file until completion
+
+Workflow Features
+----------------
+- **XML Validation**: Automatic BPMN XML file validation
+- **Process Monitoring**: Track workflow execution progress
+- **Error Handling**: Comprehensive error tracking and reporting
+- **Performance Metrics**: Monitor workflow execution performance
+
+Examples
+--------
+    >>> # Execute BPMN workflow
+    >>> uvmgr agent run workflow.bpmn
+    >>> 
+    >>> # Workflow will execute until completion
+    >>> # Progress and results are tracked in telemetry
+
+BPMN File Requirements
+---------------------
+- Valid XML format
+- Contains BPMN namespace and elements
+- Readable file format
+- Proper BPMN 2.0 specification compliance
+
+See Also
+--------
+- :mod:`uvmgr.ops.agent` : Agent operations
+- :mod:`uvmgr.core.telemetry` : Telemetry and observability
 """
 
 from __future__ import annotations

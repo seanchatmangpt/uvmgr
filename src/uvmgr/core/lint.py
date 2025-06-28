@@ -1,7 +1,54 @@
 """
-uvmgr.core.lint – local quality gate helpers.
+uvmgr.core.lint - Code Quality and Linting Utilities
+==================================================
 
-Enhanced with comprehensive OpenTelemetry instrumentation for code quality operations monitoring.
+Local quality gate helpers with comprehensive telemetry instrumentation.
+
+This module provides utilities for enforcing code quality standards using
+Ruff linting and mapping exceptions to appropriate exit codes for
+consistent error handling across the application.
+
+Key Features
+-----------
+• **Ruff Integration**: Enforce code quality using Ruff linter
+• **Exception Mapping**: Consistent exit code mapping for different exception types
+• **Telemetry Integration**: Full OpenTelemetry instrumentation
+• **Performance Monitoring**: Duration tracking for linting operations
+• **Quality Gates**: Automated code quality enforcement
+
+Available Functions
+------------------
+- **enforce_ruff()**: Run Ruff linting with quality gate enforcement
+- **map_exception()**: Map exceptions to standardized exit codes
+
+Exception Mapping
+----------------
+- **FileNotFoundError**: Exit code 3
+- **KeyError**: Exit code 4
+- **ValueError**: Exit code 5
+- **Other exceptions**: Exit code 1 (default)
+
+Examples
+--------
+    >>> from uvmgr.core.lint import enforce_ruff, map_exception
+    >>> 
+    >>> # Enforce code quality
+    >>> try:
+    >>>     enforce_ruff("src/")
+    >>> except SystemExit:
+    >>>     print("Linting failed")
+    >>> 
+    >>> # Map exception to exit code
+    >>> try:
+    >>>     # ... some operation
+    >>>     pass
+    >>> except Exception as e:
+    >>>     exit_code = map_exception(e)
+    >>>     sys.exit(exit_code)
+
+See Also
+--------
+- :mod:`uvmgr.core.telemetry` : Telemetry and observability
 """
 
 from __future__ import annotations

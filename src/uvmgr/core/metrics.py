@@ -1,14 +1,57 @@
 """
-uvmgr.core.metrics
-------------------
-Metrics collection classes for different operation types.
+uvmgr.core.metrics - Metrics Collection and Monitoring
+====================================================
 
-Provides metric collection for:
-- Package management (deps)
-- Build operations
-- Test execution
-- AI operations
-- Process execution
+Metrics collection classes for different operation types with comprehensive monitoring.
+
+This module provides specialized metrics collection classes for various uvmgr
+operations, including package management, build operations, test execution,
+AI operations, and process execution. All metrics are integrated with
+OpenTelemetry for comprehensive observability.
+
+Key Features
+-----------
+• **Specialized Metrics**: Operation-specific metrics for different domains
+• **Base Class**: Common metrics functionality and timing utilities
+• **OpenTelemetry Integration**: Full integration with telemetry system
+• **Context Managers**: Easy-to-use timing and monitoring utilities
+• **Type Safety**: Type-safe metric recording with semantic conventions
+
+Available Metric Classes
+-----------------------
+- **BaseMetrics**: Base class with common metrics functionality
+- **PackageMetrics**: Package management operations (add, remove, update)
+- **BuildMetrics**: Build operations (wheel, exe, etc.)
+- **TestMetrics**: Test execution and coverage metrics
+- **AiMetrics**: AI operations and token usage
+- **ProcessMetrics**: Process execution and performance
+- **ProjectMetrics**: Project creation and management
+
+Common Metrics
+-------------
+- **Operation Counters**: Track operation frequency
+- **Duration Histograms**: Measure operation performance
+- **Error Counters**: Monitor failure rates
+- **Active Gauges**: Track concurrent operations
+
+Examples
+--------
+    >>> from uvmgr.core.metrics import PackageMetrics, TestMetrics
+    >>> 
+    >>> # Package metrics
+    >>> pkg_metrics = PackageMetrics()
+    >>> with pkg_metrics.timer() as timer:
+    >>>     # ... package operation
+    >>>     pkg_metrics.record_add("requests", "2.28.0", False, result)
+    >>> 
+    >>> # Test metrics
+    >>> test_metrics = TestMetrics()
+    >>> test_metrics.record_test_operation("run", 5.2, True, 10, 0, 0, 85.5)
+
+See Also
+--------
+- :mod:`uvmgr.core.telemetry` : Telemetry and observability
+- :mod:`uvmgr.core.semconv` : Semantic conventions
 """
 
 from __future__ import annotations
