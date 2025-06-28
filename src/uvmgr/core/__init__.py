@@ -46,6 +46,27 @@ import sys
 from types import ModuleType
 from typing import Final
 
+# Explicit imports for PyInstaller compatibility
+# These ensure all submodules are available during frozen execution
+try:
+    from . import (
+        cache,
+        clipboard, 
+        concurrency,
+        config,
+        fs,
+        history,
+        lint,
+        paths,
+        process,
+        shell,
+        telemetry,
+        venv,
+    )
+except ImportError:
+    # Fall back to dynamic import for development/testing
+    pass
+
 # --------------------------------------------------------------------------- #
 # List util sub-modules to aggregate
 # --------------------------------------------------------------------------- #

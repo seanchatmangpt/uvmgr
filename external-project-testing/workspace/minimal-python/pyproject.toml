@@ -1,0 +1,29 @@
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "minimal-external-test"
+version = "0.1.0"
+description = "Minimal Python project for uvmgr testing"
+dependencies = [
+    "requests",
+    "uvmgr",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+]
+
+[tool.uv.sources]
+uvmgr = { path = "../../../", editable = true }
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+    "pytest-cov>=6.2.1",
+    "pytest-mock>=3.14.1",
+]

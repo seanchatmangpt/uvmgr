@@ -1,0 +1,37 @@
+{
+  "project_info": {
+    "name": "minimal-python",
+    "path": "external-project-testing/workspace/minimal-python",
+    "language": "python",
+    "package_manager": "uv",
+    "has_tests": true,
+    "test_framework": "pytest",
+    "has_requirements": true,
+    "has_pyproject": true,
+    "dependencies": [],
+    "project_type": "library"
+  },
+  "validation_result": {
+    "success": false,
+    "workflow_name": "external_validation",
+    "duration_seconds": 2.0352351665496826,
+    "validation_steps": [
+      "Installation failed"
+    ],
+    "metrics_validated": 0,
+    "spans_validated": 0,
+    "errors": [
+      "Failed to install uvmgr dependencies"
+    ],
+    "performance_data": {}
+  },
+  "installation_success": false,
+  "installation_time": 2.0352351665496826,
+  "uvmgr_integration_success": false,
+  "original_dependencies_preserved": true,
+  "cleanup_success": false,
+  "recommendations": [
+    "Check project dependencies and Python version compatibility"
+  ],
+  "generated_at": "2025-06-28T00:00:00Z"
+}

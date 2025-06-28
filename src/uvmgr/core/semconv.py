@@ -47,6 +47,10 @@ class PackageAttributes:
     
     PACKAGE_OPERATION: Final[str] = "package.operation"  # The type of package operation
     
+    OPERATION: Final[str] = "package.operation"  # Alias for PACKAGE_OPERATION
+    
+    DEV_DEPENDENCY: Final[str] = "package.dev_dependency"  # Whether it's a dev dependency
+    
 
 
 
@@ -87,6 +91,8 @@ class ProcessAttributes:
     EXIT_CODE: Final[str] = "process.exit_code"  # Process exit code
     
     WORKING_DIRECTORY: Final[str] = "process.working_directory"  # Working directory
+    
+    DURATION: Final[str] = "process.duration"  # Process execution duration
 
 
 # Test execution attributes  
@@ -111,6 +117,8 @@ class TestAttributes:
 # Build operation attributes
 class BuildAttributes:
     """Build operation attributes"""
+    
+    OPERATION: Final[str] = "build.operation"  # Build operation type
     
     TYPE: Final[str] = "build.type"  # Build type (wheel, exe, etc.)
     
@@ -456,6 +464,32 @@ class ShellOperations:
     BACKGROUND: Final[str] = "background"
 
 
+# MCP (Model Context Protocol) attributes
+class McpAttributes:
+    """MCP operation attributes"""
+    
+    OPERATION: Final[str] = "mcp.operation"  # MCP operation type
+    
+    TOOL_NAME: Final[str] = "mcp.tool_name"  # Tool name
+    
+    RESOURCE_URI: Final[str] = "mcp.resource_uri"  # Resource URI
+    
+    STATUS: Final[str] = "mcp.status"  # Operation status
+
+
+# MCP operations
+class McpOperations:
+    """Standard MCP operation values"""
+    
+    CALL_TOOL: Final[str] = "call_tool"
+    
+    LIST_TOOLS: Final[str] = "list_tools"
+    
+    READ_RESOURCE: Final[str] = "read_resource"
+    
+    LIST_RESOURCES: Final[str] = "list_resources"
+
+
 # Export all classes for convenient importing
 __all__ = [
     "CliAttributes",
@@ -483,6 +517,8 @@ __all__ = [
     "ServerOperations",
     "ShellAttributes",
     "ShellOperations",
+    "McpAttributes",
+    "McpOperations",
     "AIAttributes",
     "CIAttributes",
     "CIOperations",

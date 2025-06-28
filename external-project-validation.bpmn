@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  id="external_project_validation"
+                  targetNamespace="http://uvmgr.com/external">
+
+  <bpmn:process id="external_project_validation_process" isExecutable="true" name="External Project Validation">
+    
+    <!-- Start Event -->
+    <bpmn:startEvent id="start_validation" name="Start External Project Test">
+      <bpmn:outgoing>flow_to_setup</bpmn:outgoing>
+    </bpmn:startEvent>
+    
+    <!-- Setup -->
+    <bpmn:sequenceFlow id="flow_to_setup" sourceRef="start_validation" targetRef="setup_test"/>
+    
+    <bpmn:serviceTask id="setup_test" name="Setup Test Environment">
+      <bpmn:incoming>flow_to_setup</bpmn:incoming>
+      <bpmn:outgoing>flow_to_create</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <!-- Create External Project -->
+    <bpmn:sequenceFlow id="flow_to_create" sourceRef="setup_test" targetRef="create_project"/>
+    
+    <bpmn:serviceTask id="create_project" name="Create External Project">
+      <bpmn:incoming>flow_to_create</bpmn:incoming>
+      <bpmn:outgoing>flow_to_test</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <!-- Test uvmgr functionality -->
+    <bpmn:sequenceFlow id="flow_to_test" sourceRef="create_project" targetRef="test_uvmgr"/>
+    
+    <bpmn:serviceTask id="test_uvmgr" name="Test uvmgr in External Project">
+      <bpmn:incoming>flow_to_test</bpmn:incoming>
+      <bpmn:outgoing>flow_to_end</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <!-- End -->
+    <bpmn:sequenceFlow id="flow_to_end" sourceRef="test_uvmgr" targetRef="end_validation"/>
+    
+    <bpmn:endEvent id="end_validation" name="External Project Test Complete">
+      <bpmn:incoming>flow_to_end</bpmn:incoming>
+    </bpmn:endEvent>
+    
+  </bpmn:process>
+  
+</bpmn:definitions>

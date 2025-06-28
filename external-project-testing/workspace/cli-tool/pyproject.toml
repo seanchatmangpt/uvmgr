@@ -1,0 +1,33 @@
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cli-external-test"
+version = "0.1.0"
+description = "CLI tool for uvmgr testing"
+dependencies = [
+    "click>=8.0.0",
+    "rich>=10.0.0",
+    "uvmgr",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+]
+
+[project.scripts]
+cli-test = "cli_external_test.main:cli"
+
+[tool.uv.sources]
+uvmgr = { path = "../../../", editable = true }
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+    "pytest-cov>=6.2.1",
+    "pytest-mock>=3.14.1",
+]

@@ -1,0 +1,27 @@
+{
+  "workflow": "8020-external-project-validation.bpmn",
+  "iterations": 1,
+  "otel_validation": true,
+  "tests": {
+    "bpmn_validation": {
+      "status": "passed",
+      "valid": true
+    },
+    "execution": {
+      "status": "passed",
+      "results": [
+        {
+          "iteration": 1,
+          "status": "completed",
+          "duration": 0.008848905563354492,
+          "steps": 1,
+          "tasks": 128
+        }
+      ]
+    },
+    "otel_integration": {
+      "status": "passed",
+      "message": "OTEL integration working correctly"
+    }
+  }
+}

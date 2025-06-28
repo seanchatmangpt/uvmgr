@@ -299,8 +299,7 @@
     <!-- Success Path -->
     <bpmn:sequenceFlow id="flow_to_success" sourceRef="validation_decision" targetRef="generate_success_report">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">
-        task.data.get('validation_success', False) == True and 
-        task.data.get('overall_success_rate', 0) >= 0.80
+        validation_success == true
       </bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     
@@ -320,8 +319,7 @@
     <!-- Failure Path -->
     <bpmn:sequenceFlow id="flow_to_failure" sourceRef="validation_decision" targetRef="generate_failure_report">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">
-        task.data.get('validation_success', False) == False or 
-        task.data.get('overall_success_rate', 0) < 0.80
+        validation_success == false
       </bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     

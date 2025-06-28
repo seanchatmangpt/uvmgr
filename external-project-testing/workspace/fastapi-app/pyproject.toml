@@ -1,0 +1,32 @@
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fastapi-external-test"
+version = "0.1.0"
+description = "FastAPI project for uvmgr testing"
+dependencies = [
+    "fastapi>=0.68.0",
+    "uvicorn>=0.15.0",
+    "pydantic>=1.8.0",
+    "uvmgr",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "httpx",
+]
+
+[tool.uv.sources]
+uvmgr = { path = "../../../", editable = true }
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+    "pytest-cov>=6.2.1",
+    "pytest-mock>=3.14.1",
+]

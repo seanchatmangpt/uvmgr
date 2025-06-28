@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  id="external_project_8020_validation"
+                  targetNamespace="http://uvmgr.com/external-8020">
+
+  <bpmn:process id="external_8020_validation_process" isExecutable="true" name="External Project 8020 Validation">
+    
+    <!-- Start Event -->
+    <bpmn:startEvent id="start_validation" name="Start External Project 8020 Validation">
+      <bpmn:outgoing>flow_to_setup</bpmn:outgoing>
+    </bpmn:startEvent>
+    
+    <!-- Setup -->
+    <bpmn:sequenceFlow id="flow_to_setup" sourceRef="start_validation" targetRef="setup_environment"/>
+    
+    <bpmn:serviceTask id="setup_environment" name="Setup Test Environment">
+      <bpmn:incoming>flow_to_setup</bpmn:incoming>
+      <bpmn:outgoing>flow_to_create</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <!-- Create External Project -->
+    <bpmn:sequenceFlow id="flow_to_create" sourceRef="setup_environment" targetRef="create_external_project"/>
+    
+    <bpmn:serviceTask id="create_external_project" name="Create External Project">
+      <bpmn:incoming>flow_to_create</bpmn:incoming>
+      <bpmn:outgoing>flow_to_test_gateway</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <!-- Test Gateway -->
+    <bpmn:sequenceFlow id="flow_to_test_gateway" sourceRef="create_external_project" targetRef="test_gateway"/>
+    
+    <bpmn:parallelGateway id="test_gateway" name="Run Parallel Tests">
+      <bpmn:incoming>flow_to_test_gateway</bpmn:incoming>
+      <bpmn:outgoing>flow_to_tests</bpmn:outgoing>
+      <bpmn:outgoing>flow_to_otel</bpmn:outgoing>
+      <bpmn:outgoing>flow_to_weaver</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    
+    <!-- Test uvmgr tests -->
+    <bpmn:sequenceFlow id="flow_to_tests" sourceRef="test_gateway" targetRef="test_uvmgr_tests"/>
+    
+    <bpmn:serviceTask id="test_uvmgr_tests" name="Test uvmgr tests run">
+      <bpmn:incoming>flow_to_tests</bpmn:incoming>
+      <bpmn:outgoing>flow_tests_to_join</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <!-- Test OTEL -->
+    <bpmn:sequenceFlow id="flow_to_otel" sourceRef="test_gateway" targetRef="test_uvmgr_otel"/>
+    
+    <bpmn:serviceTask id="test_uvmgr_otel" name="Test uvmgr otel test">
+      <bpmn:incoming>flow_to_otel</bpmn:incoming>
+      <bpmn:outgoing>flow_otel_to_join</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <!-- Test Weaver -->
+    <bpmn:sequenceFlow id="flow_to_weaver" sourceRef="test_gateway" targetRef="test_uvmgr_weaver"/>
+    
+    <bpmn:serviceTask id="test_uvmgr_weaver" name="Test uvmgr weaver check">
+      <bpmn:incoming>flow_to_weaver</bpmn:incoming>
+      <bpmn:outgoing>flow_weaver_to_join</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <!-- Join Gateway -->
+    <bpmn:sequenceFlow id="flow_tests_to_join" sourceRef="test_uvmgr_tests" targetRef="test_join"/>
+    <bpmn:sequenceFlow id="flow_otel_to_join" sourceRef="test_uvmgr_otel" targetRef="test_join"/>
+    <bpmn:sequenceFlow id="flow_weaver_to_join" sourceRef="test_uvmgr_weaver" targetRef="test_join"/>
+    
+    <bpmn:parallelGateway id="test_join" name="Join Test Results">
+      <bpmn:incoming>flow_tests_to_join</bpmn:incoming>
+      <bpmn:incoming>flow_otel_to_join</bpmn:incoming>
+      <bpmn:incoming>flow_weaver_to_join</bpmn:incoming>
+      <bpmn:outgoing>flow_to_report</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    
+    <!-- Generate Report -->
+    <bpmn:sequenceFlow id="flow_to_report" sourceRef="test_join" targetRef="generate_report"/>
+    
+    <bpmn:serviceTask id="generate_report" name="Generate External Project Report">
+      <bpmn:incoming>flow_to_report</bpmn:incoming>
+      <bpmn:outgoing>flow_to_end</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <!-- End -->
+    <bpmn:sequenceFlow id="flow_to_end" sourceRef="generate_report" targetRef="end_validation"/>
+    
+    <bpmn:endEvent id="end_validation" name="External Project Validation Complete">
+      <bpmn:incoming>flow_to_end</bpmn:incoming>
+    </bpmn:endEvent>
+    
+  </bpmn:process>
+  
+</bpmn:definitions>

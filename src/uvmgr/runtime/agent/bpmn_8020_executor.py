@@ -28,7 +28,7 @@ from SpiffWorkflow.task import Task
 
 from uvmgr.core.instrumentation import add_span_attributes, add_span_event
 from uvmgr.core.semconv import WorkflowAttributes, WorkflowOperations
-from uvmgr.core.shell import run_command
+from uvmgr.core.process import run
 from uvmgr.core.telemetry import metric_counter, metric_histogram, span
 from uvmgr.runtime.agent.spiff import _load, _step, get_workflow_stats
 
@@ -110,6 +110,8 @@ class BPMN8020Executor:
         """Register custom task handlers for service tasks."""
         # Map service task IDs to handler methods
         self.task_handlers = {
+            "start_validation": self._handle_start_event,
+            "Start": self._handle_start_event,  # Default start task
             "setup_environment": self._handle_setup_environment,
             "start_otel_validation": self._handle_start_otel_validation,
             "generate_minimal_project": self._handle_generate_project,
@@ -133,42 +135,37 @@ class BPMN8020Executor:
         results = {"tasks": [], "errors": [], "metrics": {}}
         
         with span("workflow.execution", track_performance=True):
-            while not workflow.is_completed():
-                ready_tasks = workflow.get_ready_user_tasks()
+            max_iterations = 1000  # Safety mechanism to prevent infinite loops
+            iteration_count = 0
+            
+            while not workflow.is_completed() and iteration_count < max_iterations:
+                iteration_count += 1
                 
-                if not ready_tasks:
-                    # No ready tasks, try to step the workflow
-                    try:
-                        _step(workflow)
-                        self.workflow_stats["tasks_executed"] += 1
-                    except Exception as e:
-                        logger.error(f"Workflow step failed: {e}")
-                        self.workflow_stats["tasks_failed"] += 1
-                        results["errors"].append(str(e))
+                try:
+                    # Get the next task to execute
+                    next_task = workflow.get_next_task()
+                    
+                    if next_task is None:
+                        # No more tasks, workflow should be complete
                         break
-                    continue
-                
-                # Process ready tasks
-                for task in ready_tasks:
-                    try:
-                        task_result = await self._execute_task_async(task)
-                        results["tasks"].append(task_result)
-                        
-                        # Complete the task
-                        task.complete()
-                        self.workflow_stats["tasks_executed"] += 1
-                        
-                    except Exception as e:
-                        logger.error(f"Task {task.task_spec.name} failed: {e}")
-                        self.workflow_stats["tasks_failed"] += 1
-                        results["errors"].append({
-                            "task": task.task_spec.name,
-                            "error": str(e)
-                        })
-                        
-                        # Mark task as failed but continue workflow
-                        task.data["error"] = str(e)
-                        task.complete()
+                    
+                    # Execute the task
+                    task_result = await self._execute_task_async(next_task)
+                    results["tasks"].append(task_result)
+                    
+                    # Complete the task
+                    next_task.complete()
+                    self.workflow_stats["tasks_executed"] += 1
+                    
+                except Exception as e:
+                    logger.error(f"Workflow execution failed: {e}")
+                    self.workflow_stats["tasks_failed"] += 1
+                    results["errors"].append(str(e))
+                    break
+            
+            if iteration_count >= max_iterations:
+                logger.error(f"Workflow execution exceeded maximum iterations ({max_iterations})")
+                results["errors"].append("Workflow execution timed out - possible infinite loop")
         
         # Calculate success rate
         total_tasks = self.workflow_stats["tasks_executed"] + self.workflow_stats["tasks_failed"]
@@ -217,13 +214,13 @@ class BPMN8020Executor:
         
         if compose_file.exists():
             # Start external testing environment
-            result = run_command(
-                ["docker-compose", "-f", str(compose_file), "up", "-d"],
-                cwd=self.base_path / "external-project-testing"
-            )
-            
-            if result.returncode != 0:
-                raise Exception(f"Failed to start Docker environment: {result.stderr}")
+            try:
+                run(
+                    ["docker-compose", "-f", str(compose_file), "up", "-d"],
+                    cwd=self.base_path / "external-project-testing"
+                )
+            except subprocess.CalledProcessError as e:
+                raise Exception(f"Failed to start Docker environment: {e}")
         
         # Initialize OTEL collector
         otel_result = await self._ensure_otel_collector()
@@ -344,13 +341,15 @@ class BPMN8020Executor:
             # Use the Substrate GitHub template
             substrate_template = "https://github.com/superlinear-ai/substrate"
             
-            result = run_command([
-                "uvmgr", "new", str(copier_test_path),
-                "--template", substrate_template,
-                "--no-input"  # Use defaults
-            ])
-            
-            success = result.returncode == 0
+            try:
+                run([
+                    "uvmgr", "new", str(copier_test_path),
+                    "--template", substrate_template,
+                    "--no-input"  # Use defaults
+                ])
+                success = True
+            except subprocess.CalledProcessError:
+                success = False
             
             if success:
                 # Validate created project structure
@@ -509,6 +508,11 @@ class BPMN8020Executor:
                 "markdown_path": str(markdown_path)
             }
     
+    async def _handle_start_event(self, task: Task) -> Dict[str, Any]:
+        """Handle start events and similar tasks."""
+        add_span_event("task.start_event", {"task_name": task.task_spec.name})
+        return {"success": True, "message": "Start event processed"}
+    
     async def _handle_default_task(self, task: Task) -> Dict[str, Any]:
         """Default handler for unrecognized tasks."""
         logger.warning(f"No specific handler for task: {task.task_spec.name}")
@@ -553,13 +557,15 @@ dependencies = []
 """)
         
         # Install uvmgr
-        result = run_command([
-            "bash", 
-            str(self.base_path / "external-project-testing" / "auto-install-uvmgr.sh"),
-            str(project_path)
-        ])
-        
-        return result.returncode == 0
+        try:
+            run([
+                "bash", 
+                str(self.base_path / "external-project-testing" / "auto-install-uvmgr.sh"),
+                str(project_path)
+            ])
+            return True
+        except subprocess.CalledProcessError:
+            return False
     
     async def _generate_fastapi_project(self, project_path: Path) -> bool:
         """Generate a FastAPI project."""
@@ -593,26 +599,30 @@ dependencies = ["fastapi>=0.68.0", "uvicorn>=0.15.0"]
 """)
         
         # Install uvmgr
-        result = run_command([
-            "bash",
-            str(self.base_path / "external-project-testing" / "auto-install-uvmgr.sh"),
-            str(project_path)
-        ])
-        
-        return result.returncode == 0
+        try:
+            run([
+                "bash",
+                str(self.base_path / "external-project-testing" / "auto-install-uvmgr.sh"),
+                str(project_path)
+            ])
+            return True
+        except subprocess.CalledProcessError:
+            return False
     
     async def _generate_substrate_project(self, project_path: Path) -> bool:
         """Generate a Substrate-inspired project."""
         # Use uvmgr's project command
-        result = run_command([
-            "uvmgr", "new", str(project_path),
-            "--substrate",
-            "--github-actions",
-            "--pre-commit",
-            "--dev-containers"
-        ])
-        
-        return result.returncode == 0
+        try:
+            run([
+                "uvmgr", "new", str(project_path),
+                "--substrate",
+                "--github-actions",
+                "--pre-commit",
+                "--dev-containers"
+            ])
+            return True
+        except subprocess.CalledProcessError:
+            return False
     
     async def _run_project_tests(self, project_path: Path, project_type: str) -> Dict[str, Any]:
         """Run comprehensive tests on a project."""
@@ -639,21 +649,20 @@ dependencies = ["fastapi>=0.68.0", "uvicorn>=0.15.0"]
                 
             test_results["tests_run"] += 1
             
-            result = run_command(cmd, cwd=project_path)
-            
-            if result.returncode == 0:
+            try:
+                output = run(cmd, cwd=project_path, capture=True)
                 test_results["tests_passed"] += 1
                 test_results["details"].append({
                     "command": " ".join(cmd),
                     "status": "passed",
-                    "output": result.stdout[:200]  # Truncate output
+                    "output": (output or "")[:200]  # Truncate output
                 })
-            else:
+            except subprocess.CalledProcessError as e:
                 test_results["tests_failed"] += 1
                 test_results["details"].append({
                     "command": " ".join(cmd),
                     "status": "failed",
-                    "error": result.stderr[:200]
+                    "error": str(e)[:200]
                 })
         
         # Calculate success rate
@@ -699,28 +708,34 @@ CMD ["python", "-m", "src.main"]
         (project_path / "Dockerfile").write_text(dockerfile_content)
         
         # Build Docker image
-        result = run_command([
-            "docker", "build", "-t", "uvmgr-test", "."
-        ], cwd=project_path)
-        
-        return result.returncode == 0
+        try:
+            run([
+                "docker", "build", "-t", "uvmgr-test", "."
+            ], cwd=project_path)
+            return True
+        except subprocess.CalledProcessError:
+            return False
     
     async def _test_pyinstaller_deployment(self, project_path: Path) -> bool:
         """Test PyInstaller deployment."""
-        result = run_command([
-            "uvmgr", "build", "exe",
-            "--name", "test-app"
-        ], cwd=project_path)
-        
-        return result.returncode == 0
+        try:
+            run([
+                "uvmgr", "build", "exe",
+                "--name", "test-app"
+            ], cwd=project_path)
+            return True
+        except subprocess.CalledProcessError:
+            return False
     
     async def _test_wheel_deployment(self, project_path: Path) -> bool:
         """Test wheel deployment."""
-        result = run_command([
-            "uvmgr", "build", "dist"
-        ], cwd=project_path)
-        
-        return result.returncode == 0
+        try:
+            run([
+                "uvmgr", "build", "dist"
+            ], cwd=project_path)
+            return True
+        except subprocess.CalledProcessError:
+            return False
     
     async def _collect_performance_metrics(self) -> Dict[str, Any]:
         """Collect performance metrics from OTEL data."""

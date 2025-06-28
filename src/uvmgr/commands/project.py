@@ -197,7 +197,7 @@ def status(ctx: typer.Context):
     add_span_attributes(**{
         ProjectAttributes.OPERATION: "status",
         ProjectAttributes.NAME: project_info["name"],
-        ProjectAttributes.PATH: project_info["path"],
+        "project.path": project_info["path"],
     })
     add_span_event("project.status.checked", project_info)
     
