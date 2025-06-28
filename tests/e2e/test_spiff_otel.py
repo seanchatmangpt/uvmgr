@@ -96,9 +96,9 @@ class TestSpiffWorkflowOTEL:
     def test_simple_workflow_execution(self, simple_bpmn):
         """Test simple workflow execution with OTEL instrumentation."""
         # Mock telemetry components to capture calls
-        with patch("uvmgr.core.telemetry.span") as mock_span, \
-             patch("uvmgr.core.telemetry.metric_counter") as mock_counter, \
-             patch("uvmgr.core.telemetry.metric_histogram") as mock_histogram:
+        with patch("uvmgr.runtime.agent.spiff.span") as mock_span, \
+             patch("uvmgr.runtime.agent.spiff.metric_counter") as mock_counter, \
+             patch("uvmgr.runtime.agent.spiff.metric_histogram") as mock_histogram:
 
             # Mock span context manager
             mock_span_instance = MagicMock()
@@ -126,9 +126,9 @@ class TestSpiffWorkflowOTEL:
     @patch("builtins.input", return_value="")  # Auto-complete user tasks
     def test_complex_workflow_with_user_tasks(self, mock_input, complex_bpmn):
         """Test complex workflow with user tasks and OTEL instrumentation."""
-        with patch("uvmgr.core.telemetry.span") as mock_span, \
-             patch("uvmgr.core.instrumentation.add_span_event") as mock_event, \
-             patch("uvmgr.core.instrumentation.add_span_attributes") as mock_attrs:
+        with patch("uvmgr.runtime.agent.spiff.span") as mock_span, \
+             patch("uvmgr.runtime.agent.spiff.add_span_event") as mock_event, \
+             patch("uvmgr.runtime.agent.spiff.add_span_attributes") as mock_attrs:
 
             mock_span.return_value.__enter__ = MagicMock()
             mock_span.return_value.__exit__ = MagicMock(return_value=None)
@@ -149,8 +149,8 @@ class TestSpiffWorkflowOTEL:
 
     def test_workflow_validation(self, simple_bpmn):
         """Test BPMN file validation with telemetry."""
-        with patch("uvmgr.core.telemetry.span") as mock_span, \
-             patch("uvmgr.core.instrumentation.add_span_event") as mock_event:
+        with patch("uvmgr.runtime.agent.spiff.span") as mock_span, \
+             patch("uvmgr.runtime.agent.spiff.add_span_event") as mock_event:
 
             mock_span.return_value.__enter__ = MagicMock()
             mock_span.return_value.__exit__ = MagicMock(return_value=None)
@@ -170,7 +170,7 @@ class TestSpiffWorkflowOTEL:
             f.write("invalid xml content")
             invalid_file = Path(f.name)
 
-        with patch("uvmgr.core.instrumentation.add_span_event") as mock_event:
+        with patch("uvmgr.runtime.agent.spiff.add_span_event") as mock_event:
             result = validate_bpmn_file(invalid_file)
             assert result is False
 
@@ -189,8 +189,8 @@ class TestSpiffWorkflowOTEL:
                 metrics_captured.append((name, value))
             return metric_func
 
-        with patch("uvmgr.core.telemetry.metric_counter", side_effect=capture_metric), \
-             patch("uvmgr.core.telemetry.metric_histogram", side_effect=capture_metric):
+        with patch("uvmgr.runtime.agent.spiff.metric_counter", side_effect=capture_metric), \
+             patch("uvmgr.runtime.agent.spiff.metric_histogram", side_effect=capture_metric):
 
             run_bpmn(simple_bpmn)
 
@@ -207,7 +207,7 @@ class TestSpiffWorkflowOTEL:
             f.write("<?xml version='1.0'?><invalid>content</invalid>")
             invalid_file = Path(f.name)
 
-        with patch("uvmgr.core.instrumentation.add_span_event") as mock_event:
+        with patch("uvmgr.runtime.agent.spiff.add_span_event") as mock_event:
             with pytest.raises(Exception):
                 run_bpmn(invalid_file)
 
@@ -300,8 +300,8 @@ class TestSpiffWorkflowE2E:
         def capture_event(name, attrs=None):
             events_recorded.append((name, attrs or {}))
 
-        with patch("uvmgr.core.telemetry.span", side_effect=capture_span), \
-             patch("uvmgr.core.instrumentation.add_span_event", side_effect=capture_event):
+        with patch("uvmgr.runtime.agent.spiff.span", side_effect=capture_span), \
+             patch("uvmgr.runtime.agent.spiff.add_span_event", side_effect=capture_event):
 
             stats = run_bpmn(ci_bpmn)
 
@@ -334,10 +334,10 @@ class TestSpiffWorkflowE2E:
             "performance_tracking": False
         }
 
-        with patch("uvmgr.core.telemetry.span") as mock_span, \
-             patch("uvmgr.core.telemetry.metric_counter") as mock_counter, \
-             patch("uvmgr.core.telemetry.metric_histogram") as mock_histogram, \
-             patch("uvmgr.core.instrumentation.add_span_attributes") as mock_attrs:
+        with patch("uvmgr.runtime.agent.spiff.span") as mock_span, \
+             patch("uvmgr.runtime.agent.spiff.metric_counter") as mock_counter, \
+             patch("uvmgr.runtime.agent.spiff.metric_histogram") as mock_histogram, \
+             patch("uvmgr.runtime.agent.spiff.add_span_attributes") as mock_attrs:
 
             # Setup mocks
             mock_span.return_value.__enter__ = MagicMock()

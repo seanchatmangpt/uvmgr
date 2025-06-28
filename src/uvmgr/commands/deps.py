@@ -35,7 +35,7 @@ from __future__ import annotations
 
 import typer
 
-from uvmgr.core.instrumentation import add_span_attributes, instrument_command
+from uvmgr.core.instrumentation import add_span_attributes, add_span_event, instrument_command
 from uvmgr.core.semconv import PackageAttributes, PackageOperations
 from uvmgr.core.shell import colour, dump_json
 from uvmgr.ops import deps as deps_ops
@@ -279,3 +279,73 @@ def _list(ctx: typer.Context):
     _maybe_json(ctx, pkgs)
     for p in pkgs:
         colour(p, "cyan")
+
+
+@deps_app.command("lock")
+@instrument_command("deps_lock", track_args=True)
+def lock_dependencies(
+    ctx: typer.Context,
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show detailed output"),
+):
+    """
+    Generate or update the lock file.
+    
+    This command generates or updates the uv.lock file with resolved
+    dependency versions. It ensures all dependencies are properly locked
+    to specific versions for reproducible builds.
+    
+    Parameters
+    ----------
+    ctx : typer.Context
+        Typer context for command execution.
+    verbose : bool, optional
+        If True, show detailed output during lock generation.
+        Default is False.
+    
+    Notes
+    -----
+    The command automatically:
+    - Resolves all dependencies to specific versions
+    - Creates or updates uv.lock file
+    - Validates dependency compatibility
+    - Records telemetry for the operation
+    
+    Example
+    -------
+    >>> # Generate lock file
+    >>> uvmgr deps lock
+    >>> 
+    >>> # Generate with verbose output
+    >>> uvmgr deps lock --verbose
+    """
+    add_span_event("deps.lock.started", {"verbose": verbose})
+    
+    import subprocess
+    
+    try:
+        cmd = ["uv", "lock"]
+        if verbose:
+            cmd.append("--verbose")
+        
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        
+        add_span_attributes(**{
+            PackageAttributes.OPERATION: "lock",
+            "lock.success": True,
+        })
+        
+        add_span_event("deps.lock.completed", {"success": True})
+        
+        if verbose and result.stdout:
+            typer.echo(result.stdout)
+        
+        typer.echo("✅ Dependencies locked successfully")
+        
+    except subprocess.CalledProcessError as e:
+        add_span_event("deps.lock.failed", {"error": str(e), "exit_code": e.returncode})
+        typer.echo(f"❌ Failed to lock dependencies: {e.stderr}", err=True)
+        raise typer.Exit(e.returncode)
+    except FileNotFoundError:
+        add_span_event("deps.lock.failed", {"error": "uv not found"})
+        typer.echo("❌ uv command not found. Please install uv first.", err=True)
+        raise typer.Exit(1)

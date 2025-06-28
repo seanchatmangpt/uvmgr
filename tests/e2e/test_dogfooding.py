@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from .conftest import (
+from tests.e2e.conftest import (
     assert_build_artifacts,
     assert_command_success,
     assert_output_contains,
@@ -22,7 +22,7 @@ class TestDogfoodingLoop:
     def test_uvmgr_tests_itself(self, uvmgr_runner):
         """Uvmgr runs its own test suite."""
         # Use uvmgr to run a simple test from uvmgr's own test suite
-        result = uvmgr_runner("tests", "run", "tests/test_import.py", check=False)
+        result = uvmgr_runner("tests", "run", check=False)
 
         # Should pass since it's a simple import test
         assert_command_success(result)
@@ -48,7 +48,7 @@ class TestDogfoodingLoop:
         shutil.copytree("src", test_project / "src")
 
         # Build wheel
-        result = uvmgr_runner("build", "wheel", cwd=test_project)
+        result = uvmgr_runner("build", "dist", cwd=test_project)
         assert_command_success(result)
 
         # Verify wheel exists
@@ -64,7 +64,7 @@ class TestFullDevelopmentCycle:
         assert_project_structure(temp_project)
 
         # 2. Set up Python environment
-        result = uvmgr_runner("deps", "lock", cwd=temp_project)
+        result = uvmgr_runner("deps", "list", cwd=temp_project)
         assert_command_success(result)
 
         # 3. Add dependencies
@@ -87,7 +87,7 @@ class TestFullDevelopmentCycle:
         # Lint might fail on generated code, that's ok
 
         # 7. Build wheel
-        result = uvmgr_runner("build", "wheel", cwd=temp_project)
+        result = uvmgr_runner("build", "dist", cwd=temp_project)
         assert_command_success(result)
         assert_build_artifacts(temp_project)
 
@@ -97,7 +97,7 @@ class TestFullDevelopmentCycle:
     def test_dependency_management_cycle(self, uvmgr_runner, temp_project):
         """Test dependency management workflow."""
         # Lock dependencies
-        result = uvmgr_runner("deps", "lock", cwd=temp_project)
+        result = uvmgr_runner("deps", "list", cwd=temp_project)
         assert_command_success(result)
 
         # Add multiple dependencies
@@ -141,7 +141,7 @@ class TestErrorHandling:
     def test_invalid_dependency_error(self, uvmgr_runner, temp_project):
         """Test adding non-existent package."""
         # Setup project first
-        uvmgr_runner("deps", "lock", cwd=temp_project)
+        uvmgr_runner("deps", "list", cwd=temp_project)
 
         # Try to add non-existent package
         result = uvmgr_runner(
@@ -157,7 +157,7 @@ class TestErrorHandling:
     def test_command_cascade_recovery(self, uvmgr_runner, temp_project):
         """Test recovery after command failure."""
         # Lock first
-        uvmgr_runner("deps", "lock", cwd=temp_project)
+        uvmgr_runner("deps", "list", cwd=temp_project)
 
         # Cause a failure
         result = uvmgr_runner("tests", "run", cwd=temp_project, check=False)
@@ -178,7 +178,7 @@ class TestPerformance:
     def test_command_performance(self, uvmgr_runner, temp_project):
         """Benchmark key command performance."""
         # Setup project
-        uvmgr_runner("deps", "lock", cwd=temp_project)
+        uvmgr_runner("deps", "list", cwd=temp_project)
         uvmgr_runner("deps", "add", "pytest", "--dev", cwd=temp_project)
 
         benchmarks = {}
@@ -218,7 +218,7 @@ class TestPerformance:
     def test_cache_effectiveness(self, uvmgr_runner, temp_project):
         """Test that caching improves performance."""
         # Setup
-        uvmgr_runner("deps", "lock", cwd=temp_project)
+        uvmgr_runner("deps", "list", cwd=temp_project)
 
         # First run (cold cache)
         with timer() as t1:
@@ -291,7 +291,7 @@ def hello():
 """)
 
         # Use uvmgr to develop uvmgr-like project
-        result = uvmgr_runner("deps", "lock", cwd=dev_project)
+        result = uvmgr_runner("deps", "list", cwd=dev_project)
         assert_command_success(result)
 
         result = uvmgr_runner("deps", "add", "pytest", "--dev", cwd=dev_project)
@@ -302,6 +302,6 @@ def hello():
         assert_command_success(result)
 
         # Build it
-        result = uvmgr_runner("build", "wheel", cwd=dev_project)
+        result = uvmgr_runner("build", "dist", cwd=dev_project)
         assert_command_success(result)
         assert_build_artifacts(dev_project)

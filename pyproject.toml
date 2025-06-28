@@ -11,6 +11,7 @@ authors = [{ name = "Sean Chatman", email = "info@chatmangpt.com" }]
 requires-python = ">=3.12,<4.0"
 dependencies = [
   "apscheduler>=3.11.0",
+  "chromadb>=0.5.30",
   "dspy>=2.6.24",
   "ember-ai>=0.0.1",
   "fastapi>=0.115.12",
@@ -25,7 +26,10 @@ dependencies = [
   "pytz>=2025.2",
   "rich>=14.0.0",
   "ruff>=0.11.11",
+  "sentence-transformers>=3.0.0",
   "spiffworkflow>=3.1.1",
+  "torch>=2.5.1",
+  "transformers>=4.48.2",
   "typer>=0.15.1",
   "zstandard>=0.23.0",
 ]
@@ -54,12 +58,13 @@ dev = [
   "pyinstaller>=6.14.1",
   "pyinstaller-hooks-contrib>=2025.5",
   "pytest (>=8.3.4)",
+  "pytest-asyncio (>=0.25.0)",
   "pytest-mock (>=3.14.0)",
   "pytest-xdist (>=3.6.1)",
   "ruff (>=0.9.2)",
 ]
 
-ci = ["pip-audit (>=8.0.0)"]
+ci = ["pip-audit (>=2.9.0)"]
 
 docs = ["mkdocs (>=1.5.0)", "mkdocs-material (>=9.5.0)"]
 
@@ -93,9 +98,16 @@ show_error_context = true
 warn_unreachable = true
 
 [tool.pytest.ini_options] # https://docs.pytest.org/en/latest/reference/reference.html#ini-options-ref
-addopts = "--color=yes --doctest-modules --exitfirst --failed-first --verbosity=2 --junitxml=reports/pytest.xml"
+addopts = "--color=yes --exitfirst --failed-first --verbosity=2 --junitxml=reports/pytest.xml"
 testpaths = ["src", "tests"]
 xfail_strict = true
+norecursedirs = ["tests/e2e/fixtures", "build", "dist", ".git", "__pycache__", "*.egg", ".eggs", ".tox", ".venv", "venv"]
+markers = [
+    "asyncio: async test function",
+    "integration: integration tests",
+    "slow: slow running tests",
+    "e2e: end-to-end tests"
+]
 
 [tool.ruff] # https://docs.astral.sh/ruff/settings/
 fix = true

@@ -91,6 +91,33 @@ def dist(
         colour("✔ build completed", "green")
 
 
+@build_app.command("wheel")
+@instrument_command("build_wheel", track_args=True)
+def wheel(
+    ctx: typer.Context,
+    outdir: pathlib.Path = typer.Option(None, "--outdir", "-o", file_okay=False),
+    upload: bool = typer.Option(False, "--upload", help="Twine upload after build"),
+):
+    """Build Python wheel (alias for dist command)."""
+    # Track build operation with wheel alias
+    add_span_attributes(
+        **{
+            BuildAttributes.OPERATION: "wheel",
+            BuildAttributes.TYPE: "wheel_sdist",
+            "build.upload": upload,
+            "build.alias_for": "dist",
+        }
+    )
+    add_span_event("build.wheel.started", {"upload": upload, "alias_for": "dist"})
+    payload = build_ops.dist(outdir)
+    if upload:
+        build_ops.upload(outdir or pathlib.Path("dist"))
+    if ctx.meta.get("json"):
+        dump_json(payload)
+    else:
+        colour("✔ wheel build completed", "green")
+
+
 @build_app.command()
 @instrument_command("build_exe", track_args=True)
 def exe(
