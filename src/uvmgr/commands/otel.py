@@ -89,8 +89,6 @@ from uvmgr.core.instrumentation import instrument_command
 from uvmgr.core.semconv import CliAttributes, PackageAttributes
 from uvmgr.core.shell import colour
 from uvmgr.core.telemetry import (
-    add_span_attributes,
-    add_span_event,
     get_current_span,
     metric_counter,
     metric_histogram,
@@ -1276,22 +1274,24 @@ def workflow_validate(
                 console.print(f"💾 Results saved to: {results_file}")
             
             # Final status and telemetry
-            add_span_attributes(**{
-                "workflow_validation.mode": mode,
-                "workflow_validation.success": result.success,
-                "workflow_validation.metrics_validated": result.metrics_validated,
-                "workflow_validation.spans_validated": result.spans_validated,
-                "workflow_validation.duration": result.duration_seconds,
-            })
-            
-            add_span_event("workflow_validation_completed", {
-                "mode": mode,
-                "success": result.success,
-                "metrics": result.metrics_validated,
-                "spans": result.spans_validated,
-                "steps": len(result.validation_steps),
-                "errors": len(result.errors),
-            })
+            current_span = get_current_span()
+            if current_span.is_recording():
+                current_span.set_attributes({
+                    "workflow_validation.mode": mode,
+                    "workflow_validation.success": result.success,
+                    "workflow_validation.metrics_validated": result.metrics_validated,
+                    "workflow_validation.spans_validated": result.spans_validated,
+                    "workflow_validation.duration": result.duration_seconds,
+                })
+                
+                current_span.add_event("workflow_validation_completed", {
+                    "mode": mode,
+                    "success": result.success,
+                    "metrics": result.metrics_validated,
+                    "spans": result.spans_validated,
+                    "steps": len(result.validation_steps),
+                    "errors": len(result.errors),
+                })
             
             if result.success:
                 console.print(f"\n[green]✅ SpiffWorkflow OTEL Validation PASSED[/green]")
@@ -1306,12 +1306,16 @@ def workflow_validate(
                 raise typer.Exit(1)
                 
     except ImportError as e:
-        add_span_event("workflow_validation_import_error", {"error": str(e)})
+        current_span = get_current_span()
+        if current_span.is_recording():
+            current_span.add_event("workflow_validation_import_error", {"error": str(e)})
         console.print("[red]❌ SpiffWorkflow dependencies not available[/red]")
         console.print("Install with: uvmgr deps add spiffworkflow")
         raise typer.Exit(1)
     except Exception as e:
-        add_span_event("workflow_validation_failed", {"error": str(e)})
+        current_span = get_current_span()
+        if current_span.is_recording():
+            current_span.add_event("workflow_validation_failed", {"error": str(e)})
         console.print(f"[red]❌ Workflow validation failed: {e}[/red]")
         raise typer.Exit(1)
 
