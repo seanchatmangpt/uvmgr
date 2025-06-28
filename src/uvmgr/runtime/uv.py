@@ -141,8 +141,8 @@ def upgrade(*, all_pkgs: bool = False, pkgs: list[str] | None = None) -> None:
 
 def list_pkgs() -> str:
     """
-    Return `uv list` output (one package per line) as **plain text**.
+    Return `uv pip list` output (one package per line) as **plain text**.
     The ops layer will turn it into a Python list.
     """
-    with span("uv.list"):
-        return call("list", capture=True) or ""
+    with span("uv.pip_list"):
+        return call("pip list", capture=True) or ""

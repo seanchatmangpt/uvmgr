@@ -171,3 +171,47 @@ def new(
         dump_json(payload)
     else:
         colour(f"✔ created project in {payload['path']}", "green")
+
+
+@proj_app.command("status")
+@instrument_command("project_status", track_args=True)
+def status(ctx: typer.Context):
+    """Show current project status and uvmgr configuration."""
+    import os
+    from pathlib import Path
+    
+    # Get basic project info
+    cwd = Path.cwd()
+    project_info = {
+        "path": str(cwd),
+        "name": cwd.name,
+        "uvmgr_version": "0.0.0",  # This would be dynamic in a real implementation
+        "python_version": f"{os.sys.version_info.major}.{os.sys.version_info.minor}.{os.sys.version_info.micro}",
+        "has_pyproject": (cwd / "pyproject.toml").exists(),
+        "has_venv": (cwd / ".venv").exists(),
+        "has_tests": (cwd / "tests").exists(),
+        "has_src": (cwd / "src").exists(),
+    }
+    
+    # Track status check
+    add_span_attributes(**{
+        ProjectAttributes.OPERATION: "status",
+        ProjectAttributes.NAME: project_info["name"],
+        ProjectAttributes.PATH: project_info["path"],
+    })
+    add_span_event("project.status.checked", project_info)
+    
+    if ctx.meta.get("json"):
+        dump_json(project_info)
+    else:
+        colour(f"📁 Project: {project_info['name']}", "blue")
+        colour(f"📍 Path: {project_info['path']}", "cyan")
+        colour(f"🐍 Python: {project_info['python_version']}", "green")
+        colour(f"📦 pyproject.toml: {'✓' if project_info['has_pyproject'] else '✗'}", 
+               "green" if project_info['has_pyproject'] else "red")
+        colour(f"🔧 Virtual env: {'✓' if project_info['has_venv'] else '✗'}", 
+               "green" if project_info['has_venv'] else "yellow")
+        colour(f"🧪 Tests dir: {'✓' if project_info['has_tests'] else '✗'}", 
+               "green" if project_info['has_tests'] else "yellow")
+        colour(f"📂 Source dir: {'✓' if project_info['has_src'] else '✗'}", 
+               "green" if project_info['has_src'] else "yellow")

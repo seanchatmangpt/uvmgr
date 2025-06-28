@@ -74,7 +74,7 @@ except ImportError:
     EMBEDDINGS_AVAILABLE = False
 
 from uvmgr.core.instrumentation import add_span_attributes, add_span_event
-from uvmgr.core.shell import run_command
+from uvmgr.core.process import run
 
 
 class SearchCache:
@@ -542,11 +542,11 @@ class DependencyAnalyzer:
         try:
             # Use uv if available, fall back to pip
             try:
-                result = run_command(["uv", "pip", "list", "--format", "json"])
-                packages = json.loads(result.stdout)
+                result = run(["uv", "pip", "list", "--format", "json"], capture=True)
+                packages = json.loads(result or "[]")
             except:
-                result = run_command(["pip", "list", "--format", "json"])
-                packages = json.loads(result.stdout)
+                result = run(["pip", "list", "--format", "json"], capture=True)
+                packages = json.loads(result or "[]")
             
             matches = []
             pattern_regex = re.compile(pattern, re.IGNORECASE)
@@ -716,10 +716,10 @@ class DependencyAnalyzer:
     def _get_package_info(self, package_name: str) -> Dict[str, Any]:
         """Get detailed package information."""
         try:
-            result = run_command(["pip", "show", package_name])
+            result = run(["pip", "show", package_name], capture=True)
             info = {}
             
-            for line in result.stdout.split('\n'):
+            for line in (result or "").split('\n'):
                 if ':' in line:
                     key, value = line.split(':', 1)
                     info[key.strip().lower()] = value.strip()
