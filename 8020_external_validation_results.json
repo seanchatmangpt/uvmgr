@@ -1,0 +1,136 @@
+{
+  "success": false,
+  "projects_discovered": 10,
+  "projects_validated": 5,
+  "successful_projects": 0,
+  "failed_projects": 5,
+  "overall_success_rate": 0.0,
+  "total_metrics_validated": 15,
+  "total_spans_validated": 25,
+  "total_errors": 35,
+  "validation_results": {
+    "cli-tool": {
+      "project_name": "cli-tool",
+      "project_type": "library",
+      "installation_success": true,
+      "validation_success": false,
+      "integration_success": false,
+      "metrics_validated": 3,
+      "spans_validated": 5,
+      "errors": [
+        "BPMN workflow validation failed",
+        "Workflow execution error: attributes construct error, line 28, column 90 (external_validation.bpmn, line 28)",
+        "Test 2:   File \"<string>\", line 1\n    'import\n    ^\nSyntaxError: unterminated string literal (detected at line 1)\n",
+        "Test 3:   File \"<string>\", line 1\n    'import\n    ^\nSyntaxError: unterminated string literal (detected at line 1)\n",
+        "Test 5:   File \"<string>\", line 1\n    'from\n    ^\nSyntaxError: unterminated string literal (detected at line 1)\n",
+        "Test 6:   File \"<string>\", line 1\n    'from\n    ^\nSyntaxError: unterminated string literal (detected at line 1)\n",
+        "Test 7:   File \"<string>\", line 1\n    'import\n    ^\nSyntaxError: unterminated string literal (detected at line 1)\n"
+      ]
+    },
+    "fastapi-app": {
+      "project_name": "fastapi-app",
+      "project_type": "web",
+      "installation_success": true,
+      "validation_success": false,
+      "integration_success": false,
+      "metrics_validated": 3,
+      "spans_validated": 5,
+      "errors": [
+        "BPMN workflow validation failed",
+        "Workflow execution error: attributes construct error, line 28, column 90 (external_validation.bpmn, line 28)",
+        "Test 2:   File \"<string>\", line 1\n    'import\n    ^\nSyntaxError: unterminated string literal (detected at line 1)\n",
+        "Test 3:   File \"<string>\", line 1\n    'import\n    ^\nSyntaxError: unterminated string literal (detected at line 1)\n",
+        "Test 5:   File \"<string>\", line 1\n    'from\n    ^\nSyntaxError: unterminated string literal (detected at line 1)\n",
+        "Test 6:   File \"<string>\", line 1\n    'from\n    ^\nSyntaxError: unterminated string literal (detected at line 1)\n",
+        "Test 7:   File \"<string>\", line 1\n    'import\n    ^\nSyntaxError: unterminated string literal (detected at line 1)\n"
+      ]
+    },
+    "data-science": {
+      "project_name": "data-science",
+      "project_type": "library",
+      "installation_success": true,
+      "validation_success": false,
+      "integration_success": false,
+      "metrics_validated": 3,
+      "spans_validated": 5,
+      "errors": [
+        "BPMN workflow validation failed",
+        "Workflow execution error: attributes construct error, line 28, column 90 (external_validation.bpmn, line 28)",
+        "Test 2:   File \"<string>\", line 1\n    'import\n    ^\nSyntaxError: unterminated string literal (detected at line 1)\n",
+        "Test 3:   File \"<string>\", line 1\n    'import\n    ^\nSyntaxError: unterminated string literal (detected at line 1)\n",
+        "Test 5:   File \"<string>\", line 1\n    'from\n    ^\nSyntaxError: unterminated string literal (detected at line 1)\n",
+        "Test 6:   File \"<string>\", line 1\n    'from\n    ^\nSyntaxError: unterminated string literal (detected at line 1)\n",
+        "Test 7:   File \"<string>\", line 1\n    'import\n    ^\nSyntaxError: unterminated string literal (detected at line 1)\n"
+      ]
+    },
+    "minimal-python": {
+      "project_name": "minimal-python",
+      "project_type": "library",
+      "installation_success": true,
+      "validation_success": false,
+      "integration_success": false,
+      "metrics_validated": 3,
+      "spans_validated": 5,
+      "errors": [
+        "BPMN workflow validation failed",
+        "Workflow execution error: attributes construct error, line 28, column 90 (external_validation.bpmn, line 28)",
+        "Test 2:   File \"<string>\", line 1\n    'import\n    ^\nSyntaxError: unterminated string literal (detected at line 1)\n",
+        "Test 3:   File \"<string>\", line 1\n    'import\n    ^\nSyntaxError: unterminated string literal (detected at line 1)\n",
+        "Test 5:   File \"<string>\", line 1\n    'from\n    ^\nSyntaxError: unterminated string literal (detected at line 1)\n",
+        "Test 6:   File \"<string>\", line 1\n    'from\n    ^\nSyntaxError: unterminated string literal (detected at line 1)\n",
+        "Test 7:   File \"<string>\", line 1\n    'import\n    ^\nSyntaxError: unterminated string literal (detected at line 1)\n"
+      ]
+    },
+    "substrate-template": {
+      "project_name": "substrate-template",
+      "project_type": "library",
+      "installation_success": true,
+      "validation_success": false,
+      "integration_success": false,
+      "metrics_validated": 3,
+      "spans_validated": 5,
+      "errors": [
+        "BPMN workflow validation failed",
+        "Workflow execution error: attributes construct error, line 28, column 90 (external_validation.bpmn, line 28)",
+        "Test 2:   File \"<string>\", line 1\n    'import\n    ^\nSyntaxError: unterminated string literal (detected at line 1)\n",
+        "Test 3:   File \"<string>\", line 1\n    'import\n    ^\nSyntaxError: unterminated string literal (detected at line 1)\n",
+        "Test 5:   File \"<string>\", line 1\n    'from\n    ^\nSyntaxError: unterminated string literal (detected at line 1)\n",
+        "Test 6:   File \"<string>\", line 1\n    'from\n    ^\nSyntaxError: unterminated string literal (detected at line 1)\n",
+        "Test 7:   File \"<string>\", line 1\n    'import\n    ^\nSyntaxError: unterminated string literal (detected at line 1)\n"
+      ]
+    }
+  },
+  "critical_projects": [
+    {
+      "name": "fastapi-app",
+      "path": "external-project-testing/workspace/fastapi-app",
+      "type": "web",
+      "has_tests": true
+    },
+    {
+      "name": "cli-tool",
+      "path": "external-project-testing/workspace/cli-tool",
+      "type": "library",
+      "has_tests": true
+    },
+    {
+      "name": "data-science",
+      "path": "external-project-testing/workspace/data-science",
+      "type": "library",
+      "has_tests": true
+    },
+    {
+      "name": "minimal-python",
+      "path": "external-project-testing/workspace/minimal-python",
+      "type": "library",
+      "has_tests": true
+    },
+    {
+      "name": "substrate-template",
+      "path": "external-project-testing/workspace/substrate-template",
+      "type": "library",
+      "has_tests": true
+    }
+  ],
+  "generated_at": "2025-06-28T00:00:00Z"
+}

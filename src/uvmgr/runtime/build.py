@@ -75,12 +75,51 @@ if __name__ == "__main__":
             # Add common hidden imports for uvmgr
             default_hidden_imports = [
                 "uvmgr.commands",
-                "uvmgr.ops",
+                "uvmgr.ops", 
                 "uvmgr.runtime",
                 "uvmgr.core",
                 "uvmgr.mcp",
+                # Explicit command modules for dynamic loading
+                "uvmgr.commands.deps",
+                "uvmgr.commands.tests", 
+                "uvmgr.commands.build",
+                "uvmgr.commands.tool",
+                "uvmgr.commands.serve",
+                "uvmgr.commands.lint",
+                "uvmgr.commands.ai",
+                "uvmgr.commands.cache", 
+                "uvmgr.commands.exec",
+                "uvmgr.commands.shell",
+                "uvmgr.commands.index",
+                "uvmgr.commands.release",
+                "uvmgr.commands.remote",
+                "uvmgr.commands.ap_scheduler",
+                "uvmgr.commands.history",
+                "uvmgr.commands.weaver",
+                "uvmgr.commands.search",
+                "uvmgr.commands.claude",
+                "uvmgr.commands.forge",
+                "uvmgr.commands.agent",
+                "uvmgr.commands.otel",
+                "uvmgr.commands.workflow",
+                "uvmgr.commands.spiff_otel",
+                "uvmgr.commands.project",
+                # Core submodules for dynamic loading
+                "uvmgr.core.cache",
+                "uvmgr.core.clipboard",
+                "uvmgr.core.concurrency",
+                "uvmgr.core.config",
+                "uvmgr.core.fs",
+                "uvmgr.core.history",
+                "uvmgr.core.lint",
+                "uvmgr.core.paths",
+                "uvmgr.core.process",
+                "uvmgr.core.shell",
+                "uvmgr.core.telemetry",
+                "uvmgr.core.venv",
+                # External libraries
                 "typer",
-                "rich",
+                "rich", 
                 "fastapi",
                 "dspy",
                 "ember_ai",
@@ -103,6 +142,15 @@ if __name__ == "__main__":
         mcp_resources = Path(__file__).parent.parent / "mcp" / "resources.py"
         if mcp_resources.exists():
             args.extend(["--add-data", f"{mcp_resources}:uvmgr/mcp"])
+
+        # Add litellm data files
+        try:
+            import litellm
+            litellm_path = Path(litellm.__file__).parent
+            for data_file in litellm_path.glob("*.json"):
+                args.extend(["--add-data", f"{data_file}:litellm"])
+        except ImportError:
+            pass  # litellm not available
 
         try:
             run_logged(args)

@@ -51,7 +51,7 @@ uv add --dev pytest pytest-cov pytest-mock
 
 # Verify installation
 echo "✅ Verifying uvmgr installation..."
-if uv run uvmgr --version; then
+if uv run uvmgr --help > /dev/null 2>&1; then
     echo "✅ uvmgr successfully installed in $PROJECT_PATH"
     
     # Create basic test to verify uvmgr works
@@ -61,9 +61,9 @@ if uv run uvmgr --version; then
 import subprocess
 import sys
 
-def test_uvmgr_version():
-    """Test that uvmgr is available and returns version."""
-    result = subprocess.run([sys.executable, "-m", "uvmgr", "--version"], 
+def test_uvmgr_available():
+    """Test that uvmgr is available."""
+    result = subprocess.run([sys.executable, "-m", "uvmgr", "--help"], 
                           capture_output=True, text=True)
     assert result.returncode == 0
     assert "uvmgr" in result.stdout

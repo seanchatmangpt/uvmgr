@@ -90,6 +90,7 @@ __all__: Final[list[str]] = [
     "ai",
     "claude",  # Claude AI integration
     "spiff_otel",  # SpiffWorkflow OTEL integration
+    "substrate",  # Substrate project integration
     "remote",
     "agent",
     "ap_scheduler",

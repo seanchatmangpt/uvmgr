@@ -2,6 +2,7 @@
 import pytest
 from minimal_external_test.main import calculate_sum, get_python_org
 
+
 def test_calculate_sum():
     assert calculate_sum(2, 3) == 5
     assert calculate_sum(-1, 1) == 0
