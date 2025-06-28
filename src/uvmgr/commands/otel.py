@@ -89,6 +89,8 @@ from uvmgr.core.instrumentation import instrument_command
 from uvmgr.core.semconv import CliAttributes, PackageAttributes
 from uvmgr.core.shell import colour
 from uvmgr.core.telemetry import (
+    add_span_attributes,
+    add_span_event,
     get_current_span,
     metric_counter,
     metric_histogram,
