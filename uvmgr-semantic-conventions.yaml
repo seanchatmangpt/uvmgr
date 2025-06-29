@@ -1,0 +1,515 @@
+# uvmgr Semantic Conventions
+# Custom semantic conventions for the uvmgr CLI system
+# Based on OpenTelemetry Semantic Conventions v1.21.0
+
+groups:
+  - id: uvmgr
+    prefix: uvmgr
+    brief: "uvmgr CLI system semantic conventions"
+    description: |
+      Semantic conventions for the uvmgr CLI system, covering package management,
+      testing, building, and development operations.
+    
+    attributes:
+      # Core operation attributes
+      - id: operation
+        type: string
+        brief: "The type of uvmgr operation being performed"
+        description: |
+          Identifies the specific operation being executed by uvmgr.
+          This attribute is required for all uvmgr operations.
+        examples: ["add", "remove", "upgrade", "run", "build", "lint", "test"]
+        stability: stable
+        
+      - id: command_group
+        type: string
+        brief: "The command group being executed"
+        description: |
+          Identifies the command group (e.g., deps, tests, build) that contains
+          the operation being performed.
+        examples: ["deps", "tests", "build", "lint", "otel", "ai", "docs"]
+        stability: stable
+        
+      - id: subcommand
+        type: string
+        brief: "The specific subcommand being executed"
+        description: |
+          Identifies the specific subcommand within a command group.
+        examples: ["add", "remove", "run", "coverage", "generate"]
+        stability: stable
+
+  - id: uvmgr.package
+    prefix: uvmgr.package
+    brief: "Package management operations"
+    description: |
+      Semantic conventions for package management operations including
+      dependency management, installation, and removal.
+    
+    attributes:
+      - id: operation
+        type: string
+        brief: "Package operation type"
+        description: "The type of package operation being performed"
+        examples: ["add", "remove", "upgrade", "list", "lock"]
+        stability: stable
+        
+      - id: count
+        type: int
+        brief: "Number of packages involved"
+        description: "The number of packages being processed in the operation"
+        stability: stable
+        
+      - id: names
+        type: string
+        brief: "Package names"
+        description: "Comma-separated list of package names being processed"
+        stability: stable
+        
+      - id: dev_dependency
+        type: boolean
+        brief: "Development dependency flag"
+        description: "Whether the operation involves development dependencies"
+        stability: stable
+        
+      - id: upgrade_all
+        type: boolean
+        brief: "Upgrade all packages flag"
+        description: "Whether all packages should be upgraded"
+        stability: stable
+
+  - id: uvmgr.test
+    prefix: uvmgr.test
+    brief: "Testing operations"
+    description: |
+      Semantic conventions for testing operations including test execution,
+      coverage analysis, and test discovery.
+    
+    attributes:
+      - id: operation
+        type: string
+        brief: "Test operation type"
+        description: "The type of test operation being performed"
+        examples: ["run", "coverage", "discover", "generate"]
+        stability: stable
+        
+      - id: framework
+        type: string
+        brief: "Testing framework"
+        description: "The testing framework being used"
+        examples: ["pytest", "coverage", "unittest"]
+        stability: stable
+        
+      - id: parallel
+        type: boolean
+        brief: "Parallel execution flag"
+        description: "Whether tests are being executed in parallel"
+        stability: stable
+        
+      - id: coverage
+        type: boolean
+        brief: "Coverage collection flag"
+        description: "Whether coverage data is being collected"
+        stability: stable
+        
+      - id: types
+        type: string_array
+        brief: "Test types"
+        description: "Types of tests being executed"
+        examples: [["unit", "integration", "e2e", "performance", "security"]]
+        stability: stable
+        
+      - id: markers
+        type: string_array
+        brief: "Test markers"
+        description: "Pytest markers being used for test selection"
+        examples: [["slow", "integration", "unit"]]
+        stability: stable
+
+  - id: uvmgr.build
+    prefix: uvmgr.build
+    brief: "Build operations"
+    description: |
+      Semantic conventions for build operations including package building,
+      compilation, and artifact generation.
+    
+    attributes:
+      - id: operation
+        type: string
+        brief: "Build operation type"
+        description: "The type of build operation being performed"
+        examples: ["build", "clean", "dist"]
+        stability: stable
+        
+      - id: type
+        type: string_array
+        brief: "Build types"
+        description: "Types of build artifacts being generated"
+        examples: [["wheel", "sdist", "binary"]]
+        stability: stable
+
+  - id: uvmgr.lint
+    prefix: uvmgr.lint
+    brief: "Linting operations"
+    description: |
+      Semantic conventions for linting operations including code quality
+      checks and automated fixes.
+    
+    attributes:
+      - id: operation
+        type: string
+        brief: "Lint operation type"
+        description: "The type of linting operation being performed"
+        examples: ["run", "fix", "check"]
+        stability: stable
+        
+      - id: tools
+        type: string_array
+        brief: "Linting tools"
+        description: "Linting tools being executed"
+        examples: [["black", "isort", "flake8", "mypy"]]
+        stability: stable
+        
+      - id: auto_fix
+        type: boolean
+        brief: "Auto-fix flag"
+        description: "Whether automatic fixes are being applied"
+        stability: stable
+
+  - id: uvmgr.otel
+    prefix: uvmgr.otel
+    brief: "OpenTelemetry operations"
+    description: |
+      Semantic conventions for OpenTelemetry operations including
+      telemetry validation, coverage analysis, and Weaver integration.
+    
+    attributes:
+      - id: operation
+        type: string
+        brief: "OTEL operation type"
+        description: "The type of OpenTelemetry operation being performed"
+        examples: ["status", "coverage", "weaver", "validate", "registry"]
+        stability: stable
+        
+      - id: coverage.threshold
+        type: int
+        brief: "Coverage threshold"
+        description: "Minimum coverage threshold percentage"
+        examples: [80, 90, 100]
+        stability: stable
+        
+      - id: coverage.detailed
+        type: boolean
+        brief: "Detailed coverage flag"
+        description: "Whether detailed coverage information should be shown"
+        stability: stable
+        
+      - id: registry.action
+        type: string
+        brief: "Registry action"
+        description: "The action being performed on the semantic conventions registry"
+        examples: ["check", "resolve", "search", "stats"]
+        stability: stable
+
+  - id: uvmgr.weaver
+    prefix: uvmgr.weaver
+    brief: "Weaver integration operations"
+    description: |
+      Semantic conventions for Weaver integration operations including
+      semantic convention validation and code generation.
+    
+    attributes:
+      - id: validate
+        type: boolean
+        brief: "Validation flag"
+        description: "Whether Weaver validation is enabled"
+        stability: stable
+        
+      - id: test_semconv
+        type: boolean
+        brief: "Semantic convention testing flag"
+        description: "Whether semantic convention testing is enabled"
+        stability: stable
+
+  - id: uvmgr.weaver_ecosystem
+    prefix: uvmgr.weaver_ecosystem
+    brief: "Weaver ecosystem management operations"
+    description: |
+      Semantic conventions for Weaver ecosystem management operations including
+      installation, updates, configuration, and status monitoring.
+    
+    attributes:
+      - id: operation
+        type: string
+        brief: "Weaver ecosystem operation type"
+        description: "The type of Weaver ecosystem operation being performed"
+        examples: ["install", "update", "status", "config"]
+        stability: stable
+        
+      - id: version
+        type: string
+        brief: "Weaver version"
+        description: "The Weaver version being installed or managed"
+        examples: ["0.15.3", "0.16.0", "latest"]
+        stability: stable
+        
+      - id: components
+        type: string_array
+        brief: "Weaver components"
+        description: "Weaver ecosystem components being managed"
+        examples: [["weaver", "weaver-forge", "weaver-checker"]]
+        stability: stable
+        
+      - id: check_only
+        type: boolean
+        brief: "Check only flag"
+        description: "Whether only checking for updates without installing"
+        stability: stable
+        
+      - id: detailed
+        type: boolean
+        brief: "Detailed status flag"
+        description: "Whether to show detailed status information"
+        stability: stable
+        
+      - id: config.action
+        type: string
+        brief: "Configuration action"
+        description: "The configuration action being performed"
+        examples: ["show", "set", "reset"]
+        stability: stable
+        
+      - id: config.key
+        type: string
+        brief: "Configuration key"
+        description: "The configuration key being managed"
+        examples: ["registry.url", "template.path", "output.format"]
+        stability: stable
+
+  - id: uvmgr.ai
+    prefix: uvmgr.ai
+    brief: "AI-assisted operations"
+    description: |
+      Semantic conventions for AI-assisted operations including
+      code analysis, suggestions, and automation.
+    
+    attributes:
+      - id: operation
+        type: string
+        brief: "AI operation type"
+        description: "The type of AI operation being performed"
+        examples: ["analyze", "suggest", "generate", "review"]
+        stability: stable
+        
+      - id: model
+        type: string
+        brief: "AI model"
+        description: "The AI model being used for operations"
+        examples: ["claude-3-sonnet", "gpt-4", "gpt-3.5-turbo"]
+        stability: stable
+        
+      - id: target
+        type: string
+        brief: "AI target"
+        description: "The target being analyzed or processed by AI"
+        examples: ["src/uvmgr/core/telemetry.py", "tests/", "docs/"]
+        stability: stable
+
+  - id: uvmgr.docs
+    prefix: uvmgr.docs
+    brief: "Documentation operations"
+    description: |
+      Semantic conventions for documentation operations including
+      generation, serving, and enhancement.
+    
+    attributes:
+      - id: operation
+        type: string
+        brief: "Documentation operation type"
+        description: "The type of documentation operation being performed"
+        examples: ["generate", "serve", "build", "publish"]
+        stability: stable
+        
+      - id: format
+        type: string
+        brief: "Documentation format"
+        description: "The output format for documentation"
+        examples: ["markdown", "html", "pdf", "rst"]
+        stability: stable
+        
+      - id: ai_enhance
+        type: boolean
+        brief: "AI enhancement flag"
+        description: "Whether AI is being used to enhance documentation"
+        stability: stable
+        
+      - id: port
+        type: int
+        brief: "Documentation server port"
+        description: "Port number for documentation server"
+        examples: [8000, 8080, 3000]
+        stability: stable
+
+  - id: uvmgr.worktree
+    prefix: uvmgr.worktree
+    brief: "Git worktree operations"
+    description: |
+      Semantic conventions for Git worktree operations including
+      creation, management, and removal.
+    
+    attributes:
+      - id: operation
+        type: string
+        brief: "Worktree operation type"
+        description: "The type of worktree operation being performed"
+        examples: ["create", "list", "remove", "clean"]
+        stability: stable
+        
+      - id: branch
+        type: string
+        brief: "Git branch"
+        description: "The Git branch associated with the worktree"
+        examples: ["feature/new-feature", "main", "develop"]
+        stability: stable
+        
+      - id: path
+        type: string
+        brief: "Worktree path"
+        description: "The filesystem path of the worktree"
+        examples: ["/path/to/worktree", "./worktrees/feature"]
+        stability: stable
+        
+      - id: isolated
+        type: boolean
+        brief: "Isolated environment flag"
+        description: "Whether the worktree uses an isolated environment"
+        stability: stable
+
+  - id: uvmgr.security
+    prefix: uvmgr.security
+    brief: "Security operations"
+    description: |
+      Semantic conventions for security operations including
+      scanning, auditing, and vulnerability assessment.
+    
+    attributes:
+      - id: operation
+        type: string
+        brief: "Security operation type"
+        description: "The type of security operation being performed"
+        examples: ["scan", "audit", "fix", "report"]
+        stability: stable
+        
+      - id: severity
+        type: string
+        brief: "Minimum severity level"
+        description: "Minimum severity level for security issues"
+        examples: ["low", "medium", "high", "critical"]
+        stability: stable
+        
+      - id: auto_fix
+        type: boolean
+        brief: "Auto-fix flag"
+        description: "Whether automatic security fixes are being applied"
+        stability: stable
+
+  - id: uvmgr.forge
+    prefix: uvmgr.forge
+    brief: "Weaver Forge operations"
+    description: |
+      Semantic conventions for Weaver Forge operations including
+      code generation, validation, and automation.
+    
+    attributes:
+      - id: operation
+        type: string
+        brief: "Forge operation type"
+        description: "The type of Weaver Forge operation being performed"
+        examples: ["generate", "validate", "scaffold", "registry"]
+        stability: stable
+        
+      - id: template
+        type: string
+        brief: "Template name"
+        description: "The Weaver Forge template being used"
+        examples: ["cli-command", "operation", "test"]
+        stability: stable
+        
+      - id: output
+        type: string
+        brief: "Output directory"
+        description: "The output directory for generated code"
+        examples: ["src/uvmgr/commands/", "./generated/"]
+        stability: stable
+        
+      - id: project_type
+        type: string
+        brief: "Project type"
+        description: "The type of project being scaffolded"
+        examples: ["cli", "api", "library", "web"]
+        stability: stable
+        
+      - id: project_name
+        type: string
+        brief: "Project name"
+        description: "The name of the project being created"
+        examples: ["my-cli", "api-service", "data-library"]
+        stability: stable
+        
+      - id: registry.action
+        type: string
+        brief: "Registry action"
+        description: "The action being performed on the Forge registry"
+        examples: ["list", "add", "remove", "update"]
+        stability: stable
+
+# Resource attributes for uvmgr operations
+resources:
+  - id: uvmgr
+    prefix: uvmgr
+    brief: "uvmgr CLI system resource"
+    description: |
+      Resource attributes for the uvmgr CLI system, providing context
+      about the environment and configuration.
+    
+    attributes:
+      - id: version
+        type: string
+        brief: "uvmgr version"
+        description: "The version of uvmgr being executed"
+        examples: ["2.0.0", "1.5.2"]
+        stability: stable
+        
+      - id: environment
+        type: string
+        brief: "Execution environment"
+        description: "The environment where uvmgr is being executed"
+        examples: ["development", "staging", "production", "ci"]
+        stability: stable
+        
+      - id: project_path
+        type: string
+        brief: "Project path"
+        description: "The path to the project being managed"
+        examples: ["/path/to/project", "./current-project"]
+        stability: stable
+        
+      - id: python_version
+        type: string
+        brief: "Python version"
+        description: "The Python version being used"
+        examples: ["3.11", "3.12", "3.13"]
+        stability: stable
+        
+      - id: weaver_version
+        type: string
+        brief: "Weaver version"
+        description: "The version of Weaver ecosystem being used"
+        examples: ["0.15.3", "0.16.0"]
+        stability: stable
+        
+      - id: weaver_components
+        type: string_array
+        brief: "Weaver components"
+        description: "Weaver ecosystem components installed"
+        examples: [["weaver", "weaver-forge", "weaver-checker"]]
+        stability: stable 

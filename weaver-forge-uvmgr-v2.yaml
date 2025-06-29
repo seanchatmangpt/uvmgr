@@ -1,0 +1,633 @@
+# Weaver Forge Configuration for uvmgr v2
+# This configuration defines the scaffolding for a modular, OpenTelemetry-instrumented CLI system
+# Goal: Complete Weaver ecosystem abstraction - users never manually call weaver/forge
+
+project:
+  name: "uvmgr"
+  version: "2.0.0"
+  description: "Modular, observability-first Python package manager with complete Weaver ecosystem integration"
+  application_mode: "single"
+
+# Semantic Conventions Registry
+semantic_conventions:
+  source: "https://github.com/open-telemetry/semantic-conventions.git[model]"
+  custom_conventions:
+    - "uvmgr.yaml"  # Custom uvmgr-specific conventions
+
+# Command Groups (organized by functionality)
+command_groups:
+  
+  # Core Package Management
+  deps:
+    description: "Dependency management with uv"
+    commands:
+      add:
+        summary: "Add packages to the project"
+        help: "Add one or more packages to project dependencies"
+        arguments:
+          - name: "pkgs"
+            type: "list[str]"
+            help: "Packages to add (e.g., fastapi requests)"
+        options:
+          - name: "dev"
+            type: "bool"
+            default: false
+            help: "Add to dev dependencies"
+        semantic_conventions:
+          - "package.operation: add"
+          - "package.count: len(pkgs)"
+          - "package.dev_dependency: dev"
+      
+      remove:
+        summary: "Remove packages from the project"
+        help: "Remove one or more packages from project dependencies"
+        arguments:
+          - name: "pkgs"
+            type: "list[str]"
+            help: "Packages to remove"
+        semantic_conventions:
+          - "package.operation: remove"
+          - "package.count: len(pkgs)"
+      
+      upgrade:
+        summary: "Upgrade packages to latest versions"
+        help: "Upgrade packages within version constraints"
+        options:
+          - name: "all"
+            type: "bool"
+            default: false
+            help: "Upgrade all packages"
+        arguments:
+          - name: "pkgs"
+            type: "list[str]"
+            optional: true
+            help: "Specific packages to upgrade"
+        semantic_conventions:
+          - "package.operation: upgrade"
+          - "package.upgrade_all: all"
+      
+      list:
+        summary: "List installed packages"
+        help: "Show all installed packages and their versions"
+        semantic_conventions:
+          - "package.operation: list"
+      
+      lock:
+        summary: "Lock dependencies"
+        help: "Generate or update dependency lock file"
+        options:
+          - name: "verbose"
+            type: "bool"
+            default: false
+            help: "Show detailed output"
+        semantic_conventions:
+          - "package.operation: lock"
+
+  # Testing and Quality
+  tests:
+    description: "Test execution and coverage"
+    commands:
+      run:
+        summary: "Run the test suite"
+        help: "Execute comprehensive test suite with pytest"
+        options:
+          - name: "verbose"
+            type: "bool"
+            default: false
+            help: "Run tests verbosely"
+          - name: "parallel"
+            type: "bool"
+            default: true
+            help: "Run tests in parallel"
+          - name: "coverage"
+            type: "bool"
+            default: true
+            help: "Collect coverage data"
+          - name: "fail_fast"
+            type: "bool"
+            default: false
+            help: "Stop on first failure"
+          - name: "test_type"
+            type: "list[str]"
+            default: []
+            help: "Test types to run (unit, integration, e2e)"
+        semantic_conventions:
+          - "test.operation: run"
+          - "test.framework: pytest"
+          - "test.parallel: parallel"
+          - "test.coverage: coverage"
+      
+      coverage:
+        summary: "Generate coverage reports"
+        help: "Generate comprehensive coverage reports"
+        options:
+          - name: "verbose"
+            type: "bool"
+            default: false
+            help: "Show detailed coverage information"
+        semantic_conventions:
+          - "test.operation: coverage"
+          - "test.framework: coverage"
+      
+      discover:
+        summary: "Discover available tests"
+        help: "Find and categorize available tests"
+        options:
+          - name: "json"
+            type: "bool"
+            default: false
+            help: "Output as JSON"
+        semantic_conventions:
+          - "test.operation: discover"
+      
+      generate:
+        summary: "Generate test templates"
+        help: "Generate test templates for modules"
+        arguments:
+          - name: "module"
+            type: "str"
+            help: "Module path to generate tests for"
+        options:
+          - name: "test_type"
+            type: "str"
+            default: "unit"
+            help: "Test type to generate"
+        semantic_conventions:
+          - "test.operation: generate"
+          - "test.type: test_type"
+
+  # Build and Release
+  build:
+    description: "Package building and compilation"
+    commands:
+      build:
+        summary: "Build the package"
+        help: "Build the package for distribution"
+        options:
+          - name: "wheel"
+            type: "bool"
+            default: true
+            help: "Build wheel distribution"
+          - name: "sdist"
+            type: "bool"
+            default: false
+            help: "Build source distribution"
+        semantic_conventions:
+          - "build.operation: build"
+          - "build.type: wheel,sdist"
+      
+      clean:
+        summary: "Clean build artifacts"
+        help: "Remove build and cache directories"
+        semantic_conventions:
+          - "build.operation: clean"
+
+  # Development Tools
+  lint:
+    description: "Code quality and linting"
+    commands:
+      run:
+        summary: "Run linting tools"
+        help: "Execute code quality checks"
+        options:
+          - name: "fix"
+            type: "bool"
+            default: false
+            help: "Automatically fix issues"
+          - name: "tools"
+            type: "list[str]"
+            default: ["black", "isort", "flake8"]
+            help: "Linting tools to run"
+        semantic_conventions:
+          - "lint.operation: run"
+          - "lint.tools: tools"
+          - "lint.auto_fix: fix"
+
+  # OpenTelemetry and Observability (Complete Weaver Wrapper)
+  otel:
+    description: "OpenTelemetry validation and management (Complete Weaver Integration)"
+    commands:
+      status:
+        summary: "Show OTEL system status"
+        help: "Display OpenTelemetry system status and health (wraps weaver registry check)"
+        semantic_conventions:
+          - "otel.operation: status"
+      
+      coverage:
+        summary: "Validate telemetry coverage"
+        help: "Check telemetry instrumentation coverage (wraps weaver registry validate)"
+        options:
+          - name: "threshold"
+            type: "int"
+            default: 80
+            help: "Coverage threshold percentage"
+          - name: "detailed"
+            type: "bool"
+            default: false
+            help: "Show detailed function list"
+        semantic_conventions:
+          - "otel.operation: coverage"
+          - "otel.coverage.threshold: threshold"
+      
+      weaver:
+        summary: "Weaver telemetry validation"
+        help: "Validate Weaver integration and semantic conventions (wraps weaver registry resolve)"
+        options:
+          - name: "validate"
+            type: "bool"
+            default: true
+            help: "Validate weaver integration"
+          - name: "test_semconv"
+            type: "bool"
+            default: true
+            help: "Test semantic conventions"
+        semantic_conventions:
+          - "otel.operation: weaver"
+          - "weaver.validate: validate"
+          - "weaver.test_semconv: test_semconv"
+      
+      registry:
+        summary: "Manage OpenTelemetry semantic conventions registry"
+        help: "Manage semantic conventions registry (wraps weaver registry commands)"
+        options:
+          - name: "action"
+            type: "str"
+            default: "check"
+            help: "Registry action (check, resolve, search, stats)"
+          - name: "output"
+            type: "str"
+            help: "Output directory for resolved conventions"
+        semantic_conventions:
+          - "otel.operation: registry"
+          - "otel.registry.action: action"
+
+  # AI and Automation
+  ai:
+    description: "AI-assisted development features"
+    commands:
+      analyze:
+        summary: "Analyze code with AI"
+        help: "Perform AI-powered code analysis"
+        arguments:
+          - name: "target"
+            type: "str"
+            help: "Target to analyze (file, directory, or module)"
+        options:
+          - name: "model"
+            type: "str"
+            default: "claude-3-sonnet"
+            help: "AI model to use"
+        semantic_conventions:
+          - "ai.operation: analyze"
+          - "ai.model: model"
+          - "ai.target: target"
+      
+      suggest:
+        summary: "Get AI suggestions"
+        help: "Get AI-powered development suggestions"
+        options:
+          - name: "context"
+            type: "str"
+            help: "Context for suggestions"
+        semantic_conventions:
+          - "ai.operation: suggest"
+
+  # Documentation
+  docs:
+    description: "Documentation automation"
+    commands:
+      generate:
+        summary: "Generate documentation"
+        help: "Generate comprehensive documentation"
+        options:
+          - name: "format"
+            type: "str"
+            default: "markdown"
+            help: "Output format (markdown, html, pdf)"
+          - name: "ai_enhance"
+            type: "bool"
+            default: true
+            help: "Use AI to enhance documentation"
+        semantic_conventions:
+          - "docs.operation: generate"
+          - "docs.format: format"
+          - "docs.ai_enhance: ai_enhance"
+      
+      serve:
+        summary: "Serve documentation"
+        help: "Start documentation server"
+        options:
+          - name: "port"
+            type: "int"
+            default: 8000
+            help: "Server port"
+        semantic_conventions:
+          - "docs.operation: serve"
+          - "docs.port: port"
+
+  # Git Worktree Management
+  worktree:
+    description: "Git worktree operations"
+    commands:
+      create:
+        summary: "Create new worktree"
+        help: "Create a new Git worktree for a branch"
+        arguments:
+          - name: "branch"
+            type: "str"
+            help: "Branch name for worktree"
+        options:
+          - name: "isolated"
+            type: "bool"
+            default: false
+            help: "Create isolated environment"
+          - name: "force"
+            type: "bool"
+            default: false
+            help: "Force creation if path exists"
+        semantic_conventions:
+          - "worktree.operation: create"
+          - "worktree.branch: branch"
+          - "worktree.isolated: isolated"
+      
+      list:
+        summary: "List worktrees"
+        help: "List all Git worktrees"
+        options:
+          - name: "verbose"
+            type: "bool"
+            default: false
+            help: "Show detailed information"
+        semantic_conventions:
+          - "worktree.operation: list"
+      
+      remove:
+        summary: "Remove worktree"
+        help: "Remove a Git worktree"
+        arguments:
+          - name: "path"
+            type: "str"
+            help: "Path to worktree"
+        options:
+          - name: "force"
+            type: "bool"
+            default: false
+            help: "Force removal"
+        semantic_conventions:
+          - "worktree.operation: remove"
+          - "worktree.path: path"
+
+  # Security
+  security:
+    description: "Security scanning and validation"
+    commands:
+      scan:
+        summary: "Run security scan"
+        help: "Perform comprehensive security scan"
+        options:
+          - name: "severity"
+            type: "str"
+            default: "medium"
+            help: "Minimum severity level"
+          - name: "fix"
+            type: "bool"
+            default: false
+            help: "Attempt automatic fixes"
+        semantic_conventions:
+          - "security.operation: scan"
+          - "security.severity: severity"
+          - "security.auto_fix: fix"
+      
+      audit:
+        summary: "Audit dependencies"
+        help: "Audit dependencies for vulnerabilities"
+        semantic_conventions:
+          - "security.operation: audit"
+
+  # Weaver Forge Integration (Complete Abstraction)
+  forge:
+    description: "Weaver Forge automation workflows (Complete Weaver Ecosystem Wrapper)"
+    commands:
+      generate:
+        summary: "Generate code with Weaver Forge"
+        help: "Generate code using Weaver Forge templates (wraps weaver forge generate)"
+        arguments:
+          - name: "template"
+            type: "str"
+            help: "Template to use"
+        options:
+          - name: "output"
+            type: "str"
+            help: "Output directory"
+          - name: "config"
+            type: "str"
+            help: "Configuration file"
+          - name: "params"
+            type: "dict"
+            help: "Template parameters"
+        semantic_conventions:
+          - "forge.operation: generate"
+          - "forge.template: template"
+          - "forge.output: output"
+      
+      validate:
+        summary: "Validate Weaver Forge setup"
+        help: "Validate Weaver Forge configuration (wraps weaver forge validate)"
+        semantic_conventions:
+          - "forge.operation: validate"
+      
+      scaffold:
+        summary: "Scaffold new project with Weaver Forge"
+        help: "Scaffold complete project structure (wraps weaver forge scaffold)"
+        arguments:
+          - name: "project_type"
+            type: "str"
+            help: "Type of project to scaffold"
+        options:
+          - name: "name"
+            type: "str"
+            help: "Project name"
+          - name: "output"
+            type: "str"
+            help: "Output directory"
+        semantic_conventions:
+          - "forge.operation: scaffold"
+          - "forge.project_type: project_type"
+          - "forge.project_name: name"
+      
+      registry:
+        summary: "Manage Weaver Forge registry"
+        help: "Manage Weaver Forge template registry (wraps weaver forge registry)"
+        options:
+          - name: "action"
+            type: "str"
+            default: "list"
+            help: "Registry action (list, add, remove, update)"
+          - name: "template"
+            type: "str"
+            help: "Template name"
+        semantic_conventions:
+          - "forge.operation: registry"
+          - "forge.registry.action: action"
+
+  # Weaver Ecosystem Management (New - Complete Wrapper)
+  weaver:
+    description: "Complete Weaver ecosystem management (No manual weaver calls needed)"
+    commands:
+      install:
+        summary: "Install Weaver ecosystem tools"
+        help: "Install Weaver CLI and related tools"
+        options:
+          - name: "version"
+            type: "str"
+            help: "Weaver version to install"
+          - name: "components"
+            type: "list[str]"
+            default: ["weaver", "weaver-forge", "weaver-checker"]
+            help: "Components to install"
+        semantic_conventions:
+          - "weaver.operation: install"
+          - "weaver.version: version"
+          - "weaver.components: components"
+      
+      update:
+        summary: "Update Weaver ecosystem"
+        help: "Update Weaver CLI and related tools"
+        options:
+          - name: "check"
+            type: "bool"
+            default: true
+            help: "Check for updates only"
+        semantic_conventions:
+          - "weaver.operation: update"
+          - "weaver.check_only: check"
+      
+      status:
+        summary: "Show Weaver ecosystem status"
+        help: "Display Weaver ecosystem status and health"
+        options:
+          - name: "detailed"
+            type: "bool"
+            default: false
+            help: "Show detailed status"
+        semantic_conventions:
+          - "weaver.operation: status"
+          - "weaver.detailed: detailed"
+      
+      config:
+        summary: "Manage Weaver configuration"
+        help: "Manage Weaver ecosystem configuration"
+        options:
+          - name: "action"
+            type: "str"
+            default: "show"
+            help: "Configuration action (show, set, reset)"
+          - name: "key"
+            type: "str"
+            help: "Configuration key"
+          - name: "value"
+            type: "str"
+            help: "Configuration value"
+        semantic_conventions:
+          - "weaver.operation: config"
+          - "weaver.config.action: action"
+          - "weaver.config.key: key"
+
+# Template Configuration
+templates:
+  cli_init:
+    description: "Bootstrap CLI application with telemetry"
+    files:
+      - "src/uvmgr/main.py"
+      - "src/uvmgr/telemetry.py"
+      - "src/uvmgr/commands/__init__.py"
+      - "src/uvmgr/operations/__init__.py"
+  
+  cli_group:
+    description: "Add command group structure"
+    files:
+      - "src/uvmgr/commands/{{ group }}/__init__.py"
+      - "src/uvmgr/operations/{{ group }}/__init__.py"
+  
+  cli_command:
+    description: "Generate CLI command and operation"
+    files:
+      - "src/uvmgr/commands/{{ group }}/{{ command }}.py"
+      - "src/uvmgr/operations/{{ group }}/{{ command }}.py"
+
+# Semantic Convention Definitions
+custom_semantic_conventions:
+  uvmgr:
+    attributes:
+      - name: "uvmgr.operation"
+        type: "string"
+        description: "The type of uvmgr operation being performed"
+        examples: ["add", "remove", "upgrade", "run", "build"]
+      
+      - name: "uvmgr.package.count"
+        type: "int"
+        description: "Number of packages involved in the operation"
+      
+      - name: "uvmgr.package.names"
+        type: "string"
+        description: "Comma-separated list of package names"
+      
+      - name: "uvmgr.test.types"
+        type: "string_array"
+        description: "Types of tests being executed"
+        examples: [["unit", "integration", "e2e"]]
+      
+      - name: "uvmgr.weaver.validate"
+        type: "boolean"
+        description: "Whether Weaver validation is enabled"
+      
+      - name: "uvmgr.ai.model"
+        type: "string"
+        description: "AI model being used for operations"
+        examples: ["claude-3-sonnet", "gpt-4"]
+
+# Generation Rules
+generation_rules:
+  - name: "preserve_operations"
+    description: "Never overwrite operation files"
+    pattern: "src/uvmgr/operations/**/*.py"
+    action: "create_if_missing"
+  
+  - name: "regenerate_cli"
+    description: "Always regenerate CLI files"
+    pattern: "src/uvmgr/commands/**/*.py"
+    action: "always_regenerate"
+  
+  - name: "preserve_custom_code"
+    description: "Preserve custom implementations"
+    pattern: "src/uvmgr/core/**/*.py"
+    action: "never_overwrite"
+
+# Validation Rules
+validation_rules:
+  - name: "telemetry_coverage"
+    description: "Ensure 100% telemetry coverage"
+    check: "all_functions_instrumented"
+    threshold: 100
+  
+  - name: "weaver_compatibility"
+    description: "Ensure Weaver semantic convention compatibility"
+    check: "semantic_convention_usage"
+    threshold: 100
+  
+  - name: "three_layer_architecture"
+    description: "Maintain three-layer architecture"
+    check: "layer_separation"
+    required: true
+  
+  - name: "weaver_abstraction"
+    description: "Ensure complete Weaver ecosystem abstraction"
+    check: "no_manual_weaver_calls"
+    required: true
+
+# Output Configuration
+output:
+  format: "yaml"
+  indent: 2
+  include_comments: true
+  validate_schema: true 

@@ -256,7 +256,7 @@ def instrument_subcommand(parent_command: str) -> Callable:
     """
     with span("instrumentation.instrument_subcommand", parent_command=parent_command):
         add_span_event("instrumentation.subcommand.created", {"parent_command": parent_command})
-        metric_counter("instrumentation.subcommand.created")(1, {"parent_command": parent_command})
+        metric_counter("instrumentation.subcommand.created")(1)
         
         def decorator(func: Callable) -> Callable:
             return instrument_command(

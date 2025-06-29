@@ -213,10 +213,10 @@ def test_basic_functionality():
         # Try to run tests if they exist
         try:
             # Check if pytest is available
-            result = run(["python", "-m", "pytest", "--version"], capture=True, cwd=project_path)
+            result = subprocess.run(["python", "-m", "pytest", "--version"], capture_output=True, text=True, cwd=project_path)
             if result.returncode == 0:
                 # Run tests
-                test_result = run(["python", "-m", "pytest", "--tb=short"], capture=True, cwd=project_path)
+                test_result = subprocess.run(["python", "-m", "pytest", "--tb=short"], capture_output=True, text=True, cwd=project_path)
                 if test_result.returncode == 0:
                     return {
                         "success": True,
@@ -316,10 +316,10 @@ SECRET_KEY=your_secret_key_here
         # Try to run security tools if available
         try:
             # Check if bandit is available
-            result = run(["bandit", "--version"], capture=True, cwd=project_path)
+            result = subprocess.run(["bandit", "--version"], capture_output=True, text=True, cwd=project_path)
             if result.returncode == 0:
                 # Run bandit scan
-                scan_result = run(["bandit", "-r", "."], capture=True, cwd=project_path)
+                scan_result = subprocess.run(["bandit", "-r", "."], capture_output=True, text=True, cwd=project_path)
                 if scan_result.returncode == 0:
                     score += 30.0
                 else:
@@ -794,10 +794,10 @@ exclude_lines = [
         # Try to run linting if tools are available
         try:
             # Check if black is available
-            result = run(["black", "--version"], capture=True, cwd=project_path)
+            result = subprocess.run(["black", "--version"], capture_output=True, text=True, cwd=project_path)
             if result.returncode == 0:
                 # Run black check
-                black_result = run(["black", "--check", "."], capture=True, cwd=project_path)
+                black_result = subprocess.run(["black", "--check", "."], capture_output=True, text=True, cwd=project_path)
                 if black_result.returncode == 0:
                     score += 10.0
                 else:

@@ -89,25 +89,14 @@ def setup_logging(level: str = "INFO") -> None:
     >>> logging.getLogger("uvmgr").info("Application started")
     14:30:25 INFO     uvmgr │ Application started
     """
-    # Lazy import to avoid circular dependency
-    from uvmgr.core.instrumentation import instrument_command, add_span_event
-    
-    @instrument_command("telemetry_setup_logging")
-    def _setup_logging_internal(level: str = "INFO") -> None:
-        with span("telemetry.setup_logging", level=level):
-            if logging.getLogger().handlers:
-                add_span_event("telemetry.logging.already_configured")
-                return  # already configured
+    if logging.getLogger().handlers:
+        return  # already configured
 
-            logging.basicConfig(
-                level=getattr(logging, level.upper(), logging.INFO),
-                format="%(asctime)s %(levelname)-8s %(name)s │ %(message)s",
-                datefmt="%H:%M:%S",
-            )
-            add_span_event("telemetry.logging.configured", {"level": level})
-            metric_counter("telemetry.logging.setup")(1, {"level": level})
-    
-    return _setup_logging_internal(level)
+    logging.basicConfig(
+        level=getattr(logging, level.upper(), logging.INFO),
+        format="%(asctime)s %(levelname)-8s %(name)s │ %(message)s",
+        datefmt="%H:%M:%S",
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -309,31 +298,11 @@ try:
 
     def get_current_span():
         """Get the current active span."""
-        # Lazy import to avoid circular dependency
-        from uvmgr.core.instrumentation import instrument_command, add_span_event
-        
-        @instrument_command("telemetry_get_current_span")
-        def _get_current_span_internal():
-            with span("telemetry.get_current_span"):
-                current_span = trace.get_current_span()
-                add_span_event("telemetry.span.retrieved", {"is_recording": current_span.is_recording()})
-                return current_span
-        
-        return _get_current_span_internal()
+        return trace.get_current_span()
 
     def get_tracer():
         """Get the tracer instance."""
-        # Lazy import to avoid circular dependency
-        from uvmgr.core.instrumentation import instrument_command, add_span_event
-        
-        @instrument_command("telemetry_get_tracer")
-        def _get_tracer_internal():
-            with span("telemetry.get_tracer"):
-                add_span_event("telemetry.tracer.retrieved")
-                metric_counter("telemetry.tracer.access")(1)
-                return _TRACER
-        
-        return _get_tracer_internal()
+        return _TRACER
 
     def set_span_status(status_code, description: str = ""):
         """
@@ -355,31 +324,15 @@ try:
         >>> set_span_status("OK")
         >>> set_span_status("ERROR", "Failed to connect to database")
         """
-        # Lazy import to avoid circular dependency
-        from uvmgr.core.instrumentation import instrument_command, add_span_event
-        
-        @instrument_command("telemetry_set_span_status")
-        def _set_span_status_internal(status_code, description: str = ""):
-            with span("telemetry.set_span_status", status_code=status_code, description=description):
-                from opentelemetry.trace import Status, StatusCode
-
-                current_span = trace.get_current_span()
-                if current_span.is_recording():
-                    if status_code == "OK":
-                        current_span.set_status(Status(StatusCode.OK))
-                        add_span_event("telemetry.status.set", {"status": "OK"})
-                    elif status_code == "ERROR":
-                        current_span.set_status(Status(StatusCode.ERROR, description))
-                        add_span_event("telemetry.status.set", {"status": "ERROR", "description": description})
-                    else:
-                        current_span.set_status(Status(StatusCode.UNSET))
-                        add_span_event("telemetry.status.set", {"status": "UNSET"})
-                    
-                    metric_counter("telemetry.status.set")(1, {"status_code": status_code})
-                else:
-                    add_span_event("telemetry.status.skip", {"reason": "span_not_recording"})
-        
-        return _set_span_status_internal(status_code, description)
+        from opentelemetry.trace import Status, StatusCode
+        current_span = trace.get_current_span()
+        if current_span.is_recording():
+            if status_code == "OK":
+                current_span.set_status(Status(StatusCode.OK))
+            elif status_code == "ERROR":
+                current_span.set_status(Status(StatusCode.ERROR, description))
+            else:
+                current_span.set_status(Status(StatusCode.UNSET))
 
 except ImportError:  # SDK not installed – degrade gracefully
 
@@ -404,17 +357,17 @@ except ImportError:  # SDK not installed – degrade gracefully
         yield _NoopSpan()
 
     def metric_counter(name: str):  # type: ignore[return-value]
-        def _noop(_=1, **__): ...
+        def _noop(value=1, attributes=None, **__): ...
 
         return _noop
 
     def metric_histogram(name: str, unit: str = "s"):  # type: ignore[return-value]
-        def _noop(_: float, **__): ...
+        def _noop(value: float, attributes=None, **__): ...
 
         return _noop
 
     def metric_gauge(name: str):  # type: ignore[return-value]
-        def _noop(_: float, **__): ...
+        def _noop(value: float, attributes=None, **__): ...
 
         return _noop
 
