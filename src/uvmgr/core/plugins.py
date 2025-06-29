@@ -549,123 +549,14 @@ class PluginMarketplace:
                            plugin_type: Optional[PluginType] = None) -> List[PluginInfo]:
         """Search for plugins in the marketplace."""
         
-        # This would integrate with remote registries
-        # For now, return a mock result to demonstrate the interface
-        
-        mock_plugins = [
-            PluginInfo(
-                name="uvmgr-docker-enhanced",
-                version="1.2.0",
-                description="Enhanced Docker integration with advanced container management",
-                author="uvmgr-team",
-                plugin_type=PluginType.TOOL_ADAPTER,
-                repository="https://github.com/uvmgr/plugins/docker-enhanced",
-                tags=["docker", "containers", "devops"],
-                verified=True
-            ),
-            PluginInfo(
-                name="uvmgr-ai-codegen",
-                version="0.8.1",
-                description="AI-powered code generation and refactoring assistant",
-                author="ai-dev-team",
-                plugin_type=PluginType.AI_ENHANCEMENT,
-                repository="https://github.com/uvmgr/plugins/ai-codegen",
-                tags=["ai", "codegen", "refactoring"],
-                verified=True
-            ),
-            PluginInfo(
-                name="uvmgr-theme-dark",
-                version="2.1.0",
-                description="Professional dark theme for uvmgr CLI",
-                author="theme-designers",
-                plugin_type=PluginType.THEME,
-                repository="https://github.com/uvmgr/plugins/theme-dark",
-                tags=["theme", "ui", "dark"],
-                verified=False
-            )
-        ]
-        
-        # Apply filters
-        filtered_plugins = mock_plugins
-        
-        if query:
-            filtered_plugins = [
-                p for p in filtered_plugins 
-                if query.lower() in p.name.lower() or query.lower() in p.description.lower()
-            ]
-        
-        if tags:
-            filtered_plugins = [
-                p for p in filtered_plugins
-                if any(tag in p.tags for tag in tags)
-            ]
-        
-        if plugin_type:
-            filtered_plugins = [
-                p for p in filtered_plugins
-                if p.plugin_type == plugin_type
-            ]
-        
-        return filtered_plugins
+        # Plugin marketplace search not implemented
+        return NotImplemented
     
     async def install_plugin(self, plugin_name: str, version: Optional[str] = None) -> bool:
         """Install a plugin from the marketplace."""
         
-        # Mock installation process
-        # In a real implementation, this would:
-        # 1. Download plugin archive
-        # 2. Verify checksums and signatures
-        # 3. Check dependencies
-        # 4. Extract to plugins directory
-        # 5. Register plugin
-        
-        try:
-            # Simulate download and installation
-            await asyncio.sleep(0.5)  # Simulate network delay
-            
-            # Create mock plugin directory
-            plugin_dir = self.registry.plugins_dir / plugin_name
-            plugin_dir.mkdir(exist_ok=True)
-            
-            # Create mock plugin.json
-            plugin_info = {
-                "name": plugin_name,
-                "version": version or "1.0.0",
-                "description": f"Mock plugin {plugin_name}",
-                "author": "marketplace",
-                "type": "command",
-                "entry_point": "__init__.py"
-            }
-            
-            with open(plugin_dir / "plugin.json", "w") as f:
-                json.dump(plugin_info, f, indent=2)
-            
-            # Create mock __init__.py
-            mock_code = f'''"""Mock plugin {plugin_name}"""
-from uvmgr.core.plugins import CommandPlugin, HookType
-
-class {plugin_name.replace("-", "_").title()}Plugin(CommandPlugin):
-    async def initialize(self):
-        return True
-    
-    async def cleanup(self):
-        pass
-    
-    def get_commands(self):
-        return {{}}
-'''
-            
-            with open(plugin_dir / "__init__.py", "w") as f:
-                f.write(mock_code)
-            
-            # Re-discover plugins
-            await self.registry.discover_plugins()
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to install plugin {plugin_name}: {e}")
-            return False
+        # Plugin installation not yet implemented
+        return NotImplemented
     
     async def uninstall_plugin(self, plugin_name: str) -> bool:
         """Uninstall a plugin."""

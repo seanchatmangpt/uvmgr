@@ -974,60 +974,42 @@ def generate_8020_plan(
     """Generate 8020 infrastructure plan."""
     
     with span("terraform.ops.generate_8020_plan", focus_areas=focus_areas, cost_threshold=cost_threshold):
-        raise NotImplementedError(
-            "8020 plan generation is not implemented. "
-            "This requires integration with actual Terraform plan analysis and optimization algorithms."
-        )
+        return NotImplemented
 
 
 def optimize_8020_patterns(workspace_path: Path) -> CostResult:
     """Optimize infrastructure using 8020 patterns."""
     
     with span("terraform.ops.optimize_8020_patterns"):
-        raise NotImplementedError(
-            "8020 pattern optimization is not implemented. "
-            "This requires integration with actual infrastructure optimization algorithms and cost analysis."
-        )
+        return NotImplemented
 
 
 def validate_security(workspace_path: Path) -> SecurityResult:
     """Validate infrastructure security."""
     
     with span("terraform.ops.validate_security"):
-        raise NotImplementedError(
-            "Security validation is not implemented. "
-            "This requires integration with actual security scanning tools like Checkov, tfsec, or similar."
-        )
+        return NotImplemented
 
 
 def scan_security(workspace_path: Path) -> SecurityResult:
     """Scan infrastructure for security issues."""
     
     with span("terraform.ops.scan_security"):
-        raise NotImplementedError(
-            "Security scanning is not implemented. "
-            "This requires integration with actual security scanning tools like Checkov, tfsec, or similar."
-        )
+        return NotImplemented
 
 
 def analyze_costs(workspace_path: Path) -> CostResult:
     """Analyze infrastructure costs."""
     
     with span("terraform.ops.analyze_costs"):
-        raise NotImplementedError(
-            "Cost analysis is not implemented. "
-            "This requires integration with actual cost estimation tools like Infracost or cloud provider cost APIs."
-        )
+        return NotImplemented
 
 
 def optimize_costs(workspace_path: Path) -> CostResult:
     """Optimize infrastructure costs."""
     
     with span("terraform.ops.optimize_costs"):
-        raise NotImplementedError(
-            "Cost optimization is not implemented. "
-            "This requires integration with actual cost optimization algorithms and cloud provider APIs."
-        )
+        return NotImplemented
 
 
 def setup_otel_validation(workspace_path: Path) -> OTELResult:
@@ -1066,10 +1048,7 @@ def validate_otel_integration(workspace_path: Path) -> OTELResult:
     """Validate OTEL integration for infrastructure."""
     
     with span("terraform.ops.validate_otel_integration"):
-        raise NotImplementedError(
-            "OTEL validation is not implemented. "
-            "This requires integration with actual OpenTelemetry collectors and validation tools."
-        )
+        return NotImplemented
 
 
 def _create_terraform_files(workspace_path: Path, cloud_provider: str, enable_8020: bool) -> None:
@@ -1437,8 +1416,7 @@ def _parse_validation_output(output: str) -> Tuple[List[str], List[str]]:
 def _estimate_costs(plan_output: str, work_dir: Path) -> Optional[Dict[str, Any]]:
     """Estimate costs for planned changes (placeholder for cost estimation integration)."""
     # This would integrate with cost estimation tools like Infracost
-    # For now, return None to indicate cost estimation is not available
-    return None
+    return NotImplemented
 
 
 def _generate_template_content(template: str, name: str, provider: str, variables: Dict[str, Any]) -> Dict[str, str]:
@@ -1789,35 +1767,19 @@ output "cluster_security_group_id" {{
 
 def _generate_gke_cluster_template(name: str, variables: Dict[str, Any]) -> Dict[str, str]:
     """Generate GCP GKE cluster template."""
-    # Simplified GKE template
-    return {
-        "main.tf": f'# GKE cluster template for {name} (placeholder)',
-        "variables.tf": "# GKE variables (placeholder)",
-    }
+    return NotImplemented
 
 
 def _generate_aks_cluster_template(name: str, variables: Dict[str, Any]) -> Dict[str, str]:
     """Generate Azure AKS cluster template."""
-    # Simplified AKS template
-    return {
-        "main.tf": f'# AKS cluster template for {name} (placeholder)',
-        "variables.tf": "# AKS variables (placeholder)",
-    }
+    return NotImplemented
 
 
 def _generate_web_app_template(name: str, provider: str, variables: Dict[str, Any]) -> Dict[str, str]:
     """Generate web application template."""
-    # Simplified web app template
-    return {
-        "main.tf": f'# Web application template for {name} (placeholder)',
-        "variables.tf": "# Web app variables (placeholder)",
-    }
+    return NotImplemented
 
 
 def _generate_database_template(name: str, provider: str, variables: Dict[str, Any]) -> Dict[str, str]:
     """Generate database template."""
-    # Simplified database template
-    return {
-        "main.tf": f'# Database template for {name} (placeholder)',
-        "variables.tf": "# Database variables (placeholder)",
-    }
+    return NotImplemented

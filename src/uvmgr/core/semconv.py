@@ -19,6 +19,52 @@ Registry: /Users/sac/dev/uvmgr/weaver-forge/registry
 from typing import Final
 
 
+# Git operation attributes for uvmgr autogit
+class GitAttributes:
+    """Git operation attributes for uvmgr autogit"""
+    
+    GIT_OPERATION: Final[str] = "git.operation"  # The Git operation being performed
+    
+    GIT_BRANCH: Final[str] = "git.branch"  # Git branch name
+    
+    GIT_REMOTE: Final[str] = "git.remote"  # Remote repository name
+    
+    GIT_COMMIT_HASH: Final[str] = "git.commit_hash"  # Git commit hash
+    
+    GIT_FILES_MODIFIED: Final[str] = "git.files_modified"  # Number of modified files
+    
+    GIT_FILES_STAGED: Final[str] = "git.files_staged"  # Number of staged files
+    
+    GIT_FILES_UNTRACKED: Final[str] = "git.files_untracked"  # Number of untracked files
+    
+    GIT_AHEAD: Final[str] = "git.ahead"  # Commits ahead of remote
+    
+    GIT_BEHIND: Final[str] = "git.behind"  # Commits behind remote
+    
+    GIT_MESSAGE_LENGTH: Final[str] = "git.message_length"  # Length of commit message
+    
+    GIT_CONVENTIONAL: Final[str] = "git.conventional"  # Whether using conventional commits
+    
+    GIT_AI_GENERATED: Final[str] = "git.ai_generated"  # Whether message was AI generated
+
+
+# Git operation types
+class GitOperations:
+    """Git operation types"""
+    
+    STATUS: Final[str] = "status"  # Git status operation
+    
+    COMMIT: Final[str] = "commit"  # Git commit operation
+    
+    SYNC: Final[str] = "sync"  # Git sync (pull/push) operation
+    
+    PULL: Final[str] = "pull"  # Git pull operation
+    
+    PUSH: Final[str] = "push"  # Git push operation
+    
+    MERGE: Final[str] = "merge"  # Git merge operation
+
+
 # CLI command attributes for uvmgr
 class CliAttributes:
     """CLI command attributes for uvmgr"""

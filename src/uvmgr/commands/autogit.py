@@ -47,7 +47,6 @@ from datetime import datetime
 from uvmgr.core.instrumentation import add_span_attributes, add_span_event, instrument_command
 from uvmgr.core.semconv import GitAttributes, GitOperations
 from uvmgr.core.shell import colour, dump_json
-from uvmgr.core.ai import get_ai_client
 
 app = typer.Typer(help="🤖 Intelligent Git automation with AI-powered workflows")
 
@@ -83,7 +82,7 @@ def status(
         
         # Verify this is a git repository
         if not (project_path / ".git").exists():
-            typer.echo(f"{colour.red('Error:')} Not a git repository", err=True)
+            typer.echo("Error: Not a git repository", err=True)
             raise typer.Exit(1)
         
         add_span_event("autogit.status.started", {"project_path": str(project_path)})
@@ -96,7 +95,7 @@ def status(
         )
         
         if not result["success"]:
-            typer.echo(f"{colour.red('Error:')} {result['error']}", err=True)
+            typer.echo(f"Error: {result['error']}", err=True)
             raise typer.Exit(1)
         
         # Output results
@@ -113,11 +112,11 @@ def status(
         
     except subprocess.CalledProcessError as e:
         add_span_event("autogit.status.git_error", {"error": str(e)})
-        typer.echo(f"{colour.red('Git Error:')} {e}", err=True)
+        typer.echo(f"Git Error: {e}", err=True)
         raise typer.Exit(1)
     except Exception as e:
         add_span_event("autogit.status.error", {"error": str(e)})
-        typer.echo(f"{colour.red('Error:')} {e}", err=True)
+        typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(1)
 
 
@@ -155,7 +154,7 @@ def commit(
         project_path = Path.cwd()
         
         if not (project_path / ".git").exists():
-            typer.echo(f"{colour.red('Error:')} Not a git repository", err=True)
+            typer.echo("Error: Not a git repository", err=True)
             raise typer.Exit(1)
         
         add_span_event("autogit.commit.started", {"project_path": str(project_path)})
@@ -172,7 +171,7 @@ def commit(
         )
         
         if not result["success"]:
-            typer.echo(f"{colour.red('Error:')} {result['error']}", err=True)
+            typer.echo(f"Error: {result['error']}", err=True)
             raise typer.Exit(1)
         
         # Display results
@@ -189,7 +188,7 @@ def commit(
         
     except Exception as e:
         add_span_event("autogit.commit.error", {"error": str(e)})
-        typer.echo(f"{colour.red('Error:')} {e}", err=True)
+        typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(1)
 
 
@@ -227,7 +226,7 @@ def sync(
         project_path = Path.cwd()
         
         if not (project_path / ".git").exists():
-            typer.echo(f"{colour.red('Error:')} Not a git repository", err=True)
+            typer.echo("Error: Not a git repository", err=True)
             raise typer.Exit(1)
         
         add_span_event("autogit.sync.started", {
@@ -248,7 +247,7 @@ def sync(
         )
         
         if not result["success"]:
-            typer.echo(f"{colour.red('Error:')} {result['error']}", err=True)
+            typer.echo(f"Error: {result['error']}", err=True)
             if "conflicts" in result:
                 _display_conflict_resolution(result["conflicts"])
             raise typer.Exit(1)
@@ -268,14 +267,15 @@ def sync(
         
     except Exception as e:
         add_span_event("autogit.sync.error", {"error": str(e)})
-        typer.echo(f"{colour.red('Error:')} {e}", err=True)
+        typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(1)
 
 
 def _display_status_result(result: Dict[str, Any], detailed: bool, ai_insights: bool) -> None:
     """Display git status results in a user-friendly format."""
-    typer.echo(f"\n🔍 {colour.bold('Git Repository Status')}")
-    typer.echo(f"📁 Branch: {colour.green(result.get('branch', 'unknown'))}")
+    colour("\n🔍 Git Repository Status", "bold")
+    print(f"📁 Branch: ", end="")
+    colour(result.get('branch', 'unknown'), "green")
     
     if result.get("behind_remote"):
         typer.echo(f"⬇️  Behind remote by {result['behind_remote']} commits")
@@ -284,28 +284,33 @@ def _display_status_result(result: Dict[str, Any], detailed: bool, ai_insights: 
     
     # Modified files
     if modified := result.get("modified_files", []):
-        typer.echo(f"\n📝 {colour.yellow('Modified files')} ({len(modified)}):")
+        print("\n📝 ", end="")
+        colour(f"Modified files ({len(modified)}):", "yellow")
         for file in modified:
             typer.echo(f"  • {file}")
     
     # Untracked files
     if untracked := result.get("untracked_files", []):
-        typer.echo(f"\n➕ {colour.blue('Untracked files')} ({len(untracked)}):")
+        print("\n➕ ", end="")
+        colour(f"Untracked files ({len(untracked)}):", "blue")
         for file in untracked:
             typer.echo(f"  • {file}")
     
     # Staged files
     if staged := result.get("staged_files", []):
-        typer.echo(f"\n✅ {colour.green('Staged files')} ({len(staged)}):")
+        print("\n✅ ", end="")
+        colour(f"Staged files ({len(staged)}):", "green")
         for file in staged:
             typer.echo(f"  • {file}")
     
     # AI insights
     if ai_insights and "ai_insights" in result:
         insights = result["ai_insights"]
-        typer.echo(f"\n🤖 {colour.bold('AI Insights')}:")
+        print("\n🤖 ", end="")
+        colour("AI Insights:", "bold")
         if insights.get("commit_suggestion"):
-            typer.echo(f"💡 Suggested commit: {colour.cyan(insights['commit_suggestion'])}")
+            print("💡 Suggested commit: ", end="")
+            colour(insights['commit_suggestion'], "cyan")
         if insights.get("recommendations"):
             typer.echo("📋 Recommendations:")
             for rec in insights["recommendations"]:
@@ -314,8 +319,9 @@ def _display_status_result(result: Dict[str, Any], detailed: bool, ai_insights: 
 
 def _display_commit_preview(result: Dict[str, Any]) -> None:
     """Display commit preview for dry-run mode."""
-    typer.echo(f"\n🔍 {colour.bold('Commit Preview')} (dry-run)")
-    typer.echo(f"📝 Message: {colour.cyan(result.get('message', ''))}")
+    colour("\n🔍 Commit Preview (dry-run)", "bold")
+    print("📝 Message: ", end="")
+    colour(result.get('message', ''), "cyan")
     
     if files := result.get("files_to_commit", []):
         typer.echo(f"📁 Files to commit ({len(files)}):")
@@ -327,9 +333,11 @@ def _display_commit_preview(result: Dict[str, Any]) -> None:
 
 def _display_commit_result(result: Dict[str, Any]) -> None:
     """Display commit results."""
-    typer.echo(f"\n✅ {colour.bold('Commit Successful')}")
-    typer.echo(f"🔗 Hash: {colour.green(result.get('commit_hash', ''))}")
-    typer.echo(f"📝 Message: {colour.cyan(result.get('message', ''))}")
+    colour("\n✅ Commit Successful", "bold")
+    print("🔗 Hash: ", end="")
+    colour(result.get('commit_hash', ''), "green")
+    print("📝 Message: ", end="")
+    colour(result.get('message', ''), "cyan")
     
     if files := result.get("files_committed", []):
         typer.echo(f"📁 Files committed: {len(files)}")
@@ -337,7 +345,7 @@ def _display_commit_result(result: Dict[str, Any]) -> None:
 
 def _display_sync_preview(result: Dict[str, Any]) -> None:
     """Display sync preview for dry-run mode."""
-    typer.echo(f"\n🔍 {colour.bold('Sync Preview')} (dry-run)")
+    colour("\n🔍 Sync Preview (dry-run)", "bold")
     
     operations = result.get("planned_operations", [])
     for op in operations:
@@ -348,7 +356,7 @@ def _display_sync_preview(result: Dict[str, Any]) -> None:
 
 def _display_sync_result(result: Dict[str, Any]) -> None:
     """Display sync results."""
-    typer.echo(f"\n✅ {colour.bold('Sync Successful')}")
+    colour("\n✅ Sync Successful", "bold")
     
     operations = result.get("operations_performed", [])
     for op in operations:
@@ -363,7 +371,8 @@ def _display_sync_result(result: Dict[str, Any]) -> None:
 
 def _display_conflict_resolution(conflicts: List[Dict[str, Any]]) -> None:
     """Display conflict resolution suggestions."""
-    typer.echo(f"\n⚠️  {colour.yellow('Conflicts Detected')}")
+    print("\n⚠️  ", end="")
+    colour("Conflicts Detected", "yellow")
     
     for conflict in conflicts:
         typer.echo(f"📁 {conflict.get('file', 'unknown')}")

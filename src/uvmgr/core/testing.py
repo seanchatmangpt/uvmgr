@@ -513,8 +513,8 @@ class TestExecutor:
             # Fallback: try to parse from .coverage file
             coverage_file = self.project_root / ".coverage"
             if coverage_file.exists():
-                # This would require coverage.py API
-                return 75.0  # Placeholder
+                # Coverage parsing not yet implemented
+                return NotImplemented
             
         except Exception as e:
             logger.warning(f"Failed to extract coverage: {e}")

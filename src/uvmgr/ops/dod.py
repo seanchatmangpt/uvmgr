@@ -11,19 +11,20 @@ Business logic for complete project automation with 80/20 principles:
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Dict, Any, Optional, List
 import time
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 from opentelemetry import trace
 
 from ..runtime.dod import (
-    initialize_exoskeleton_files,
-    execute_automation_workflow,
-    validate_criteria_runtime,
-    generate_pipeline_files,
-    run_e2e_tests,
     analyze_project_health,
-    create_automation_report
+    create_automation_report,
+    execute_automation_workflow,
+    generate_pipeline_files,
+    initialize_exoskeleton_files,
+    run_e2e_tests,
+    validate_criteria_runtime,
 )
 
 tracer = trace.get_tracer(__name__)
@@ -63,7 +64,7 @@ def create_exoskeleton(
     template: str = "standard",
     force: bool = False,
     preview: bool = False
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Create Weaver Forge exoskeleton for complete project automation.
     
@@ -80,7 +81,8 @@ def create_exoskeleton(
         force: Overwrite existing exoskeleton
         preview: Preview structure without creating files
         
-    Returns:
+    Returns
+    -------
         Dict with creation results and metadata
     """
     span = trace.get_current_span()
@@ -90,7 +92,7 @@ def create_exoskeleton(
         "dod.preview": preview,
         "project.path": str(project_path)
     })
-    
+
     try:
         # Validate template
         if template not in EXOSKELETON_TEMPLATES:
@@ -98,9 +100,9 @@ def create_exoskeleton(
                 "success": False,
                 "error": f"Unknown template: {template}. Available: {list(EXOSKELETON_TEMPLATES.keys())}"
             }
-        
+
         template_config = EXOSKELETON_TEMPLATES[template]
-        
+
         if preview:
             # Return structure preview without creating files
             return {
@@ -110,41 +112,41 @@ def create_exoskeleton(
                 "structure": _generate_exoskeleton_structure(template_config),
                 "description": template_config["description"]
             }
-        
+
         # Create exoskeleton files and structure
         result = initialize_exoskeleton_files(
             project_path=project_path,
             template_config=template_config,
             force=force
         )
-        
+
         if result["success"]:
             span.set_attributes({
                 "dod.files_created": len(result.get("files_created", [])),
                 "dod.workflows_created": len(result.get("workflows_created", [])),
                 "dod.ai_integrations": len(result.get("ai_integrations", []))
             })
-        
+
         return result
-        
+
     except Exception as e:
         span.record_exception(e)
         return {
             "success": False,
-            "error": f"Failed to create exoskeleton: {str(e)}"
+            "error": f"Failed to create exoskeleton: {e!s}"
         }
 
 @tracer.start_as_current_span("dod.execute_complete_automation")
 def execute_complete_automation(
     project_path: Path,
     environment: str = "development",
-    criteria: Optional[List[str]] = None,
+    criteria: list[str] | None = None,
     skip_tests: bool = False,
     skip_security: bool = False,
     auto_fix: bool = False,
     parallel: bool = True,
     ai_assist: bool = True
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Execute complete Definition of Done automation for entire project.
     
@@ -163,7 +165,8 @@ def execute_complete_automation(
         parallel: Run automation steps in parallel
         ai_assist: Enable AI-powered automation assistance
         
-    Returns:
+    Returns
+    -------
         Dict with automation results and completion status
     """
     span = trace.get_current_span()
@@ -176,22 +179,22 @@ def execute_complete_automation(
         "dod.ai_assist": ai_assist,
         "project.path": str(project_path)
     })
-    
+
     start_time = time.time()
-    
+
     try:
         # Determine criteria to execute (default to all if not specified)
         if criteria is None:
             criteria = list(DOD_CRITERIA_WEIGHTS.keys())
-        
+
         # Filter out skipped criteria
         if skip_tests and "testing" in criteria:
             criteria.remove("testing")
         if skip_security and "security" in criteria:
             criteria.remove("security")
-        
+
         span.set_attribute("dod.criteria_count", len(criteria))
-        
+
         # Execute automation workflow
         automation_result = execute_automation_workflow(
             project_path=project_path,
@@ -201,41 +204,41 @@ def execute_complete_automation(
             parallel=parallel,
             ai_assist=ai_assist
         )
-        
+
         # Calculate weighted success rate using 80/20 principles
         overall_success_rate = _calculate_weighted_success_rate(
             automation_result.get("criteria_results", {}),
             criteria
         )
-        
+
         automation_result["overall_success_rate"] = overall_success_rate
         automation_result["execution_time"] = time.time() - start_time
         automation_result["criteria_executed"] = criteria
         automation_result["automation_strategy"] = "80/20"
-        
+
         span.set_attributes({
             "dod.success_rate": overall_success_rate,
             "dod.execution_time": automation_result["execution_time"],
             "dod.criteria_passed": len([c for c, r in automation_result.get("criteria_results", {}).items() if r.get("passed", False)])
         })
-        
+
         return automation_result
-        
+
     except Exception as e:
         span.record_exception(e)
         return {
             "success": False,
-            "error": f"Automation execution failed: {str(e)}",
+            "error": f"Automation execution failed: {e!s}",
             "execution_time": time.time() - start_time
         }
 
 @tracer.start_as_current_span("dod.validate_dod_criteria")
 def validate_dod_criteria(
     project_path: Path,
-    criteria: Optional[List[str]] = None,
+    criteria: list[str] | None = None,
     detailed: bool = False,
     fix_suggestions: bool = True
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Validate current Definition of Done criteria with 80/20 scoring.
     
@@ -250,7 +253,8 @@ def validate_dod_criteria(
         detailed: Include detailed validation results
         fix_suggestions: Generate AI-powered fix suggestions
         
-    Returns:
+    Returns
+    -------
         Dict with validation results and scores
     """
     span = trace.get_current_span()
@@ -259,14 +263,14 @@ def validate_dod_criteria(
         "dod.fix_suggestions": fix_suggestions,
         "project.path": str(project_path)
     })
-    
+
     try:
         # Default to all criteria if not specified
         if criteria is None:
             criteria = list(DOD_CRITERIA_WEIGHTS.keys())
-        
+
         span.set_attribute("dod.criteria_count", len(criteria))
-        
+
         # Validate criteria using runtime layer
         validation_result = validate_criteria_runtime(
             project_path=project_path,
@@ -274,23 +278,23 @@ def validate_dod_criteria(
             detailed=detailed,
             fix_suggestions=fix_suggestions
         )
-        
+
         # Calculate weighted overall score using 80/20 principles
         criteria_scores = validation_result.get("criteria_scores", {})
         overall_score = _calculate_weighted_success_rate(criteria_scores, criteria)
-        
+
         # Add 80/20 analysis
         critical_scores = [
-            score_data.get("score", 0) 
+            score_data.get("score", 0)
             for criteria_name, score_data in criteria_scores.items()
             if DOD_CRITERIA_WEIGHTS.get(criteria_name, {}).get("priority") == "critical"
         ]
         important_scores = [
             score_data.get("score", 0)
-            for criteria_name, score_data in criteria_scores.items() 
+            for criteria_name, score_data in criteria_scores.items()
             if DOD_CRITERIA_WEIGHTS.get(criteria_name, {}).get("priority") == "important"
         ]
-        
+
         validation_result.update({
             "overall_score": overall_score,
             "critical_score": sum(critical_scores) / len(critical_scores) if critical_scores else 0,
@@ -301,20 +305,20 @@ def validate_dod_criteria(
                 for criteria_name in criteria
             }
         })
-        
+
         span.set_attributes({
             "dod.overall_score": overall_score,
             "dod.critical_score": validation_result["critical_score"],
             "dod.important_score": validation_result["important_score"]
         })
-        
+
         return validation_result
-        
+
     except Exception as e:
         span.record_exception(e)
         return {
             "success": False,
-            "error": f"Validation failed: {str(e)}",
+            "error": f"Validation failed: {e!s}",
             "overall_score": 0.0
         }
 
@@ -322,11 +326,11 @@ def validate_dod_criteria(
 def generate_devops_pipeline(
     project_path: Path,
     provider: str = "github-actions",
-    environments: List[str] = None,
-    features: List[str] = None,
+    environments: list[str] = None,
+    features: list[str] = None,
     template: str = "standard",
-    output_path: Optional[Path] = None
-) -> Dict[str, Any]:
+    output_path: Path | None = None
+) -> dict[str, Any]:
     """
     Generate comprehensive DevOps pipelines with DoD automation.
     
@@ -346,7 +350,8 @@ def generate_devops_pipeline(
         template: Pipeline template (standard, enterprise, security-first)
         output_path: Custom output path for pipeline files
         
-    Returns:
+    Returns
+    -------
         Dict with pipeline generation results
     """
     span = trace.get_current_span()
@@ -357,14 +362,14 @@ def generate_devops_pipeline(
         "dod.features": str(features or ["testing", "security", "deployment"]),
         "project.path": str(project_path)
     })
-    
+
     try:
         # Set defaults
         if environments is None:
             environments = ["dev", "staging", "production"]
         if features is None:
             features = ["testing", "security", "deployment", "monitoring"]
-        
+
         # Generate pipeline files using runtime layer
         pipeline_result = generate_pipeline_files(
             project_path=project_path,
@@ -374,21 +379,21 @@ def generate_devops_pipeline(
             template=template,
             output_path=output_path
         )
-        
+
         if pipeline_result["success"]:
             span.set_attributes({
                 "dod.files_created": len(pipeline_result.get("files_created", [])),
                 "dod.features_enabled": len(pipeline_result.get("features_enabled", [])),
                 "dod.environments_configured": len(environments)
             })
-        
+
         return pipeline_result
-        
+
     except Exception as e:
         span.record_exception(e)
         return {
             "success": False,
-            "error": f"Pipeline generation failed: {str(e)}"
+            "error": f"Pipeline generation failed: {e!s}"
         }
 
 @tracer.start_as_current_span("dod.run_e2e_automation")
@@ -399,7 +404,7 @@ def run_e2e_automation(
     headless: bool = True,
     record_video: bool = False,
     generate_report: bool = True
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Execute comprehensive end-to-end automation testing.
     
@@ -419,7 +424,8 @@ def run_e2e_automation(
         record_video: Record test execution videos
         generate_report: Generate detailed test report
         
-    Returns:
+    Returns
+    -------
         Dict with E2E test results and metrics
     """
     span = trace.get_current_span()
@@ -431,9 +437,9 @@ def run_e2e_automation(
         "dod.generate_report": generate_report,
         "project.path": str(project_path)
     })
-    
+
     start_time = time.time()
-    
+
     try:
         # Execute E2E tests using runtime layer
         e2e_result = run_e2e_tests(
@@ -444,34 +450,34 @@ def run_e2e_automation(
             record_video=record_video,
             generate_report=generate_report
         )
-        
+
         # Calculate success rate
         test_suites = e2e_result.get("test_suites", {})
         total_tests = sum(suite.get("total", 0) for suite in test_suites.values())
         passed_tests = sum(suite.get("passed", 0) for suite in test_suites.values())
         success_rate = passed_tests / total_tests if total_tests > 0 else 0.0
-        
+
         e2e_result.update({
             "success_rate": success_rate,
             "total_tests": total_tests,
             "passed_tests": passed_tests,
             "execution_time": time.time() - start_time
         })
-        
+
         span.set_attributes({
             "dod.success_rate": success_rate,
             "dod.total_tests": total_tests,
             "dod.passed_tests": passed_tests,
             "dod.execution_time": e2e_result["execution_time"]
         })
-        
+
         return e2e_result
-        
+
     except Exception as e:
         span.record_exception(e)
         return {
             "success": False,
-            "error": f"E2E testing failed: {str(e)}",
+            "error": f"E2E testing failed: {e!s}",
             "execution_time": time.time() - start_time,
             "success_rate": 0.0
         }
@@ -481,7 +487,7 @@ def analyze_project_status(
     project_path: Path,
     detailed: bool = False,
     suggestions: bool = True
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Analyze project Definition of Done status and health.
     
@@ -498,7 +504,8 @@ def analyze_project_status(
         detailed: Include detailed analysis and metrics
         suggestions: Include improvement suggestions
         
-    Returns:
+    Returns
+    -------
         Dict with project health analysis and recommendations
     """
     span = trace.get_current_span()
@@ -507,7 +514,7 @@ def analyze_project_status(
         "dod.detailed": detailed,
         "dod.suggestions": suggestions
     })
-    
+
     try:
         # Get project health analysis from runtime layer
         health_result = analyze_project_health(
@@ -515,14 +522,14 @@ def analyze_project_status(
             detailed=detailed,
             suggestions=suggestions
         )
-        
+
         if not health_result.get("success", False):
             return health_result
-        
+
         # Calculate overall health score
         dod_status = health_result.get("dod_status", {})
         overall_score = dod_status.get("overall_score", 0)
-        
+
         # Determine status level
         if overall_score >= 90:
             status = "EXCELLENT"
@@ -534,12 +541,12 @@ def analyze_project_status(
             status = "NEEDS WORK"
         else:
             status = "CRITICAL"
-        
+
         span.set_attributes({
             "dod.overall_score": overall_score,
             "dod.status": status
         })
-        
+
         return {
             "success": True,
             "overall_health_score": overall_score,
@@ -548,16 +555,16 @@ def analyze_project_status(
             "security_score": health_result.get("security_posture", {}).get("score", 0),
             "suggestions": health_result.get("suggestions", [])
         }
-        
+
     except Exception as e:
         span.record_exception(e)
         return {
             "success": False,
-            "error": f"Project status analysis failed: {str(e)}"
+            "error": f"Project status analysis failed: {e!s}"
         }
 
 @tracer.start_as_current_span("dod.generate_dod_report")
-def generate_dod_report(project_path: Path, automation_result: Dict[str, Any]) -> Dict[str, Any]:
+def generate_dod_report(project_path: Path, automation_result: dict[str, Any]) -> dict[str, Any]:
     """
     Generate comprehensive Definition of Done completion report.
     
@@ -572,7 +579,8 @@ def generate_dod_report(project_path: Path, automation_result: Dict[str, Any]) -
         project_path: Path to project root
         automation_result: Results from complete automation execution
         
-    Returns:
+    Returns
+    -------
         Dict with generated report and metadata
     """
     span = trace.get_current_span()
@@ -580,7 +588,7 @@ def generate_dod_report(project_path: Path, automation_result: Dict[str, Any]) -
         "project.path": str(project_path),
         "dod.success_rate": automation_result.get("overall_success_rate", 0)
     })
-    
+
     try:
         # Generate comprehensive report using runtime layer
         report_result = create_automation_report(
@@ -588,24 +596,24 @@ def generate_dod_report(project_path: Path, automation_result: Dict[str, Any]) -
             automation_result=automation_result,
             include_ai_insights=True
         )
-        
+
         span.set_attributes({
             "dod.report_generated": report_result.get("success", False),
             "dod.report_formats": len(report_result.get("formats_generated", []))
         })
-        
+
         return report_result
-        
+
     except Exception as e:
         span.record_exception(e)
         return {
             "success": False,
-            "error": f"Report generation failed: {str(e)}"
+            "error": f"Report generation failed: {e!s}"
         }
 
 # Helper functions
 
-def _generate_exoskeleton_structure(template_config: Dict[str, Any]) -> Dict[str, List[str]]:
+def _generate_exoskeleton_structure(template_config: dict[str, Any]) -> dict[str, list[str]]:
     """Generate exoskeleton structure preview for template."""
     base_structure = {
         "automation": [
@@ -638,7 +646,7 @@ def _generate_exoskeleton_structure(template_config: Dict[str, Any]) -> Dict[str
             "monitoring/dashboards/"
         ]
     }
-    
+
     # Add template-specific files
     includes = template_config.get("includes", [])
     if "compliance" in includes:
@@ -648,7 +656,7 @@ def _generate_exoskeleton_structure(template_config: Dict[str, Any]) -> Dict[str
             "governance/compliance/",
             "governance/audit-trail.json"
         ]
-    
+
     if "ai_features" in template_config:
         base_structure["ai_integration"] = [
             ".uvmgr/ai/",
@@ -656,31 +664,31 @@ def _generate_exoskeleton_structure(template_config: Dict[str, Any]) -> Dict[str
             ".uvmgr/ai/models.json",
             ".uvmgr/ai/claude-integration.py"
         ]
-    
+
     return base_structure
 
-def _calculate_weighted_success_rate(criteria_results: Dict[str, Any], criteria: List[str]) -> float:
+def _calculate_weighted_success_rate(criteria_results: dict[str, Any], criteria: list[str]) -> float:
     """Calculate weighted success rate using 80/20 principles."""
     if not criteria_results:
         return 0.0
-    
+
     total_weight = 0.0
     weighted_score = 0.0
-    
+
     for criteria_name in criteria:
         if criteria_name not in criteria_results:
             continue
-            
+
         criteria_weight = DOD_CRITERIA_WEIGHTS.get(criteria_name, {}).get("weight", 0.05)
         criteria_score = criteria_results[criteria_name].get("score", 0.0)
-        
+
         # Convert boolean passed to score if needed
         if isinstance(criteria_score, bool):
             criteria_score = 1.0 if criteria_score else 0.0
         elif "passed" in criteria_results[criteria_name]:
             criteria_score = 1.0 if criteria_results[criteria_name]["passed"] else 0.0
-        
+
         weighted_score += criteria_score * criteria_weight
         total_weight += criteria_weight
-    
+
     return weighted_score / total_weight if total_weight > 0 else 0.0

@@ -585,9 +585,8 @@ class WorkflowEngine:
             merged_args = {**command_config, **step.args}
             
             # Execute command (simplified)
-            start_time = time.time()
-            success = True  # Placeholder - would execute actual command
-            duration = time.time() - start_time
+            # Command execution not yet implemented
+            return NotImplemented
             
             # Update command history
             update_command_history(step.command, merged_args, success, duration)

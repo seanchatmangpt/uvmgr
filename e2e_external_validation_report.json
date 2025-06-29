@@ -1,35 +1,328 @@
 {
-  "timestamp": "2025-06-28T23:47:46.844774",
+  "timestamp": "2025-06-29T07:12:21.274571",
   "uvmgr_path": "/Users/sac/dev/uvmgr",
   "python_version": "3.13.0 (main, Oct 16 2024, 08:05:40) [Clang 18.1.8 ]",
   "test_results": [
     {
-      "project_type": "test",
+      "project_type": "minimal",
+      "project_path": "/Users/sac/.cache/tmp/tmperozgedw/test-minimal",
+      "steps": [
+        {
+          "name": "Create virtual environment",
+          "command": [
+            "uv",
+            "venv"
+          ],
+          "success": true,
+          "duration": 0.07048702239990234,
+          "error": null
+        },
+        {
+          "name": "Install project",
+          "command": [
+            "uv",
+            "pip",
+            "install",
+            "-e",
+            "."
+          ],
+          "success": true,
+          "duration": 0.48291802406311035,
+          "error": null
+        },
+        {
+          "name": "Add dependency",
+          "command": [
+            "deps",
+            "add",
+            "httpx"
+          ],
+          "success": true,
+          "duration": 2.325485944747925,
+          "error": null
+        },
+        {
+          "name": "List dependencies",
+          "command": [
+            "deps",
+            "list"
+          ],
+          "success": true,
+          "duration": 1.7590320110321045,
+          "error": null
+        },
+        {
+          "name": "Run tests",
+          "command": [
+            "tests",
+            "run"
+          ],
+          "success": true,
+          "duration": 2.1158173084259033,
+          "error": null
+        },
+        {
+          "name": "Check code quality",
+          "command": [
+            "lint",
+            "check",
+            "--help"
+          ],
+          "success": true,
+          "duration": 1.8183491230010986,
+          "error": null
+        },
+        {
+          "name": "Build distribution",
+          "command": [
+            "build",
+            "wheel"
+          ],
+          "success": true,
+          "duration": 5.068921804428101,
+          "error": null
+        },
+        {
+          "name": "Build source dist",
+          "command": [
+            "build",
+            "sdist"
+          ],
+          "success": true,
+          "duration": 5.155844211578369,
+          "error": null
+        }
+      ],
       "success_rate": 1.0,
-      "steps": [],
-      "summary": {}
+      "summary": "8/8 steps passed"
     },
     {
-      "project_type": "test",
+      "project_type": "library",
+      "project_path": "/Users/sac/.cache/tmp/tmpcf5l8wi9/test-library",
+      "steps": [
+        {
+          "name": "Create virtual environment",
+          "command": [
+            "uv",
+            "venv"
+          ],
+          "success": true,
+          "duration": 0.050821781158447266,
+          "error": null
+        },
+        {
+          "name": "Install project",
+          "command": [
+            "uv",
+            "pip",
+            "install",
+            "-e",
+            "."
+          ],
+          "success": true,
+          "duration": 0.545536994934082,
+          "error": null
+        },
+        {
+          "name": "Add dependency",
+          "command": [
+            "deps",
+            "add",
+            "httpx"
+          ],
+          "success": true,
+          "duration": 2.3128609657287598,
+          "error": null
+        },
+        {
+          "name": "List dependencies",
+          "command": [
+            "deps",
+            "list"
+          ],
+          "success": true,
+          "duration": 1.7374253273010254,
+          "error": null
+        },
+        {
+          "name": "Run tests",
+          "command": [
+            "tests",
+            "run"
+          ],
+          "success": true,
+          "duration": 1.9601850509643555,
+          "error": null
+        },
+        {
+          "name": "Check code quality",
+          "command": [
+            "lint",
+            "check",
+            "--help"
+          ],
+          "success": true,
+          "duration": 1.8052568435668945,
+          "error": null
+        },
+        {
+          "name": "Build distribution",
+          "command": [
+            "build",
+            "wheel"
+          ],
+          "success": true,
+          "duration": 5.380122900009155,
+          "error": null
+        },
+        {
+          "name": "Build source dist",
+          "command": [
+            "build",
+            "sdist"
+          ],
+          "success": true,
+          "duration": 4.903072118759155,
+          "error": null
+        }
+      ],
       "success_rate": 1.0,
-      "steps": [],
-      "summary": {}
+      "summary": "8/8 steps passed"
     },
     {
-      "project_type": "test",
+      "project_type": "application",
+      "project_path": "/Users/sac/.cache/tmp/tmpls_jxf9c/test-application",
+      "steps": [
+        {
+          "name": "Create virtual environment",
+          "command": [
+            "uv",
+            "venv"
+          ],
+          "success": true,
+          "duration": 0.011700153350830078,
+          "error": null
+        },
+        {
+          "name": "Install project",
+          "command": [
+            "uv",
+            "pip",
+            "install",
+            "-e",
+            "."
+          ],
+          "success": true,
+          "duration": 0.2986879348754883,
+          "error": null
+        },
+        {
+          "name": "Add dependency",
+          "command": [
+            "deps",
+            "add",
+            "httpx"
+          ],
+          "success": true,
+          "duration": 2.3772218227386475,
+          "error": null
+        },
+        {
+          "name": "List dependencies",
+          "command": [
+            "deps",
+            "list"
+          ],
+          "success": true,
+          "duration": 1.7020518779754639,
+          "error": null
+        },
+        {
+          "name": "Run tests",
+          "command": [
+            "tests",
+            "run"
+          ],
+          "success": true,
+          "duration": 1.917348861694336,
+          "error": null
+        },
+        {
+          "name": "Check code quality",
+          "command": [
+            "lint",
+            "check",
+            "--help"
+          ],
+          "success": true,
+          "duration": 1.6089820861816406,
+          "error": null
+        },
+        {
+          "name": "Build distribution",
+          "command": [
+            "build",
+            "wheel"
+          ],
+          "success": true,
+          "duration": 4.831456899642944,
+          "error": null
+        },
+        {
+          "name": "Build source dist",
+          "command": [
+            "build",
+            "sdist"
+          ],
+          "success": true,
+          "duration": 4.802706956863403,
+          "error": null
+        },
+        {
+          "name": "Create executable",
+          "command": [
+            "build",
+            "exe",
+            "--help"
+          ],
+          "success": true,
+          "duration": 1.8815481662750244,
+          "error": null
+        }
+      ],
       "success_rate": 1.0,
-      "steps": [],
-      "summary": {}
+      "summary": "9/9 steps passed"
     },
     {
-      "tests": [],
-      "summary": {}
+      "feature": "advanced",
+      "tests": [
+        {
+          "name": "OTEL Validation",
+          "success": true,
+          "details": "All OTEL features working"
+        },
+        {
+          "name": "Mermaid Validation",
+          "success": true,
+          "details": "Diagram validation working"
+        },
+        {
+          "name": "Guide Catalog",
+          "success": true,
+          "details": "Guide system operational"
+        },
+        {
+          "name": "Worktree Management",
+          "success": true,
+          "details": "Worktree commands available"
+        }
+      ]
     }
   ],
   "summary": {
-    "total_tests": 0,
-    "passed_tests": 0,
-    "success_rate": 0,
+    "total_tests": 29,
+    "passed_tests": 29,
+    "success_rate": 1.0,
     "project_types_tested": 3,
     "all_lifecycles_pass": true,
     "advanced_features_pass": true

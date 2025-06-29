@@ -78,6 +78,7 @@ __all__: Final[list[str]] = [
     "otel",
     "guides",
     "worktree",
+    "autogit", # Intelligent Git automation with AI-powered workflows
     "infodesign", # Information design with DSPy three-layer architecture
     "mermaid", # Full Mermaid support with Weaver Forge + DSPy (8020 priority)
     "dod", # Definition of Done automation with Weaver Forge exoskeleton

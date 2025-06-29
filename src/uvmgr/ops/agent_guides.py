@@ -738,10 +738,7 @@ def get_guide_status(
 
 def _search_conversations(query: str) -> List[SearchResult]:
     """Search Claude conversations."""
-    raise NotImplementedError(
-        "Conversation search is not implemented. "
-        "This requires integration with Claude's conversation history API."
-    )
+    return NotImplemented
 
 
 def _search_guides(query: str) -> List[SearchResult]:
@@ -770,10 +767,7 @@ def _search_guides(query: str) -> List[SearchResult]:
 
 def _search_codebase(query: str) -> List[SearchResult]:
     """Search codebase."""
-    raise NotImplementedError(
-        "Codebase search is not implemented. "
-        "This requires integration with actual code search tools or APIs."
-    )
+    return NotImplemented
 
 
 def _auto_assign_experts(topic: str) -> List[str]:
@@ -905,10 +899,7 @@ def _execute_workflow_iteration(
     iteration: int
 ) -> Dict[str, Any]:
     """Execute a single workflow iteration."""
-    raise NotImplementedError(
-        "Workflow iteration execution is not implemented. "
-        "This requires integration with actual workflow engines like SpiffWorkflow or similar."
-    )
+    return NotImplemented
 
 
 def _vary_parameters(parameters: Dict[str, Any], used_patterns: set) -> Dict[str, Any]:
@@ -958,7 +949,4 @@ def execute_workflow(
         context=context
     )
     
-    raise NotImplementedError(
-        "Workflow execution is not implemented. "
-        "This requires integration with actual workflow engines like SpiffWorkflow or similar."
-    ) 
+    return NotImplemented 

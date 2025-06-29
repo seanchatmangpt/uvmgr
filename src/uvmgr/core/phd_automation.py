@@ -257,7 +257,7 @@ class PhDAutomationEngine:
             
         except Exception as e:
             logger.warning(f"Research design generation failed: {e}")
-            return self._mock_research_design(context)
+            return NotImplemented
     
     def analyze_external_project(self, project: ExternalProject, context: ResearchContext) -> Dict[str, Any]:
         """Analyze external project for research integration."""
@@ -282,7 +282,7 @@ class PhDAutomationEngine:
             
         except Exception as e:
             logger.warning(f"External project analysis failed: {e}")
-            return self._mock_project_analysis(project, context)
+            return NotImplemented
     
     def generate_literature_review(self, context: ResearchContext) -> Dict[str, Any]:
         """Generate comprehensive literature review."""
@@ -303,7 +303,7 @@ class PhDAutomationEngine:
             
         except Exception as e:
             logger.warning(f"Literature review generation failed: {e}")
-            return self._mock_literature_review(context)
+            return NotImplemented
     
     def validate_research_results(self, findings: Dict[str, Any], context: ResearchContext) -> Dict[str, Any]:
         """Validate research results with academic rigor."""
@@ -324,7 +324,7 @@ class PhDAutomationEngine:
             
         except Exception as e:
             logger.warning(f"Results validation failed: {e}")
-            return self._mock_validation_results(findings, context)
+            return NotImplemented
     
     def generate_academic_paper(self, research_data: Dict[str, Any], context: ResearchContext) -> Dict[str, Any]:
         """Generate academic paper structure and content."""
@@ -345,7 +345,7 @@ class PhDAutomationEngine:
             
         except Exception as e:
             logger.warning(f"Academic paper generation failed: {e}")
-            return self._mock_academic_paper(research_data, context)
+            return NotImplemented
     
     def _analyze_codebase(self, project_path: Path) -> Dict[str, Any]:
         """Analyze external codebase for research relevance."""
@@ -876,22 +876,8 @@ class ExternalProjectManager:
     
     async def _analyze_project_metrics(self, project: ExternalProject):
         """Analyze project metrics for research assessment."""
-        # Simulate comprehensive project analysis
-        import random
-        
-        project.complexity_score = random.uniform(0.3, 0.9)
-        project.maintainability_index = random.uniform(0.4, 0.95)
-        project.test_coverage = random.uniform(0.2, 0.85)
-        project.documentation_quality = random.uniform(0.3, 0.8)
-        project.research_relevance = random.uniform(0.5, 0.95)
-        project.methodology_alignment = random.uniform(0.4, 0.9)
-        project.integration_feasibility = random.uniform(0.6, 0.95)
-        
-        # Simulate contributor analysis
-        project.contributors = ["contributor1", "contributor2", "contributor3"]
-        project.dependencies = ["numpy", "pandas", "requests", "flask"]
-        project.key_algorithms = ["machine_learning", "data_processing", "web_framework"]
-        project.research_papers = ["paper1.pdf", "paper2.pdf"]
+        # Project analysis not yet implemented
+        return NotImplemented
 
 
 class PhDAutomationManager:
@@ -935,13 +921,8 @@ class PhDAutomationManager:
         workflow_results = self.workflow_engine.execute_workflow("phd_research", context)
         results["components"]["workflow_execution"] = workflow_results
         
-        # Simulate research findings
-        mock_findings = {
-            "primary_results": "Significant findings in the research domain",
-            "statistical_significance": "p < 0.001",
-            "effect_size": "Large effect size (Cohen's d = 0.8)",
-            "confidence_intervals": "95% CI [0.65, 0.95]"
-        }
+        # Research findings generation not yet implemented
+        return NotImplemented
         
         # Validate results
         results["components"]["validation"] = self.engine.validate_research_results(

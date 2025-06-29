@@ -211,7 +211,7 @@ class TechnicalWritingEngine:
             return result.api_documentation
         except Exception as e:
             logger.error(f"Failed to generate API documentation: {e}")
-            return self._mock_api_documentation(function_signature)
+            return NotImplemented
     
     def generate_user_guide_section(
         self,
@@ -229,7 +229,7 @@ class TechnicalWritingEngine:
             return result.user_guide_section
         except Exception as e:
             logger.error(f"Failed to generate user guide: {e}")
-            return self._mock_user_guide(feature_description)
+            return NotImplemented
     
     def generate_technical_spec(
         self,
@@ -247,7 +247,7 @@ class TechnicalWritingEngine:
             return result.technical_spec
         except Exception as e:
             logger.error(f"Failed to generate technical spec: {e}")
-            return self._mock_technical_spec(requirements)
+            return NotImplemented
     
     def generate_architecture_doc(
         self,
@@ -265,7 +265,7 @@ class TechnicalWritingEngine:
             return result.architecture_documentation
         except Exception as e:
             logger.error(f"Failed to generate architecture doc: {e}")
-            return self._mock_architecture_doc(components)
+            return NotImplemented
     
     def generate_troubleshooting_guide(
         self,
@@ -283,7 +283,7 @@ class TechnicalWritingEngine:
             return result.troubleshooting_guide
         except Exception as e:
             logger.error(f"Failed to generate troubleshooting guide: {e}")
-            return self._mock_troubleshooting_guide(issues)
+            return NotImplemented
     
     # Mock response methods for demo purposes
     def _mock_api_documentation(self, function_signature: str) -> str:

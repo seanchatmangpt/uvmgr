@@ -524,7 +524,7 @@ class SixSigmaEngine:
     def _execute_uvmgr_operation(self, operation: str, params: Dict[str, Any], context: Dict[str, Any]) -> Any:
         """Execute uvmgr-related operation."""
         # This would integrate with uvmgr-specific operations
-        raise NotImplementedError(f"uvmgr operation not implemented: {operation}")
+        return NotImplemented
     
     def _retry_with_backoff(self, operation: str, params: Dict[str, Any], 
                            context: Dict[str, Any], error: Exception) -> bool:

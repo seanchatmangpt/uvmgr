@@ -1,0 +1,25 @@
+name: DoD Automation
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  dod-validation:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: ['dev', 'staging', 'prod']
+    
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    - name: Install uvmgr
+      run: pip install uvmgr
+    - name: Run DoD Automation
+      run: uvmgr dod complete --env ${{ matrix.environment }}

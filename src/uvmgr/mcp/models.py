@@ -31,31 +31,11 @@ class MockLM(dspy.BaseLM):
         
     def basic_request(self, prompt: str, **kwargs) -> str:
         """Generate a mock response based on the prompt."""
-        self.calls += 1
-        
-        # Simple response generation based on prompt content
-        if "validation" in prompt.lower():
-            return "Analysis: The validation data appears to be consistent and well-structured. Confidence: 0.85. Key insights: Data quality is good. Recommendations: Continue monitoring."
-        elif "workflow" in prompt.lower():
-            return "Optimization: The workflow can be improved by caching dependencies and parallelizing jobs. Expected improvement: 30% faster execution. Implementation: Add cache steps and matrix strategy."
-        elif "issue" in prompt.lower():
-            return "Diagnosis: The issue appears to be related to configuration. Root cause: Missing environment variables. Solution: Add required env vars to workflow."
-        elif "performance" in prompt.lower():
-            return "Performance analysis shows good baseline metrics. Bottlenecks: None identified. Optimization opportunities: Consider parallel processing."
-        elif "security" in prompt.lower():
-            return "Security assessment: No critical vulnerabilities found. Recommendations: Enable branch protection and require code reviews."
-        elif "trend" in prompt.lower():
-            return "Trend analysis: Stable performance over time. Patterns: Consistent execution times. Predictions: Continued stability expected."
-        elif "error" in prompt.lower():
-            return "Error analysis: Configuration issue detected. Root cause: Missing dependencies. Solution: Install required packages."
-        elif "web search" in prompt.lower():
-            return "Web search results analyzed. Key findings: Best practices align with current implementation. Recommendations: Continue current approach."
-        else:
-            return "Analysis completed successfully. Confidence: 0.75. Insights: Data appears normal. Recommendations: Monitor for changes."
+        return NotImplemented
     
     def __call__(self, prompt: str, **kwargs) -> str:
         """Call the mock LM."""
-        return self.basic_request(prompt, **kwargs)
+        return NotImplemented
 
 
 class WebSearchTool:
@@ -66,20 +46,7 @@ class WebSearchTool:
         
     async def search(self, query: str, max_results: int = 5) -> List[Dict[str, Any]]:
         """Perform mock web search and return results."""
-        self.search_count += 1
-        await asyncio.sleep(0.1)  # Simulate network delay
-        
-        # Generate mock search results based on query
-        results = []
-        for i in range(min(max_results, 3)):
-            results.append({
-                "title": f"Mock result {i+1} for: {query}",
-                "snippet": f"This is a mock search result about {query}. It contains relevant information for testing purposes.",
-                "url": f"https://example.com/result-{i+1}",
-                "relevance_score": 0.8 - (i * 0.1)
-            })
-        
-        return results
+        return NotImplemented
 
 
 class UvmgrDSPyModels:

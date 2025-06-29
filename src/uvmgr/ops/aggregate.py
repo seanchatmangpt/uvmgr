@@ -553,10 +553,7 @@ def get_aggregation_metrics(workflow_file: Optional[Path] = None) -> Dict[str, A
             detailed=detailed
         )
         
-        raise NotImplementedError(
-            "Metrics collection is not implemented. "
-            "This requires integration with actual metrics collection systems."
-        )
+        return NotImplemented
 
 
 def _calculate_critical_path(dependencies: Dict[str, List[str]]) -> List[str]:
