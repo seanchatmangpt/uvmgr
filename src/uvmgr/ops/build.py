@@ -174,9 +174,9 @@ def generate_spec(
 
 
 @timed
-def test_executable(exe_path: Path) -> dict:
+def verify_executable(exe_path: Path) -> dict:
     """Test the built executable."""
-    with span("ops.build.test_executable", exe_path=str(exe_path)):
+    with span("ops.build.verify_executable", exe_path=str(exe_path)):
         add_span_attributes(**{
             "build.test_target": str(exe_path),
             "build.test_type": "executable",
@@ -184,7 +184,7 @@ def test_executable(exe_path: Path) -> dict:
         add_span_event("build.test.started", {"executable": str(exe_path)})
 
         try:
-            result = _rt.test_executable(exe_path)
+            result = _rt.verify_executable(exe_path)
 
             success = result.get("success", False)
             add_span_attributes(**{"build.test_success": success})

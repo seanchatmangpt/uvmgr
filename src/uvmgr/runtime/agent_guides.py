@@ -345,8 +345,120 @@ def search_conversations(query: str, limit: int = 10,
                  "search.query": query,
                  "search.limit": limit}):
         
-        # Conversation search not implemented
-        return NotImplemented
+        try:
+            # For now, implement a basic file-based conversation search
+            # In production, this would integrate with Claude/AI conversation history APIs
+            
+            search_results = []
+            
+            # Look for conversation files in common locations
+            conversation_dirs = [
+                Path.home() / ".uvmgr" / "conversations",
+                Path.home() / ".claude" / "conversations", 
+                Path.cwd() / "conversations",
+                Path.cwd() / ".conversations"
+            ]
+            
+            # Create search query patterns
+            query_lower = query.lower()
+            query_words = query_lower.split()
+            
+            for conv_dir in conversation_dirs:
+                if not conv_dir.exists():
+                    continue
+                
+                # Search through conversation files
+                for conv_file in conv_dir.rglob("*.txt"):
+                    try:
+                        content = conv_file.read_text(encoding='utf-8', errors='ignore')
+                        content_lower = content.lower()
+                        
+                        # Calculate relevance score
+                        relevance_score = 0.0
+                        
+                        # Exact phrase match
+                        if query_lower in content_lower:
+                            relevance_score += 10.0
+                        
+                        # Word matches
+                        word_matches = sum(1 for word in query_words if word in content_lower)
+                        relevance_score += word_matches * 2.0
+                        
+                        # Skip if no relevance
+                        if relevance_score == 0:
+                            continue
+                        
+                        # Find best snippet (context around first match)
+                        snippet = _extract_snippet(content, query_lower, max_length=200)
+                        
+                        # Get timestamp from file metadata
+                        timestamp = conv_file.stat().st_mtime
+                        timestamp_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(timestamp))
+                        
+                        # Determine source
+                        file_source = source or conv_file.parent.name
+                        
+                        search_results.append(SearchResult(
+                            conversation_id=conv_file.stem,
+                            relevance_score=relevance_score,
+                            snippet=snippet,
+                            timestamp=timestamp_str,
+                            source=file_source
+                        ))
+                        
+                    except Exception as e:
+                        # Skip files that can't be read
+                        continue
+            
+            # Sort by relevance score (highest first)
+            search_results.sort(key=lambda x: x.relevance_score, reverse=True)
+            
+            # Apply limit
+            search_results = search_results[:limit]
+            
+            add_span_attributes(**{
+                "search.results_found": len(search_results),
+                "search.query_words": len(query_words)
+            })
+            
+            metric_counter("agent_guides.searches")(1, {
+                "results_found": str(len(search_results)),
+                "has_source_filter": str(source is not None)
+            })
+            
+            return search_results
+            
+        except Exception as e:
+            record_exception(e, attributes={
+                "operation": "search_conversations",
+                "query": query
+            })
+            # Return empty results instead of raising
+            return []
+
+
+def _extract_snippet(content: str, query: str, max_length: int = 200) -> str:
+    """Extract a relevant snippet from content around the query."""
+    content_lower = content.lower()
+    query_pos = content_lower.find(query)
+    
+    if query_pos == -1:
+        # If exact query not found, just return beginning
+        return content[:max_length] + "..." if len(content) > max_length else content
+    
+    # Calculate snippet window around the query
+    snippet_start = max(0, query_pos - max_length // 2)
+    snippet_end = min(len(content), query_pos + len(query) + max_length // 2)
+    
+    snippet = content[snippet_start:snippet_end]
+    
+    # Add ellipsis if truncated
+    if snippet_start > 0:
+        snippet = "..." + snippet
+    if snippet_end < len(content):
+        snippet = snippet + "..."
+    
+    return snippet.strip()
 
 
 @instrument_command("agent_guides_create_command")

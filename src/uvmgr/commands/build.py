@@ -318,7 +318,7 @@ def dogfood(
 
     if test:
         # Test the built executable
-        test_result = build_ops.test_executable(pathlib.Path(payload["output_file"]))
+        test_result = build_ops.verify_executable(pathlib.Path(payload["output_file"]))
         payload["test_result"] = test_result
 
     if ctx.meta.get("json"):

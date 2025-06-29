@@ -318,11 +318,11 @@ os.unlink(entry_file)
         return outfile
 
 
-def test_executable(exe_path: Path) -> dict:
+def verify_executable(exe_path: Path) -> dict:
     """Test the built executable by running basic commands."""
     import subprocess
 
-    with span("build.test_executable"):
+    with span("build.verify_executable"):
         try:
             # Test 1: Check version
             result = subprocess.run(

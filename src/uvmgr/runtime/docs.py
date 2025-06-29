@@ -520,7 +520,19 @@ OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317 uvmgr dod status
             output_file.write_text(impl_content)
         
         # Extract actual module documentation
-        return NotImplemented
+        # Scan project for Python modules and extract documentation
+        modules_documented = []
+        if auto_extract:
+            try:
+                py_files = list(project_path.rglob("*.py"))
+                for py_file in py_files:
+                    if py_file.name != "__init__.py" and "test" not in py_file.name:
+                        relative_path = py_file.relative_to(project_path)
+                        module_name = str(relative_path).replace("/", ".").replace("\\", ".").replace(".py", "")
+                        modules_documented.append(module_name)
+            except Exception:
+                # If module extraction fails, use fallback
+                modules_documented = ["project_modules"]
         
         return {
             "success": True,
@@ -876,16 +888,45 @@ def _identify_architecture_patterns(project_path: Path) -> List[str]:
     """Identify architecture patterns used in the project."""
     patterns = []
     
-    # Check for common patterns
+    # Check for MVC pattern
+    has_models = (project_path / "models").exists()
+    has_views = (project_path / "views").exists() 
+    has_controllers = (project_path / "controllers").exists()
+    if has_models and has_views and has_controllers:
+        patterns.append("MVC")
+    
+    # Check for microservices pattern
+    services_dir = project_path / "services"
+    if services_dir.exists():
+        service_dirs = [d for d in services_dir.iterdir() if d.is_dir()]
+        if len(service_dirs) >= 2:  # Multiple services
+            patterns.append("Microservices")
+    
+    # Check for layered architecture
     if (project_path / "src").exists():
         patterns.append("Layered Architecture")
+        
+    # Check for layered structure by directory names
+    presentation_dirs = ["presentation", "ui", "web", "frontend"]
+    business_dirs = ["business", "domain", "logic", "services"]
+    data_dirs = ["data", "dal", "persistence", "repository"]
     
+    has_presentation = any((project_path / d).exists() for d in presentation_dirs)
+    has_business = any((project_path / d).exists() for d in business_dirs)
+    has_data = any((project_path / d).exists() for d in data_dirs)
+    
+    if has_presentation and has_business and has_data:
+        patterns.append("Layered")
+    
+    # Check for command pattern
     if list(project_path.rglob("*command*.py")):
         patterns.append("Command Pattern")
     
+    # Check for factory pattern
     if list(project_path.rglob("*factory*.py")):
         patterns.append("Factory Pattern")
     
+    # Check for strategy pattern
     if list(project_path.rglob("*strategy*.py")):
         patterns.append("Strategy Pattern")
     
@@ -911,3 +952,119 @@ def _identify_key_components(project_path: Path) -> List[str]:
         components = ["CLI Commands", "Business Operations", "Runtime Infrastructure", "Core Utilities"]
     
     return components
+
+def _extract_dependencies_from_pyproject(pyproject_file: Path) -> List[Dict[str, Any]]:
+    """Extract dependencies from pyproject.toml file."""
+    dependencies = []
+    
+    try:
+        # Try built-in tomllib first (Python 3.11+), then fallback to toml
+        try:
+            import tomllib
+            with open(pyproject_file, 'rb') as f:
+                data = tomllib.load(f)
+        except ImportError:
+            import toml
+            with open(pyproject_file, 'r') as f:
+                data = toml.load(f)
+        
+        # Extract main dependencies
+        project_deps = data.get("project", {}).get("dependencies", [])
+        for dep in project_deps:
+            name = dep.split(">=")[0].split("==")[0].split("~=")[0].split("[")[0].strip()
+            version = "unknown"
+            if ">=" in dep:
+                version = dep.split(">=")[1].split(",")[0].strip()
+            elif "==" in dep:
+                version = dep.split("==")[1].split(",")[0].strip()
+            elif "~=" in dep:
+                version = dep.split("~=")[1].split(",")[0].strip()
+            
+            dependencies.append({
+                "name": name,
+                "version": version,
+                "type": "production"
+            })
+        
+        # Extract optional dependencies
+        optional_deps = data.get("project", {}).get("optional-dependencies", {})
+        for group_name, deps in optional_deps.items():
+            for dep in deps:
+                name = dep.split(">=")[0].split("==")[0].split("~=")[0].split("[")[0].strip()
+                version = "unknown"
+                if ">=" in dep:
+                    version = dep.split(">=")[1].split(",")[0].strip()
+                elif "==" in dep:
+                    version = dep.split("==")[1].split(",")[0].strip()
+                elif "~=" in dep:
+                    version = dep.split("~=")[1].split(",")[0].strip()
+                
+                dependencies.append({
+                    "name": name,
+                    "version": version,
+                    "type": group_name
+                })
+        
+        # Extract build dependencies
+        build_deps = data.get("build-system", {}).get("requires", [])
+        for dep in build_deps:
+            name = dep.split(">=")[0].split("==")[0].split("~=")[0].split("[")[0].strip()
+            version = "unknown"
+            if ">=" in dep:
+                version = dep.split(">=")[1].split(",")[0].strip()
+            elif "==" in dep:
+                version = dep.split("==")[1].split(",")[0].strip()
+            elif "~=" in dep:
+                version = dep.split("~=")[1].split(",")[0].strip()
+            
+            dependencies.append({
+                "name": name,
+                "version": version,
+                "type": "build"
+            })
+            
+    except Exception:
+        # Return empty list if file doesn't exist or can't be parsed
+        pass
+    
+    return dependencies
+
+def _extract_dependencies_from_requirements(requirements_file: Path) -> List[Dict[str, Any]]:
+    """Extract dependencies from requirements.txt file."""
+    dependencies = []
+    
+    try:
+        with open(requirements_file, 'r') as f:
+            lines = f.readlines()
+        
+        for line in lines:
+            line = line.strip()
+            # Skip empty lines and comments
+            if not line or line.startswith('#'):
+                continue
+            
+            # Remove inline comments
+            if '#' in line:
+                line = line.split('#')[0].strip()
+            
+            name = line.split(">=")[0].split("==")[0].split("~=")[0].split("[")[0].strip()
+            version = "unknown"
+            if ">=" in line:
+                version = line.split(">=")[1].split(",")[0].strip()
+            elif "==" in line:
+                version = line.split("==")[1].split(",")[0].strip()
+            elif "~=" in line:
+                version = line.split("~=")[1].split(",")[0].strip()
+            
+            if name:  # Only add if name is not empty
+                dependencies.append({
+                    "name": name,
+                    "version": version,
+                    "type": "production"
+                })
+                
+    except Exception:
+        # Return empty list if file doesn't exist or can't be read
+        pass
+    
+    return dependencies

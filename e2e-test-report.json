@@ -1,0 +1,33 @@
+{
+  "timestamp": "2025-06-29 08:46:55",
+  "environment": "development",
+  "configuration": {
+    "parallel": true,
+    "headless": true,
+    "record_video": false
+  },
+  "test_suites": {
+    "browser_tests": {
+      "total": 22497,
+      "passed": 0,
+      "failed": 22497,
+      "error": "[Errno 7] Argument list too long: 'python'"
+    },
+    "api_tests": {
+      "total": 323,
+      "passed": 0,
+      "failed": 0
+    },
+    "integration_tests": {
+      "total": 27,
+      "passed": 0,
+      "failed": 0
+    }
+  },
+  "summary": {
+    "total_tests": 22847,
+    "passed_tests": 0,
+    "failed_tests": 22847,
+    "success_rate": 0.0
+  }
+}
