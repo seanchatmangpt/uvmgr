@@ -1,0 +1,10 @@
+flowchart TB
+    %% Service Dependency Map
+
+    uvmgr_cli[uvmgr-cli]
+    uvmgr_cli --> uvmgr_cli
+    uvmgr_ops[uvmgr-ops]
+    uvmgr_runtime[uvmgr-runtime]
+
+    uvmgr_cli --> uvmgr_ops
+    uvmgr_ops --> uvmgr_runtime

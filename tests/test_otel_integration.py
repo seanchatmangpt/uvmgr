@@ -18,8 +18,8 @@ class TestOTELIntegration:
         """Test that spans are created and context is maintained."""
         spans_created = []
 
-        # Mock to capture span calls
-        with patch("uvmgr.core.telemetry.span") as mock_span:
+        # Mock to capture span calls - patch the imported reference
+        with patch("tests.test_otel_integration.span") as mock_span:
             mock_span.return_value.__enter__ = MagicMock()
             mock_span.return_value.__exit__ = MagicMock(return_value=None)
 

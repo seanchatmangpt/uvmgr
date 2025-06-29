@@ -92,7 +92,7 @@ def install_agent_guides(
     """
     start_time = time.time()
     
-    with span("agent_guides.install", source=source):
+    with span("agent_guides.install", source=source, force=force):
         add_span_attributes(**{
             "agent_guides.source": source,
             "agent_guides.force": force,
@@ -183,7 +183,7 @@ def search_conversations(
     Returns:
         Search results
     """
-    with span("agent_guides.search", query=query):
+    with span("agent_guides.search", query=query, sources=",".join(sources), max_results=max_results):
         add_span_attributes(**{
             "agent_guides.query": query,
             "agent_guides.sources": ",".join(sources),
@@ -256,7 +256,7 @@ def execute_multi_mind_analysis(
     """
     start_time = time.time()
     
-    with span("agent_guides.multi_mind", topic=topic, type=analysis_type):
+    with span("agent_guides.multi_mind", topic=topic, type=analysis_type, rounds=rounds):
         add_span_attributes(**{
             "agent_guides.topic": topic,
             "agent_guides.type": analysis_type,
@@ -341,7 +341,7 @@ def analyze_code_deep(
     Returns:
         Code analysis result
     """
-    with span("agent_guides.analyze_code", target=target, depth=depth):
+    with span("agent_guides.analyze_code", target=target, depth=depth, performance=include_performance, security=include_security):
         add_span_attributes(**{
             "agent_guides.target": target,
             "agent_guides.depth": depth,
@@ -434,7 +434,7 @@ def create_custom_guide(
     """
     start_time = time.time()
     
-    with span("agent_guides.create", name=name, template=template):
+    with span("agent_guides.create", **{"guide_name": name, "template": template, "interactive": interactive}):
         add_span_attributes(**{
             "agent_guides.name": name,
             "agent_guides.template": template,
@@ -588,7 +588,7 @@ def execute_anti_repetition_workflow(
     """
     start_time = time.time()
     
-    with span("agent_guides.workflow", workflow=workflow_name):
+    with span("agent_guides.workflow", workflow=workflow_name, iterations=iterations, anti_repetition=anti_repetition):
         add_span_attributes(**{
             "agent_guides.workflow": workflow_name,
             "agent_guides.iterations": iterations,
@@ -667,7 +667,7 @@ def get_guide_status(
     Returns:
         Status information
     """
-    with span("agent_guides.status"):
+    with span("agent_guides.status", detailed=detailed, include_metrics=include_metrics):
         add_span_attributes(**{
             "agent_guides.detailed": detailed,
             "agent_guides.include_metrics": include_metrics,

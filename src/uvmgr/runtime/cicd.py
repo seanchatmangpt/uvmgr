@@ -28,7 +28,7 @@ from typing import Any, Dict, List, Optional
 
 from uvmgr.core.instrumentation import add_span_attributes, add_span_event, instrument_command
 from uvmgr.core.process import run_logged
-from uvmgr.core.semconv import CICDAttributes, CICDOperations
+from uvmgr.core.semconv import CiCdAttributes, CiCdOperations
 from uvmgr.core.telemetry import metric_counter, metric_histogram, span, record_exception
 
 
@@ -101,8 +101,8 @@ def get_workflow_runs(limit: int = 10, branch: Optional[str] = None) -> List[Wor
     platform = detect_cicd_platform()
     
     with span("cicd.workflow_runs",
-              **{CICDAttributes.PLATFORM: platform,
-                 CICDAttributes.OPERATION: CICDOperations.LIST_RUNS}):
+              **{CiCdAttributes.PLATFORM: platform,
+                 CiCdAttributes.OPERATION: CiCdOperations.LIST_RUNS}):
         
         if platform == "github_actions":
             return _get_github_workflow_runs(limit, branch)
@@ -220,9 +220,9 @@ def trigger_workflow(workflow_name: str, branch: Optional[str] = None,
     platform = detect_cicd_platform()
     
     with span("cicd.trigger_workflow",
-              **{CICDAttributes.PLATFORM: platform,
-                 CICDAttributes.OPERATION: CICDOperations.TRIGGER,
-                 CICDAttributes.WORKFLOW_NAME: workflow_name}):
+              **{CiCdAttributes.PLATFORM: platform,
+                 CiCdAttributes.OPERATION: CiCdOperations.TRIGGER,
+                 CiCdAttributes.WORKFLOW_NAME: workflow_name}):
         
         if platform == "github_actions":
             return _trigger_github_workflow(workflow_name, branch, inputs)
@@ -312,9 +312,9 @@ def get_build_artifacts(run_id: str) -> List[BuildArtifact]:
     platform = detect_cicd_platform()
     
     with span("cicd.get_artifacts",
-              **{CICDAttributes.PLATFORM: platform,
-                 CICDAttributes.OPERATION: CICDOperations.GET_ARTIFACTS,
-                 CICDAttributes.RUN_ID: run_id}):
+              **{CiCdAttributes.PLATFORM: platform,
+                 CiCdAttributes.OPERATION: CiCdOperations.GET_ARTIFACTS,
+                 CiCdAttributes.RUN_ID: run_id}):
         
         if platform == "github_actions":
             return _get_github_artifacts(run_id)
@@ -370,8 +370,8 @@ def get_deployments(environment: Optional[str] = None) -> List[DeploymentStatus]
     platform = detect_cicd_platform()
     
     with span("cicd.get_deployments",
-              **{CICDAttributes.PLATFORM: platform,
-                 CICDAttributes.OPERATION: CICDOperations.GET_DEPLOYMENTS}):
+              **{CiCdAttributes.PLATFORM: platform,
+                 CiCdAttributes.OPERATION: CiCdOperations.GET_DEPLOYMENTS}):
         
         if platform == "github_actions":
             return _get_github_deployments(environment)
@@ -428,8 +428,8 @@ def create_workflow_template(workflow_type: str, output_path: Path) -> bool:
     platform = detect_cicd_platform()
     
     with span("cicd.create_template",
-              **{CICDAttributes.PLATFORM: platform,
-                 CICDAttributes.OPERATION: CICDOperations.CREATE_WORKFLOW}):
+              **{CiCdAttributes.PLATFORM: platform,
+                 CiCdAttributes.OPERATION: CiCdOperations.CREATE_WORKFLOW}):
         
         templates = {
             "python_test": _get_python_test_template(),

@@ -29,7 +29,7 @@ from rich.panel import Panel
 from rich.syntax import Syntax
 
 from uvmgr.core.instrumentation import instrument_command, add_span_attributes, add_span_event
-from uvmgr.core.semconv import CliAttributes
+from uvmgr.core.semconv import CliAttributes, CiCdAttributes, CiCdOperations
 from uvmgr.core.cicd import (
     PipelineGenerator,
     CICDPlatform,

@@ -1,0 +1,24 @@
+{
+  "validation_summary": {
+    "total_tests": 6,
+    "passed": 6,
+    "failed": 0,
+    "success_rate": 100.0
+  },
+  "performance_metrics": {
+    "Module Imports": 2.86102294921875e-06,
+    "Command Registration": 1.6689300537109375e-06,
+    "Operations Layer": 4.1961669921875e-05,
+    "Template Generation": 0.0023260116577148438,
+    "OTEL Instrumentation": 4.00543212890625e-05,
+    "Error Handling": 5.030632019042969e-05
+  },
+  "otel_telemetry": {
+    "spans_created": 1,
+    "instrumentation_working": true
+  },
+  "errors": [],
+  "recommendations": [
+    "All tests passed - Terraform integration ready for production"
+  ]
+}

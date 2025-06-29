@@ -582,6 +582,59 @@ def variables(
 
 
 @app.command()
+def logs(
+    run_id: str = typer.Argument(..., help="Workflow run ID"),
+    job_id: Optional[str] = typer.Option(None, "--job", "-j", help="Specific job ID"),
+    owner: Optional[str] = typer.Option(None, "--owner", "-o", help="Repository owner"),
+    repo: Optional[str] = typer.Option(None, "--repo", "-r", help="Repository name"),
+    validation_level: ValidationLevel = typer.Option(
+        ValidationLevel.STRICT, 
+        "--validation-level", 
+        "-v",
+        help="Validation level (basic, strict, paranoid)"
+    ),
+    show_validation: bool = typer.Option(
+        False, 
+        "--show-validation", 
+        help="Show validation details"
+    )
+):
+    """Get workflow run or job logs with validation."""
+    with span("actions.logs", run_id=run_id, job_id=job_id, validation_level=validation_level.value):
+        token = get_github_token()
+        owner, repo = get_repo_info(owner, repo)
+        
+        ops = GitHubActionsOps(token, owner, repo, validation_level)
+        
+        try:
+            if job_id:
+                result = ops.get_job_logs(job_id)
+                log_type = f"Job {job_id}"
+            else:
+                result = ops.get_workflow_run_logs(run_id)
+                log_type = f"Workflow Run {run_id}"
+            
+            if result["validation"].is_valid:
+                typer.echo(f"✅ {log_type} Logs (confidence: {result['validation'].confidence:.2f})")
+                typer.echo("\n" + result["data"])
+                
+                if show_validation:
+                    typer.echo(f"\n📊 Validation Details:")
+                    typer.echo(f"  Level: {validation_level.value}")
+                    typer.echo(f"  Confidence: {result['validation'].confidence:.2f}")
+                    typer.echo(f"  Issues: {len(result['validation'].issues)}")
+                    
+            else:
+                typer.echo(f"⚠️  {log_type} Logs - Validation Issues Detected")
+                typer.echo(f"   Confidence: {result['validation'].confidence:.2f}")
+                typer.echo(f"   Issues: {', '.join(result['validation'].issues)}")
+                
+        except Exception as e:
+            typer.echo(f"❌ Error getting logs: {e}")
+            raise typer.Exit(1)
+
+
+@app.command()
 def usage(
     owner: Optional[str] = typer.Option(None, "--owner", "-o", help="Repository owner"),
     repo: Optional[str] = typer.Option(None, "--repo", "-r", help="Repository name"),

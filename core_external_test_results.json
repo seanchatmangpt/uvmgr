@@ -1,0 +1,60 @@
+{
+  "core_command_tests": [
+    {
+      "command": "uvmgr deps --help",
+      "description": "deps help",
+      "success": true,
+      "exit_code": 0
+    },
+    {
+      "command": "uvmgr build --help",
+      "description": "build help",
+      "success": true,
+      "exit_code": 0
+    },
+    {
+      "command": "uvmgr tests --help",
+      "description": "tests help",
+      "success": true,
+      "exit_code": 0
+    },
+    {
+      "command": "uvmgr lint --help",
+      "description": "lint help",
+      "success": true,
+      "exit_code": 0
+    },
+    {
+      "command": "uvmgr otel --help",
+      "description": "otel help",
+      "success": true,
+      "exit_code": 0
+    },
+    {
+      "command": "uvmgr infodesign --help",
+      "description": "infodesign help",
+      "success": true,
+      "exit_code": 0
+    }
+  ],
+  "external_project_tests": [
+    {
+      "command": "uvmgr deps list",
+      "description": "deps list in external project",
+      "success": true,
+      "working_directory": "/Users/sac/.cache/tmp/tmpwqrgz0ef/test_project"
+    },
+    {
+      "command": "uvmgr lint check --",
+      "description": "lint check in external project",
+      "success": true,
+      "working_directory": "/Users/sac/.cache/tmp/tmpwqrgz0ef/test_project"
+    }
+  ],
+  "summary": {
+    "total_tests": 8,
+    "passed_tests": 8,
+    "success_rate": 1.0,
+    "meets_8020_threshold": true
+  }
+}

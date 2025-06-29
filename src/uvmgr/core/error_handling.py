@@ -170,7 +170,7 @@ class IntelligentErrorHandler:
         self.error_history: List[ErrorContext] = []
         self.error_patterns: Dict[str, ErrorPattern] = {}
         self.recovery_strategies: Dict[ErrorCategory, List[RecoveryStrategy]] = {}
-        self.global_handlers: Dict[Type[Exception], Callable] = {}
+        self.global_handlers: Dict[Type[Exception], "Callable"] = {}
         
         # Performance settings
         self.max_recovery_attempts = 3
@@ -843,7 +843,7 @@ async def handle_error_with_recovery(exception: Exception,
 def error_handler(operation: str = None, component: str = None, max_attempts: int = 3):
     """Decorator for automatic error handling with recovery."""
     
-    def decorator(func: Callable[..., T]) -> Callable[..., T]:
+    def decorator(func: "Callable[..., T]") -> "Callable[..., T]":
         @functools.wraps(func)
         async def async_wrapper(*args, **kwargs):
             try:

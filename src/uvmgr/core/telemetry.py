@@ -145,10 +145,10 @@ try:
         with _TRACER.start_as_current_span(name, **kwargs):
             yield
 
-    def metric_counter(name: str) -> Callable[[int], None]:
+    def metric_counter(name: str) -> "Callable[[int], None]":
         return _METER.create_counter(name).add
 
-    def metric_histogram(name: str, unit: str = "s") -> Callable[[float], None]:
+    def metric_histogram(name: str, unit: str = "s") -> "Callable[[float], None]":
         """
         Create a histogram metric for recording distributions.
         
@@ -167,7 +167,7 @@ try:
         
         Returns
         -------
-        Callable[[float], None]
+        "Callable[[float], None]"
             A function that records values in the histogram. The function
             accepts a float value and optional attributes as keyword arguments.
         
@@ -178,7 +178,7 @@ try:
         """
         return _METER.create_histogram(name, unit=unit).record
 
-    def metric_gauge(name: str) -> Callable[[float], None]:
+    def metric_gauge(name: str) -> "Callable[[float], None]":
         """
         Create a gauge metric for recording current values.
         
@@ -195,7 +195,7 @@ try:
         
         Returns
         -------
-        Callable[[float], None]
+        "Callable[[float], None]"
             A function that updates the gauge value. The function accepts
             a float value and optional attributes as keyword arguments.
             Positive values increase the gauge, negative values decrease it.

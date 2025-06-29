@@ -28,33 +28,27 @@ def add(pkgs: list[str], *, dev: bool = False) -> dict:
                  "package.count": len(pkgs)}) as current_span:
 
         # Record operation start
-        metric_counter("deps.operations")(1, {
-            "operation": "add",
-            "dev": str(dev),
-            "package_count": len(pkgs)
-        })
+        metric_counter("deps.operations")(1)
 
         try:
             _rt.add(pkgs, dev=dev)
 
             # Record success metrics
             duration = time.time() - start_time
-            metric_histogram("deps.operation.duration")(duration, {
-                "operation": "add",
-                "success": "true"
-            })
+            metric_histogram("deps.operation.duration")(duration)
 
-            current_span.set_attribute("operation.success", True)
-            current_span.set_attribute("operation.duration", duration)
+            if current_span:
+                current_span.set_attribute("operation.success", True)
+                current_span.set_attribute("operation.duration", duration)
 
         except Exception as e:
             # Record failure metrics
             duration = time.time() - start_time
-            metric_counter("deps.errors")(1, {"operation": "add"})
-            metric_histogram("deps.operation.duration")(duration, {
-                "operation": "add",
-                "success": "false"
-            })
+            metric_counter("deps.errors")(1)
+            metric_histogram("deps.operation.duration")(duration)
+            if current_span:
+                current_span.set_attribute("operation.success", False)
+                current_span.set_attribute("operation.error", str(e))
             raise
 
     _log.debug("Added %s (dev=%s)", pkgs, dev)
@@ -92,10 +86,7 @@ def lock(*, verbose: bool = False) -> dict:
     
     with span("deps.lock", verbose=verbose) as current_span:
         # Record operation start
-        metric_counter("deps.operations")(1, {
-            "operation": "lock",
-            "verbose": str(verbose)
-        })
+        metric_counter("deps.operations")(1)
         
         try:
             cmd = ["uv", "lock"]
@@ -107,13 +98,11 @@ def lock(*, verbose: bool = False) -> dict:
             
             # Record success metrics
             duration = time.time() - start_time
-            metric_histogram("deps.operation.duration")(duration, {
-                "operation": "lock",
-                "success": "true"
-            })
+            metric_histogram("deps.operation.duration")(duration)
             
-            current_span.set_attribute("operation.success", True)
-            current_span.set_attribute("operation.duration", duration)
+            if current_span:
+                current_span.set_attribute("operation.success", True)
+                current_span.set_attribute("operation.duration", duration)
             
             _log.debug("Locked dependencies successfully")
             return {
@@ -125,14 +114,12 @@ def lock(*, verbose: bool = False) -> dict:
         except Exception as e:
             # Record failure metrics
             duration = time.time() - start_time
-            metric_counter("deps.errors")(1, {"operation": "lock"})
-            metric_histogram("deps.operation.duration")(duration, {
-                "operation": "lock",
-                "success": "false"
-            })
+            metric_counter("deps.errors")(1)
+            metric_histogram("deps.operation.duration")(duration)
             
-            current_span.set_attribute("operation.success", False)
-            current_span.set_attribute("operation.error", str(e))
+            if current_span:
+                current_span.set_attribute("operation.success", False)
+                current_span.set_attribute("operation.error", str(e))
             
             _log.error("Failed to lock dependencies: %s", e)
             raise

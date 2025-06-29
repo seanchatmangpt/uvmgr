@@ -69,50 +69,52 @@ from types import ModuleType
 from typing import Final, List
 
 __all__: Final[list[str]] = [
-    # core
+    # core working commands
     "deps",
-    "project",  # Project creation and management
-    "build",
-    "release",  # Version management and releases
-    "tests",  # Test execution and CI verification
-    "tool",    # Tool management and installation
-    "cache",   # Cache management and operations
-    "index",   # Package index operations
-    "exec",    # Command execution utilities
-    "shell",   # Shell integration commands
-    "serve",   # MCP server for AI integration
-    "lint",    # Code quality and linting
-    "otel",    # OpenTelemetry validation and management
-    "weaver",  # OpenTelemetry Weaver semantic convention tools
-    "forge",   # 8020 Weaver Forge automation and development workflows
-    "history", # Command history tracking
-    "workspace", # Workspace and environment management
-    "search",    # Advanced search capabilities (code, deps, files, semantic)
-    "workflow",  # Workflow orchestration and automation
-    "knowledge", # AI-powered knowledge management
-    "guides",    # Agent guide catalog management and versioning
-    "worktree",  # Git worktree isolation and management
-    # advanced / optional
-    "ai",
-    "claude",  # Claude AI integration
-    "remote",
-    "agent",
-    "spiff_otel",  # SpiffWorkflow OTEL integration
-    "substrate",  # Substrate project integration
-    "ap_scheduler",
-    "actions",
-    # NEW 8020 COMMANDS - ready to enable when needed
-    # "container", # Container management (Docker/Podman) - 80/20 implementation - HAS CALLABLE ISSUE
-    # "cicd",      # CI/CD pipeline management - 80/20 implementation - HAS CALLABLE ISSUE
-    # "multilang", # Multi-language project support - 80/20 implementation - HAS CALLABLE ISSUE
-    # "terraform", # Enterprise Terraform support with 8020 Weaver Forge integration - HAS CALLABLE ISSUE
-    # "orchestrate", # Service orchestration - 80/20 implementation
-    # "performance", # Performance profiling and optimization (80/20 implementation) - HAS CALLABLE ISSUE
-    # "aggregate", # Command aggregation with 8020 implementation using Spiff and Weaver
-    # "agent_guides", # Agent guides integration with DSPy and Lean Six Sigma - HAS CALLABLE ISSUE
-    # "security",  # Security scanning and vulnerability management (80/20 implementation) - HAS CALLABLE ISSUE
-    "documentation", # Technical writing automation with Spiff and DSPy - 80/20 implementation
+    "build", 
+    "tests",
+    "cache",
+    "lint",
+    "otel",
+    "guides",
+    "worktree",
     "infodesign", # Information design with DSPy three-layer architecture
+    "mermaid", # Full Mermaid support with Weaver Forge + DSPy (8020 priority)
+    # "mcp", # FastMCP server with DSPy integration for AI-powered analysis - DISABLED: DSPy init issues
+    # "exponential", # Exponential technology capabilities - "The Future Is Faster Than You Think" - DISABLED: testing
+    # "democratize", # Democratization platform - Make AI development accessible to everyone - DISABLED: testing
+    
+    # Other commands disabled temporarily due to Callable type issues
+    # "project",  # Project creation and management
+    # "release",  # Version management and releases
+    # "tool",    # Tool management and installation
+    # "index",   # Package index operations
+    # "exec",    # Command execution utilities
+    # "shell",   # Shell integration commands
+    # "serve",   # MCP server for AI integration
+    # "weaver",  # OpenTelemetry Weaver semantic convention tools
+    # "forge",   # 8020 Weaver Forge automation and development workflows
+    # "history", # Command history tracking
+    # "workspace", # Workspace and environment management
+    # "search",    # Advanced search capabilities (code, deps, files, semantic)
+    # "workflow",  # Workflow orchestration and automation
+    # "knowledge", # AI-powered knowledge management
+    # Already enabled above
+    # "ai",
+    # "claude",  # Claude AI integration
+    # "remote",
+    # "agent",
+    # "spiff_otel",  # SpiffWorkflow OTEL integration
+    # "substrate",  # Substrate project integration
+    # "ap_scheduler",
+    # "actions",
+    # Already enabled above
+    # Already enabled above  
+    # Already enabled above
+    "terraform", # Enterprise Terraform support with 8020 Weaver Forge integration
+    # Already enabled above
+    # "documentation", # Technical writing automation with Spiff and DSPy - 80/20 implementation
+    # "dod", # Definition of Done automation with Weaver Forge exoskeleton
 ]
 
 _PACKAGE_PREFIX = __name__ + "."

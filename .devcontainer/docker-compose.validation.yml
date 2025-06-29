@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  uvmgr-validation:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    container_name: uvmgr-exponential-validation
+    working_dir: /workspace
+    volumes:
+      - ..:/workspace:cached
+    environment:
+      - PYTHONPATH=/workspace/src
+      - UV_CACHE_DIR=/workspace/.uv-cache
+      - VIRTUAL_ENV=/workspace/.venv
+      - PATH=/workspace/.venv/bin:/home/vscode/.cargo/bin:/usr/local/bin:/usr/bin:/bin
+    command: ["python", ".devcontainer/validate-exponential.py"]
+    profiles:
+      - validation
+    
+  uvmgr-quick-test:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    container_name: uvmgr-quick-test
+    working_dir: /workspace
+    volumes:
+      - ..:/workspace:cached
+    environment:
+      - PYTHONPATH=/workspace/src
+      - PATH=/workspace/.venv/bin:/home/vscode/.local/bin:/usr/local/bin:/usr/bin:/bin
+      - VIRTUAL_ENV=/workspace/.venv
+      - UV_LINK_MODE=copy
+    command:
+      - bash
+      - -c
+      - |
+        echo "⚡ Quick Exponential Technology Test"
+        echo "Setting up virtual environment..."
+        
+        # Clean any existing broken venv
+        rm -rf .venv
+        
+        # Set UV to copy mode to avoid hardlink issues in Docker
+        export UV_LINK_MODE=copy
+        
+        # Create fresh virtual environment with pip
+        /home/vscode/.local/bin/uv venv .venv --seed
+        
+        # Install core dependencies first using uv
+        /home/vscode/.local/bin/uv pip install --python .venv/bin/python rich typer
+        
+        # Install the package in development mode
+        /home/vscode/.local/bin/uv pip install --python .venv/bin/python -e .
+        
+        echo "✅ Dependencies installed"
+        echo "Checking environment..."
+        ls -la .venv/
+        ls -la .venv/bin/ || echo "No bin directory"
+        
+        # Set PYTHONPATH to include installed packages and use system python
+        export PYTHONPATH=/workspace/.venv/lib/python3.12/site-packages:/workspace/src:$PYTHONPATH
+        echo "Active Python: $(python3 --version)"
+        echo "PYTHONPATH: $PYTHONPATH"
+        
+        # Run comprehensive validation
+        echo "Running comprehensive state validation..."
+        python3 /workspace/.devcontainer/validate-current-state.py
+        
+        echo "🎉 Quick validation successful!"
+    profiles:
+      - quick

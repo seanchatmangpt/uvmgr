@@ -1,0 +1,11 @@
+{
+  "provider": "aws",
+  "8020_enabled": true,
+  "optimization_rules": [
+    "cost_optimization",
+    "security_validation",
+    "performance_optimization"
+  ],
+  "otel_integration": true,
+  "created_at": 1751167428.179901
+}

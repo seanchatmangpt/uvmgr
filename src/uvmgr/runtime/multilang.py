@@ -2,15 +2,19 @@
 Multi-Language Runtime Operations
 ==================================
 
-This module provides multi-language project support operations.
-Implements the 80/20 principle: focuses on the most common language integrations
-that provide 80% of the value for typical polyglot development workflows.
+This module provides multi-language project support operations for Python and Terraform.
+Implements the 80/20 principle: focuses on the most essential language integrations
+that provide 80% of the value for uvmgr development workflows.
+
+Supported Languages:
+- Python: Full dependency management with uv, pip, poetry, pipenv
+- Terraform: Infrastructure as Code with provider dependency analysis
 
 Key Features:
 - Language detection and analysis
-- Dependency management across languages
-- Build tool integration (npm, cargo, go mod, etc.)
-- Cross-language import analysis
+- Dependency management (Python packages, Terraform providers)
+- Build tool integration (uv build, terraform validate)
+- Configuration file analysis
 - Unified testing across languages
 - Package manager abstractions
 """
@@ -71,41 +75,11 @@ LANGUAGE_PATTERNS = {
         "package_managers": ["pip", "poetry", "pipenv", "uv"],
         "entry_patterns": ["__main__.py", "main.py", "app.py"]
     },
-    "javascript": {
-        "extensions": [".js", ".mjs", ".cjs"],
-        "config_files": ["package.json", "package-lock.json", "yarn.lock", "pnpm-lock.yaml"],
-        "package_managers": ["npm", "yarn", "pnpm"],
-        "entry_patterns": ["index.js", "main.js", "app.js", "server.js"]
-    },
-    "typescript": {
-        "extensions": [".ts", ".tsx", ".d.ts"],
-        "config_files": ["tsconfig.json", "package.json"],
-        "package_managers": ["npm", "yarn", "pnpm"],
-        "entry_patterns": ["index.ts", "main.ts", "app.ts", "server.ts"]
-    },
-    "rust": {
-        "extensions": [".rs"],
-        "config_files": ["Cargo.toml", "Cargo.lock"],
-        "package_managers": ["cargo"],
-        "entry_patterns": ["main.rs", "lib.rs"]
-    },
-    "go": {
-        "extensions": [".go"],
-        "config_files": ["go.mod", "go.sum"],
-        "package_managers": ["go mod"],
-        "entry_patterns": ["main.go"]
-    },
-    "java": {
-        "extensions": [".java"],
-        "config_files": ["pom.xml", "build.gradle", "build.gradle.kts"],
-        "package_managers": ["maven", "gradle"],
-        "entry_patterns": ["Main.java", "Application.java"]
-    },
-    "csharp": {
-        "extensions": [".cs"],
-        "config_files": ["*.csproj", "*.sln", "packages.config"],
-        "package_managers": ["nuget", "dotnet"],
-        "entry_patterns": ["Program.cs", "Main.cs"]
+    "terraform": {
+        "extensions": [".tf", ".tfvars", ".hcl"],
+        "config_files": ["main.tf", "variables.tf", "outputs.tf", "versions.tf", "terraform.tfvars", ".terraform.lock.hcl"],
+        "package_managers": ["terraform"],
+        "entry_patterns": ["main.tf", "provider.tf"]
     }
 }
 
@@ -203,9 +177,7 @@ def detect_languages(project_path: Path) -> List[LanguageInfo]:
             "lines.total": total_lines
         })
         
-        metric_counter("multilang.detections")(1, {
-            "languages_count": len(language_infos)
-        })
+        metric_counter("multilang.detections")(1)
         
         return language_infos
 
@@ -259,29 +231,16 @@ def _detect_package_managers(language: str, project_path: Path) -> List[str]:
         
         return available_managers or ["pip"]  # Fallback to pip
     
-    elif language in ["javascript", "typescript"]:
-        if (project_path / "package-lock.json").exists():
-            managers.append("npm")
-        if (project_path / "yarn.lock").exists():
-            managers.append("yarn")
-        if (project_path / "pnpm-lock.yaml").exists():
-            managers.append("pnpm")
+    elif language == "terraform":
+        # Check if terraform is available
+        try:
+            subprocess.run(["terraform", "version"], 
+                         capture_output=True, timeout=5, check=True)
+            managers.append("terraform")
+        except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
+            pass
         
-        return managers or ["npm"]
-    
-    elif language == "rust":
-        return ["cargo"] if (project_path / "Cargo.toml").exists() else []
-    
-    elif language == "go":
-        return ["go mod"] if (project_path / "go.mod").exists() else []
-    
-    elif language == "java":
-        managers = []
-        if (project_path / "pom.xml").exists():
-            managers.append("maven")
-        if any((project_path / f).exists() for f in ["build.gradle", "build.gradle.kts"]):
-            managers.append("gradle")
-        return managers
+        return managers or ["terraform"]  # Always return terraform as fallback
     
     return []
 
@@ -324,14 +283,8 @@ def _analyze_language_dependencies(language: str, project_path: Path) -> List[De
     
     if language == "python":
         dependencies.extend(_analyze_python_dependencies(project_path))
-    elif language in ["javascript", "typescript"]:
-        dependencies.extend(_analyze_node_dependencies(project_path))
-    elif language == "rust":
-        dependencies.extend(_analyze_rust_dependencies(project_path))
-    elif language == "go":
-        dependencies.extend(_analyze_go_dependencies(project_path))
-    elif language == "java":
-        dependencies.extend(_analyze_java_dependencies(project_path))
+    elif language == "terraform":
+        dependencies.extend(_analyze_terraform_dependencies(project_path))
     
     return dependencies
 
@@ -399,157 +352,104 @@ def _analyze_python_dependencies(project_path: Path) -> List[DependencyInfo]:
     return dependencies
 
 
-def _analyze_node_dependencies(project_path: Path) -> List[DependencyInfo]:
-    """Analyze Node.js dependencies."""
+def _analyze_terraform_dependencies(project_path: Path) -> List[DependencyInfo]:
+    """Analyze Terraform dependencies."""
     dependencies = []
     
-    package_json = project_path / "package.json"
-    if package_json.exists():
+    # Check for terraform configuration files
+    for tf_file in project_path.rglob("*.tf"):
         try:
-            data = json.loads(package_json.read_text())
+            content = tf_file.read_text()
             
-            # Main dependencies
-            if "dependencies" in data:
-                for name, version in data["dependencies"].items():
-                    dependencies.append(DependencyInfo(
-                        name=name,
-                        version=version,
-                        language="javascript",
-                        package_manager="npm",
-                        file_path="package.json",
-                        is_dev=False
-                    ))
+            # Look for provider blocks
+            lines = content.splitlines()
+            in_terraform_block = False
+            in_required_providers = False
             
-            # Dev dependencies
-            if "devDependencies" in data:
-                for name, version in data["devDependencies"].items():
-                    dependencies.append(DependencyInfo(
-                        name=name,
-                        version=version,
-                        language="javascript",
-                        package_manager="npm",
-                        file_path="package.json",
-                        is_dev=True
-                    ))
-        except Exception:
-            pass
-    
-    return dependencies
-
-
-def _analyze_rust_dependencies(project_path: Path) -> List[DependencyInfo]:
-    """Analyze Rust dependencies."""
-    dependencies = []
-    
-    cargo_toml = project_path / "Cargo.toml"
-    if cargo_toml.exists():
-        try:
-            import tomllib
-            with open(cargo_toml, "rb") as f:
-                data = tomllib.load(f)
-                
-                # Main dependencies
-                if "dependencies" in data:
-                    for name, spec in data["dependencies"].items():
-                        version = spec if isinstance(spec, str) else spec.get("version", "*")
-                        dependencies.append(DependencyInfo(
-                            name=name,
-                            version=version,
-                            language="rust",
-                            package_manager="cargo",
-                            file_path="Cargo.toml",
-                            is_dev=False
-                        ))
-                
-                # Dev dependencies
-                if "dev-dependencies" in data:
-                    for name, spec in data["dev-dependencies"].items():
-                        version = spec if isinstance(spec, str) else spec.get("version", "*")
-                        dependencies.append(DependencyInfo(
-                            name=name,
-                            version=version,
-                            language="rust",
-                            package_manager="cargo",
-                            file_path="Cargo.toml",
-                            is_dev=True
-                        ))
-        except Exception:
-            pass
-    
-    return dependencies
-
-
-def _analyze_go_dependencies(project_path: Path) -> List[DependencyInfo]:
-    """Analyze Go dependencies."""
-    dependencies = []
-    
-    go_mod = project_path / "go.mod"
-    if go_mod.exists():
-        try:
-            content = go_mod.read_text()
-            in_require = False
-            
-            for line in content.splitlines():
+            for line in lines:
                 line = line.strip()
                 
-                if line.startswith("require ("):
-                    in_require = True
+                if line.startswith("terraform {"):
+                    in_terraform_block = True
                     continue
-                elif line == ")":
-                    in_require = False
+                elif line.startswith("required_providers {"):
+                    in_required_providers = True
                     continue
-                elif line.startswith("require "):
-                    # Single line require
-                    parts = line.replace("require ", "").split()
-                    if len(parts) >= 2:
+                elif line == "}":
+                    if in_required_providers:
+                        in_required_providers = False
+                    elif in_terraform_block:
+                        in_terraform_block = False
+                    continue
+                
+                # Parse provider requirements
+                if in_required_providers and "=" in line:
+                    # Simple parsing for provider = { source = "...", version = "..." }
+                    if "source" in line and "version" in line:
+                        # Extract provider name (before =)
+                        provider_name = line.split("=")[0].strip()
+                        
+                        # Try to extract version (simplified)
+                        if "version" in line:
+                            version_part = line.split("version")[1]
+                            if '"' in version_part:
+                                version = version_part.split('"')[1]
+                            else:
+                                version = "*"
+                        else:
+                            version = "*"
+                        
                         dependencies.append(DependencyInfo(
-                            name=parts[0],
-                            version=parts[1],
-                            language="go",
-                            package_manager="go mod",
-                            file_path="go.mod",
+                            name=provider_name,
+                            version=version,
+                            language="terraform",
+                            package_manager="terraform",
+                            file_path=str(tf_file.relative_to(project_path)),
                             is_dev=False
                         ))
-                elif in_require and line:
-                    # Multi-line require
-                    parts = line.split()
-                    if len(parts) >= 2:
+                
+                # Also look for simple provider blocks
+                elif line.startswith("provider "):
+                    # Extract provider name from 'provider "aws" {'
+                    if '"' in line:
+                        provider_name = line.split('"')[1]
                         dependencies.append(DependencyInfo(
-                            name=parts[0],
-                            version=parts[1],
-                            language="go",
-                            package_manager="go mod",
-                            file_path="go.mod",
+                            name=provider_name,
+                            version="*",
+                            language="terraform",
+                            package_manager="terraform",
+                            file_path=str(tf_file.relative_to(project_path)),
                             is_dev=False
                         ))
+        
         except Exception:
-            pass
+            continue
     
-    return dependencies
-
-
-def _analyze_java_dependencies(project_path: Path) -> List[DependencyInfo]:
-    """Analyze Java dependencies."""
-    dependencies = []
-    
-    # Check Maven pom.xml
-    pom_xml = project_path / "pom.xml"
-    if pom_xml.exists():
+    # Check terraform.lock.hcl for exact versions
+    lock_file = project_path / ".terraform.lock.hcl"
+    if lock_file.exists():
         try:
-            # This would require XML parsing
-            # Simplified implementation for now
-            content = pom_xml.read_text()
-            if "<dependencies>" in content:
-                # Basic regex-like parsing would go here
-                # For now, just mark that dependencies exist
-                dependencies.append(DependencyInfo(
-                    name="maven-dependencies",
-                    version="*",
-                    language="java",
-                    package_manager="maven",
-                    file_path="pom.xml",
-                    is_dev=False
-                ))
+            content = lock_file.read_text()
+            lines = content.splitlines()
+            
+            for line in lines:
+                line = line.strip()
+                if line.startswith("provider "):
+                    # Extract provider from 'provider "registry.terraform.io/hashicorp/aws" {'
+                    if '"' in line:
+                        provider_full = line.split('"')[1]
+                        provider_name = provider_full.split("/")[-1]  # Get last part
+                        
+                        # Look for version in next few lines
+                        # This is a simplified parser
+                        dependencies.append(DependencyInfo(
+                            name=provider_name,
+                            version="locked",
+                            language="terraform",
+                            package_manager="terraform",
+                            file_path=".terraform.lock.hcl",
+                            is_dev=False
+                        ))
         except Exception:
             pass
     
@@ -610,10 +510,7 @@ def run_builds(project_path: Path, languages: Optional[List[str]] = None,
             "builds.duration_total": total_duration
         })
         
-        metric_counter("multilang.builds")(1, {
-            "languages_count": len(languages),
-            "success_rate": success_count / len(build_results) if build_results else 0
-        })
+        metric_counter("multilang.builds")(1)
         
         return {
             "success": success_count == len(build_results),
@@ -672,75 +569,54 @@ def _run_language_build(language: str, project_path: Path) -> Dict[str, Any]:
                     "duration": time.time() - start_time
                 }
     
-    elif language in ["javascript", "typescript"]:
+    elif language == "terraform":
         try:
-            # Try npm run build
+            # Terraform validate (most common "build" operation)
             result = subprocess.run(
-                ["npm", "run", "build"],
+                ["terraform", "validate"],
                 cwd=project_path,
                 capture_output=True,
                 text=True,
-                timeout=300,
+                timeout=120,
                 check=True
             )
             return {
                 "success": True,
                 "output": result.stdout,
                 "duration": time.time() - start_time,
-                "tool": "npm"
+                "tool": "terraform"
             }
         except subprocess.CalledProcessError as e:
-            return {
-                "success": False,
-                "error": e.stderr,
-                "duration": time.time() - start_time
-            }
-    
-    elif language == "rust":
-        try:
-            result = subprocess.run(
-                ["cargo", "build", "--release"],
-                cwd=project_path,
-                capture_output=True,
-                text=True,
-                timeout=600,
-                check=True
-            )
-            return {
-                "success": True,
-                "output": result.stdout,
-                "duration": time.time() - start_time,
-                "tool": "cargo"
-            }
-        except subprocess.CalledProcessError as e:
-            return {
-                "success": False,
-                "error": e.stderr,
-                "duration": time.time() - start_time
-            }
-    
-    elif language == "go":
-        try:
-            result = subprocess.run(
-                ["go", "build", "./..."],
-                cwd=project_path,
-                capture_output=True,
-                text=True,
-                timeout=300,
-                check=True
-            )
-            return {
-                "success": True,
-                "output": result.stdout,
-                "duration": time.time() - start_time,
-                "tool": "go"
-            }
-        except subprocess.CalledProcessError as e:
-            return {
-                "success": False,
-                "error": e.stderr,
-                "duration": time.time() - start_time
-            }
+            # Try terraform init first, then validate
+            try:
+                subprocess.run(
+                    ["terraform", "init"],
+                    cwd=project_path,
+                    capture_output=True,
+                    text=True,
+                    timeout=300,
+                    check=True
+                )
+                result = subprocess.run(
+                    ["terraform", "validate"],
+                    cwd=project_path,
+                    capture_output=True,
+                    text=True,
+                    timeout=120,
+                    check=True
+                )
+                return {
+                    "success": True,
+                    "output": f"Initialized and validated\n{result.stdout}",
+                    "duration": time.time() - start_time,
+                    "tool": "terraform"
+                }
+            except subprocess.CalledProcessError as init_error:
+                return {
+                    "success": False,
+                    "error": f"Init failed: {init_error.stderr}\nValidate failed: {e.stderr}",
+                    "duration": time.time() - start_time
+                }
     
     return {
         "success": False,

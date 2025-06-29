@@ -8,7 +8,7 @@ version = "0.0.0"
 description = "A DX wrapper around the uv package and project manager."
 readme = "README.md"
 authors = [{ name = "Sean Chatman", email = "info@chatmangpt.com" }]
-requires-python = ">=3.12,<4.0"
+requires-python = ">=3.11,<4.0"
 dependencies = [
   "apscheduler>=3.11.0",
   "chromadb>=0.5.30",
@@ -28,19 +28,21 @@ dependencies = [
   "ruff>=0.11.11",
   "sentence-transformers>=3.0.0",
   "spiffworkflow>=3.1.1",
+  "torch>=2.5.1",
   "transformers>=4.48.2",
   "typer>=0.15.1",
   "zstandard>=0.23.0",
   # Critical runtime dependencies (80/20 fixes)
-  "requests>=2.31.0",    # HTTP client for AI APIs - CRITICAL
-  "aiohttp>=3.9.0",      # Async HTTP for better performance
+  "requests>=2.31.0", # HTTP client for AI APIs - CRITICAL
+  "aiohttp>=3.9.0", # Async HTTP for better performance
   "scikit-learn>=1.3.0", # ML capabilities for semantic search
-  "build>=1.0.0",        # Python package building
-  "twine>=4.0.0",        # PyPI uploads
-  "watchdog>=3.0.0",     # File system monitoring
-  "gitpython>=3.1.0",    # Enhanced git integration
-  "psutil>=5.9.0",       # System monitoring
-  "safety>=2.3.0",       # Vulnerability scanning
+  "build>=1.0.0", # Python package building
+  "twine>=4.0.0", # PyPI uploads
+  "watchdog>=3.0.0", # File system monitoring
+  "gitpython>=3.1.0", # Enhanced git integration
+  "psutil>=5.9.0", # System monitoring
+  "safety>=2.3.0", # Vulnerability scanning
+  "mypy>=1.15.0",
 ]
 
 [project.scripts] # https://docs.astral.sh/uv/concepts/projects/config/#command-line-interfaces

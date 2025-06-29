@@ -1,27 +1,20 @@
 [build-system]
-requires = ["setuptools>=45", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "test-external-project"
 version = "0.1.0"
-description = "Test project for uvmgr external validation"
+description = "Test external project for uvmgr validation"
+authors = [{name = "Test User", email = "test@example.com"}]
 dependencies = [
-    "requests>=2.25.0",
+    "black>=25.1.0",
+    "pytest>=8.4.1",
+    "requests>=2.31.0",
 ]
-requires-python = ">=3.12"
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=6.0",
-    "black",
-    "flake8",
+    "pytest>=7.0.0",
+    "black>=23.0.0",
 ]
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py"]
-
-[tool.black]
-line-length = 88
-target-version = ['py38']

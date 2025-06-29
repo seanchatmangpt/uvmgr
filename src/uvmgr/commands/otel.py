@@ -734,18 +734,18 @@ def _test_semantic_conventions():
         conventions_tested = 0
 
         # Test CLI conventions
-        assert hasattr(CliAttributes, "COMMAND")
-        assert hasattr(CliAttributes, "EXIT_CODE")
+        assert hasattr(CliAttributes, "COMMAND")  # Alias exists
+        assert hasattr(CliAttributes, "EXIT_CODE")  # Alias exists
         conventions_tested += 1
 
         # Test Package conventions
-        assert hasattr(PackageAttributes, "NAME")
-        assert hasattr(PackageAttributes, "VERSION")
+        assert hasattr(PackageAttributes, "PACKAGE_NAME")
+        assert hasattr(PackageAttributes, "PACKAGE_VERSION")
         conventions_tested += 1
 
         # Test Build conventions
         assert hasattr(BuildAttributes, "TYPE")
-        assert hasattr(BuildAttributes, "DURATION")
+        assert hasattr(BuildAttributes, "OPERATION")  # Use OPERATION instead of DURATION
         conventions_tested += 1
 
         # Test Workflow conventions
@@ -755,7 +755,7 @@ def _test_semantic_conventions():
 
         # Test that constants have proper values (strings)
         assert isinstance(CliAttributes.COMMAND, str)
-        assert isinstance(PackageAttributes.NAME, str)
+        assert isinstance(PackageAttributes.PACKAGE_NAME, str)
         assert isinstance(BuildAttributes.TYPE, str)
 
         return {

@@ -1,0 +1,40 @@
+FROM python:3.12-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    unzip \
+    wget \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv (Python package manager)
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.cargo/bin:$PATH"
+
+# Install Terraform for testing Terraform projects
+RUN wget -O terraform.zip https://releases.hashicorp.com/terraform/1.6.0/terraform_1.6.0_linux_amd64.zip \
+    && unzip terraform.zip \
+    && mv terraform /usr/local/bin/ \
+    && rm terraform.zip
+
+# Set working directory
+WORKDIR /workspace
+
+# Copy uvmgr source code
+COPY . /workspace/uvmgr/
+
+# Install uvmgr in development mode
+WORKDIR /workspace/uvmgr
+RUN uv pip install --system -e .
+
+# Create test workspace
+WORKDIR /workspace/test
+
+# Set environment variables for testing
+ENV PYTHONPATH="/workspace/uvmgr/src:$PYTHONPATH"
+ENV UV_SYSTEM_PYTHON=1
+
+# Entry point for running tests
+CMD ["/bin/bash"]

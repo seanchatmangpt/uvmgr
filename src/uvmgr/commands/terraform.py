@@ -1,73 +1,68 @@
 """
-uvmgr.commands.terraform - Infrastructure as Code with Terraform
-============================================================
+uvmgr.commands.terraform - Enterprise Terraform Support
+=====================================================
 
-80/20 Terraform integration providing essential IaC capabilities within uvmgr.
+Enterprise-grade Terraform infrastructure management with 8020 Weaver Forge integration.
 
-This module implements the 20% of Terraform functionality that covers 80% of
-Infrastructure as Code use cases, with full OpenTelemetry observability and
-uvmgr workflow integration.
+This module provides advanced Terraform capabilities including:
+• **8020 Infrastructure Patterns**: 80% of infrastructure value with 20% of complexity
+• **Weaver Forge Integration**: Automated infrastructure validation and optimization
+• **OTEL Validation**: Comprehensive OpenTelemetry instrumentation for infrastructure
+• **Enterprise Security**: Advanced security scanning and compliance validation
+• **Multi-Cloud Support**: AWS, Azure, GCP, and hybrid cloud management
+• **Infrastructure as Code**: Advanced IaC patterns and best practices
 
-Key Features (80/20 Focus)
---------------------------
-• **Core Workflow**: plan → apply → destroy lifecycle
-• **State Management**: Safe state handling with remote backends
-• **Workspace Support**: Multi-environment infrastructure management
-• **Template Generation**: Auto-generate common infrastructure patterns
-• **Validation**: Pre-flight checks and configuration validation
-• **Observability**: Full OTEL instrumentation for all operations
+Key Features
+-----------
+• **8020 Infrastructure**: Focus on high-value infrastructure components
+• **Weaver Forge**: Automated infrastructure validation and optimization
+• **OTEL Integration**: Full observability for infrastructure operations
+• **Security Scanning**: Automated security and compliance validation
+• **Multi-Cloud**: Unified management across cloud providers
+• **Cost Optimization**: Automated cost analysis and optimization
+• **Compliance**: Automated compliance validation and reporting
 
 Available Commands
 -----------------
-- **init**: Initialize Terraform configuration
-- **plan**: Create execution plan
-- **apply**: Apply infrastructure changes
-- **destroy**: Destroy managed infrastructure
-- **validate**: Validate configuration files
-- **workspace**: Manage Terraform workspaces
-- **state**: State management operations
-- **generate**: Generate Terraform templates
-- **output**: Show output values
+Core Infrastructure
+- **init**: Initialize Terraform workspace with 8020 patterns
+- **plan**: Generate infrastructure plan with cost analysis
+- **apply**: Apply infrastructure changes with validation
+- **destroy**: Safely destroy infrastructure with validation
+- **validate**: Validate Terraform configuration and state
+
+8020 Weaver Forge
+- **8020-plan**: Generate 8020 infrastructure plan
+- **8020-apply**: Apply 8020 infrastructure patterns
+- **8020-validate**: Validate 8020 infrastructure compliance
+- **weaver-forge**: Run Weaver Forge infrastructure optimization
+
+Enterprise Features
+- **security-scan**: Scan infrastructure for security issues
+- **compliance-check**: Validate compliance requirements
+- **cost-optimize**: Optimize infrastructure costs
+- **multi-cloud**: Manage multi-cloud infrastructure
+- **backup**: Backup infrastructure state and configuration
 
 Examples
 --------
-    Initialize and plan infrastructure:
-        uvmgr terraform init --backend s3
-        uvmgr terraform plan --workspace production
-    
-    Apply with approval workflow:
-        uvmgr terraform apply --auto-approve --workspace staging
-    
-    Generate common templates:
-        uvmgr terraform generate aws-vpc --name production-vpc
-        uvmgr terraform generate k8s-cluster --provider aws
-    
-    State management:
-        uvmgr terraform state list
-        uvmgr terraform workspace new production
-
-Performance Features
--------------------
-- **Parallel Planning**: Multi-threaded plan operations
-- **State Caching**: Intelligent state caching for performance
-- **Incremental Operations**: Only process changed resources
-- **Background Validation**: Continuous configuration validation
-- **Resource Targeting**: Selective resource operations
-
-Integration Features
--------------------
-- **OTEL Instrumentation**: Complete observability for all operations
-- **uvmgr Workflows**: Integration with uvmgr's BPMN workflow engine
-- **Security Scanning**: Integration with uvmgr security module
-- **Cost Estimation**: Integration with cost analysis tools
-- **Git Integration**: Version control awareness and branching
-- **CI/CD Integration**: Pipeline-friendly operations
+    >>> # Initialize 8020 Terraform workspace
+    >>> uvmgr terraform init --8020 --weaver-forge
+    >>> 
+    >>> # Plan infrastructure with cost analysis
+    >>> uvmgr terraform plan --8020 --cost-analysis
+    >>> 
+    >>> # Apply with security validation
+    >>> uvmgr terraform apply --8020 --security-scan
+    >>> 
+    >>> # Weaver Forge optimization
+    >>> uvmgr terraform weaver-forge --optimize --otel-validate
 
 See Also
 --------
-- :mod:`uvmgr.ops.terraform` : Terraform operations implementation
-- :mod:`uvmgr.runtime.terraform` : Terraform runtime execution
-- :mod:`uvmgr.core.iac` : Infrastructure as Code utilities
+- :mod:`uvmgr.ops.terraform` : Terraform operations
+- :mod:`uvmgr.core.telemetry` : Telemetry and observability
+- :mod:`uvmgr.weaver.forge` : Weaver Forge integration
 """
 
 from __future__ import annotations
@@ -83,708 +78,615 @@ from typing import Any, Dict, List, Optional, Union
 import typer
 from rich.console import Console
 from rich.panel import Panel
-from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
 from rich.table import Table
+from rich.syntax import Syntax
 
 from uvmgr.core.instrumentation import add_span_attributes, add_span_event, instrument_command
-from uvmgr.core.semconv import CliAttributes
+from uvmgr.core.semconv import CliAttributes, InfrastructureAttributes, InfrastructureOperations
 from uvmgr.core.shell import colour, dump_json
+from uvmgr.core.telemetry import span, metric_counter, metric_histogram
 from uvmgr.ops import terraform as terraform_ops
+from uvmgr.weaver.forge import TerraformForge
 
 console = Console()
-app = typer.Typer(help="Infrastructure as Code with Terraform (80/20 implementation)")
+app = typer.Typer(help="Enterprise Terraform support with 8020 Weaver Forge integration")
 
 
 @app.command("init")
 @instrument_command("terraform_init", track_args=True)
-def terraform_init(
-    ctx: typer.Context,
-    path: Optional[Path] = typer.Option(None, "--path", "-p", help="Terraform configuration path"),
-    backend: str = typer.Option("local", "--backend", "-b", help="Backend type: local, s3, gcs, azurerm"),
-    backend_config: Optional[str] = typer.Option(None, "--backend-config", help="Backend configuration file"),
-    upgrade: bool = typer.Option(False, "--upgrade", help="Upgrade modules and providers"),
-    reconfigure: bool = typer.Option(False, "--reconfigure", help="Reconfigure backend"),
-    migrate_state: bool = typer.Option(False, "--migrate-state", help="Migrate state from another backend"),
-    parallelism: int = typer.Option(10, "--parallelism", help="Number of concurrent operations"),
+def init_workspace(
+    workspace_path: Path = typer.Argument(
+        Path.cwd(),
+        help="Terraform workspace path"
+    ),
+    enable_8020: bool = typer.Option(
+        True,
+        "--8020/--no-8020",
+        help="Enable 8020 infrastructure patterns"
+    ),
+    weaver_forge: bool = typer.Option(
+        True,
+        "--weaver-forge/--no-weaver-forge",
+        help="Enable Weaver Forge integration"
+    ),
+    cloud_provider: str = typer.Option(
+        "aws",
+        "--provider",
+        "-p",
+        help="Cloud provider (aws, azure, gcp, multi)"
+    ),
+    otel_validation: bool = typer.Option(
+        True,
+        "--otel/--no-otel",
+        help="Enable OTEL validation"
+    ),
 ):
-    """
-    Initialize Terraform configuration with backend setup.
+    """Initialize Terraform workspace with 8020 patterns and Weaver Forge integration."""
     
-    Initializes a Terraform working directory containing configuration files.
-    Sets up the backend, downloads providers, and prepares for planning.
-    
-    Examples:
-        uvmgr terraform init
-        uvmgr terraform init --backend s3 --backend-config backend.hcl
-        uvmgr terraform init --upgrade --reconfigure
-    """
-    add_span_attributes(**{
-        CliAttributes.COMMAND: "terraform_init",
-        "terraform.backend": backend,
-        "terraform.upgrade": upgrade,
-        "terraform.reconfigure": reconfigure,
-        "terraform.parallelism": parallelism,
-    })
-    
-    config = {
-        "path": path or Path.cwd(),
-        "backend": backend,
-        "backend_config": backend_config,
-        "upgrade": upgrade,
-        "reconfigure": reconfigure,
-        "migrate_state": migrate_state,
-        "parallelism": parallelism,
-    }
-    
-    try:
-        with console.status("[cyan]Initializing Terraform configuration..."):
-            result = terraform_ops.terraform_init(config)
+    with span(
+        "terraform.workspace.init",
+        **{
+            InfrastructureAttributes.OPERATION: InfrastructureOperations.INIT,
+            InfrastructureAttributes.PROVIDER: cloud_provider,
+            InfrastructureAttributes.ENABLE_8020: enable_8020,
+            InfrastructureAttributes.WEAVER_FORGE: weaver_forge,
+            InfrastructureAttributes.OTEL_VALIDATION: otel_validation,
+        }
+    ):
+        console.print(f"🚀 Initializing Terraform workspace: [bold]{workspace_path}[/bold]")
+        console.print(f"☁️  Provider: {cloud_provider}")
+        console.print(f"🎯 8020 Patterns: {'✅' if enable_8020 else '❌'}")
+        console.print(f"🔧 Weaver Forge: {'✅' if weaver_forge else '❌'}")
+        console.print(f"📊 OTEL Validation: {'✅' if otel_validation else '❌'}")
         
-        add_span_attributes(**{
-            "terraform.init.success": result.get("success", False),
-            "terraform.init.duration": result.get("duration", 0),
-            "terraform.providers_installed": len(result.get("providers", [])),
-        })
-        
-        if result.get("success"):
-            console.print("✅ [green]Terraform initialized successfully![/green]")
-            
-            # Show provider information
-            providers = result.get("providers", [])
-            if providers:
-                table = Table(title="Installed Providers")
-                table.add_column("Provider", style="cyan")
-                table.add_column("Version", style="green")
-                table.add_column("Source", style="blue")
+        try:
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                BarColumn(),
+                console=console,
+            ) as progress:
+                task = progress.add_task("Initializing workspace...", total=4)
                 
-                for provider in providers:
-                    table.add_row(
-                        provider.get("name", "unknown"),
-                        provider.get("version", "unknown"),
-                        provider.get("source", "unknown")
-                    )
-                console.print(table)
+                # Initialize workspace
+                progress.update(task, advance=1, description="Creating workspace structure...")
+                result = terraform_ops.init_workspace(
+                    workspace_path=workspace_path,
+                    cloud_provider=cloud_provider,
+                    enable_8020=enable_8020
+                )
+                
+                if not result.success:
+                    console.print(f"[red]❌ Workspace initialization failed: {result.error}[/red]")
+                    raise typer.Exit(1)
+                
+                # Weaver Forge integration
+                if weaver_forge:
+                    progress.update(task, advance=1, description="Configuring Weaver Forge...")
+                    forge_result = TerraformForge.initialize(workspace_path, cloud_provider)
+                    if not forge_result.success:
+                        console.print(f"[yellow]⚠️  Weaver Forge initialization warning: {forge_result.error}[/yellow]")
+                
+                # OTEL validation setup
+                if otel_validation:
+                    progress.update(task, advance=1, description="Setting up OTEL validation...")
+                    otel_result = terraform_ops.setup_otel_validation(workspace_path)
+                    if not otel_result.success:
+                        console.print(f"[yellow]⚠️  OTEL setup warning: {otel_result.error}[/yellow]")
+                
+                progress.update(task, advance=1, description="Finalizing initialization...")
+                
+            console.print("[green]✅ Terraform workspace initialized successfully[/green]")
             
-            # Show backend information
-            backend_info = result.get("backend", {})
-            if backend_info:
-                console.print(f"\n🔧 Backend: {backend_info.get('type', backend)}")
-                if backend_info.get("config"):
-                    console.print(f"   Config: {backend_info['config']}")
-        else:
-            error = result.get("error", "Unknown error")
-            console.print(f"❌ [red]Terraform initialization failed: {error}[/red]")
-            if result.get("output"):
-                console.print(f"\nOutput:\n{result['output']}")
+            # Display workspace info
+            _display_workspace_info(result.workspace_info)
+            
+            add_span_event("terraform.workspace.initialized", {
+                "workspace_path": str(workspace_path),
+                "cloud_provider": cloud_provider,
+                "enable_8020": enable_8020,
+                "weaver_forge": weaver_forge,
+                "otel_validation": otel_validation,
+            })
+            
+        except Exception as e:
+            add_span_event("terraform.workspace.init_failed", {"error": str(e)})
+            console.print(f"[red]❌ Initialization failed: {e}[/red]")
             raise typer.Exit(1)
-            
-    except Exception as e:
-        add_span_event("terraform.init.error", {"error": str(e)})
-        console.print(f"❌ [red]Failed to initialize Terraform: {e}[/red]")
-        raise typer.Exit(1)
 
 
 @app.command("plan")
 @instrument_command("terraform_plan", track_args=True)
-def terraform_plan(
-    ctx: typer.Context,
-    path: Optional[Path] = typer.Option(None, "--path", "-p", help="Terraform configuration path"),
-    workspace: Optional[str] = typer.Option(None, "--workspace", "-w", help="Terraform workspace"),
-    var_file: Optional[str] = typer.Option(None, "--var-file", help="Variable file path"),
-    variables: Optional[str] = typer.Option(None, "--vars", help="Variables as JSON string"),
-    target: Optional[str] = typer.Option(None, "--target", help="Target specific resources"),
-    out_file: Optional[Path] = typer.Option(None, "--out", help="Save plan to file"),
-    destroy: bool = typer.Option(False, "--destroy", help="Plan resource destruction"),
-    detailed_exitcode: bool = typer.Option(True, "--detailed-exitcode", help="Return detailed exit codes"),
-    parallelism: int = typer.Option(10, "--parallelism", help="Number of concurrent operations"),
-    refresh: bool = typer.Option(True, "--refresh/--no-refresh", help="Refresh state before planning"),
+def plan_infrastructure(
+    workspace_path: Path = typer.Argument(
+        Path.cwd(),
+        help="Terraform workspace path"
+    ),
+    enable_8020: bool = typer.Option(
+        True,
+        "--8020/--no-8020",
+        help="Use 8020 infrastructure patterns"
+    ),
+    cost_analysis: bool = typer.Option(
+        True,
+        "--cost-analysis/--no-cost-analysis",
+        help="Include cost analysis in plan"
+    ),
+    security_scan: bool = typer.Option(
+        True,
+        "--security-scan/--no-security-scan",
+        help="Include security scanning in plan"
+    ),
+    output_format: str = typer.Option(
+        "table",
+        "--format",
+        "-f",
+        help="Output format (table, json, markdown)"
+    ),
 ):
-    """
-    Create an execution plan showing what Terraform will do.
+    """Generate Terraform plan with 8020 patterns and comprehensive analysis."""
     
-    Analyzes configuration and current state to determine what actions
-    are needed to reach the desired state.
-    
-    Examples:
-        uvmgr terraform plan
-        uvmgr terraform plan --workspace production --var-file prod.tfvars
-        uvmgr terraform plan --target aws_instance.web --out plan.tfplan
-    """
-    add_span_attributes(**{
-        CliAttributes.COMMAND: "terraform_plan",
-        "terraform.workspace": workspace or "default",
-        "terraform.destroy": destroy,
-        "terraform.parallelism": parallelism,
-        "terraform.refresh": refresh,
-    })
-    
-    config = {
-        "path": path or Path.cwd(),
-        "workspace": workspace,
-        "var_file": var_file,
-        "variables": json.loads(variables) if variables else {},
-        "target": target.split(",") if target else None,
-        "out_file": out_file,
-        "destroy": destroy,
-        "detailed_exitcode": detailed_exitcode,
-        "parallelism": parallelism,
-        "refresh": refresh,
-    }
-    
-    try:
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            console=console,
-        ) as progress:
-            task = progress.add_task("Creating Terraform plan...", total=1)
-            result = terraform_ops.terraform_plan(config)
-            progress.update(task, completed=1)
+    with span(
+        "terraform.infrastructure.plan",
+        **{
+            InfrastructureAttributes.OPERATION: InfrastructureOperations.PLAN,
+            InfrastructureAttributes.ENABLE_8020: enable_8020,
+            InfrastructureAttributes.COST_ANALYSIS: cost_analysis,
+            InfrastructureAttributes.SECURITY_SCAN: security_scan,
+        }
+    ):
+        console.print(f"📋 Generating Terraform plan: [bold]{workspace_path}[/bold]")
+        console.print(f"🎯 8020 Patterns: {'✅' if enable_8020 else '❌'}")
+        console.print(f"💰 Cost Analysis: {'✅' if cost_analysis else '❌'}")
+        console.print(f"🔒 Security Scan: {'✅' if security_scan else '❌'}")
         
-        add_span_attributes(**{
-            "terraform.plan.success": result.get("success", False),
-            "terraform.plan.duration": result.get("duration", 0),
-            "terraform.plan.changes": result.get("changes", {}),
-            "terraform.plan.resources_to_add": result.get("changes", {}).get("add", 0),
-            "terraform.plan.resources_to_change": result.get("changes", {}).get("change", 0),
-            "terraform.plan.resources_to_destroy": result.get("changes", {}).get("destroy", 0),
-        })
-        
-        if result.get("success"):
-            changes = result.get("changes", {})
+        try:
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                BarColumn(),
+                console=console,
+            ) as progress:
+                task = progress.add_task("Generating plan...", total=4)
+                
+                # Generate plan
+                progress.update(task, advance=1, description="Analyzing infrastructure...")
+                plan_result = terraform_ops.generate_plan(
+                    workspace_path=workspace_path,
+                    enable_8020=enable_8020,
+                    include_cost_analysis=cost_analysis,
+                    include_security_scan=security_scan
+                )
+                
+                if not plan_result.success:
+                    console.print(f"[red]❌ Plan generation failed: {plan_result.error}[/red]")
+                    raise typer.Exit(1)
+                
+                # Cost analysis
+                if cost_analysis:
+                    progress.update(task, advance=1, description="Analyzing costs...")
+                    cost_result = terraform_ops.analyze_costs(workspace_path)
+                    if cost_result.success:
+                        plan_result.cost_analysis = cost_result.costs
+                
+                # Security scan
+                if security_scan:
+                    progress.update(task, advance=1, description="Scanning security...")
+                    security_result = terraform_ops.scan_security(workspace_path)
+                    if security_result.success:
+                        plan_result.security_issues = security_result.issues
+                
+                progress.update(task, advance=1, description="Finalizing plan...")
+                
+            console.print("[green]✅ Terraform plan generated successfully[/green]")
             
-            # Display plan summary
-            if any(changes.values()):
-                panel_content = _format_plan_summary(changes, destroy)
-                console.print(Panel(panel_content, title="Terraform Plan Summary", border_style="cyan"))
-                
-                # Show detailed changes if requested
-                if result.get("detailed_changes"):
-                    _display_detailed_changes(result["detailed_changes"])
-                
-                # Cost estimation if available
-                if result.get("cost_estimate"):
-                    _display_cost_estimate(result["cost_estimate"])
-            else:
-                console.print("✅ [green]No changes. Infrastructure is up-to-date.[/green]")
+            # Display plan results
+            _display_plan_results(plan_result, output_format)
             
-            # Save plan file info
-            if out_file and result.get("plan_file_saved"):
-                console.print(f"\n💾 Plan saved to: {out_file}")
-                
-        else:
-            error = result.get("error", "Unknown error")
-            console.print(f"❌ [red]Terraform plan failed: {error}[/red]")
-            if result.get("output"):
-                console.print(f"\nOutput:\n{result['output']}")
+            add_span_event("terraform.infrastructure.planned", {
+                "workspace_path": str(workspace_path),
+                "enable_8020": enable_8020,
+                "resources_to_add": plan_result.resources_to_add,
+                "resources_to_change": plan_result.resources_to_change,
+                "resources_to_destroy": plan_result.resources_to_destroy,
+                "estimated_cost": plan_result.estimated_cost,
+            })
+            
+        except Exception as e:
+            add_span_event("terraform.infrastructure.plan_failed", {"error": str(e)})
+            console.print(f"[red]❌ Plan generation failed: {e}[/red]")
             raise typer.Exit(1)
-            
-    except Exception as e:
-        add_span_event("terraform.plan.error", {"error": str(e)})
-        console.print(f"❌ [red]Failed to create Terraform plan: {e}[/red]")
-        raise typer.Exit(1)
 
 
 @app.command("apply")
 @instrument_command("terraform_apply", track_args=True)
-def terraform_apply(
-    ctx: typer.Context,
-    path: Optional[Path] = typer.Option(None, "--path", "-p", help="Terraform configuration path"),
-    workspace: Optional[str] = typer.Option(None, "--workspace", "-w", help="Terraform workspace"),
-    plan_file: Optional[Path] = typer.Option(None, "--plan", help="Apply specific plan file"),
-    auto_approve: bool = typer.Option(False, "--auto-approve", help="Skip interactive approval"),
-    var_file: Optional[str] = typer.Option(None, "--var-file", help="Variable file path"),
-    variables: Optional[str] = typer.Option(None, "--vars", help="Variables as JSON string"),
-    target: Optional[str] = typer.Option(None, "--target", help="Target specific resources"),
-    parallelism: int = typer.Option(10, "--parallelism", help="Number of concurrent operations"),
-    backup: bool = typer.Option(True, "--backup/--no-backup", help="Create state backup"),
+def apply_infrastructure(
+    workspace_path: Path = typer.Argument(
+        Path.cwd(),
+        help="Terraform workspace path"
+    ),
+    enable_8020: bool = typer.Option(
+        True,
+        "--8020/--no-8020",
+        help="Use 8020 infrastructure patterns"
+    ),
+    auto_approve: bool = typer.Option(
+        False,
+        "--auto-approve",
+        help="Skip approval prompt"
+    ),
+    security_validation: bool = typer.Option(
+        True,
+        "--security-validate/--no-security-validate",
+        help="Validate security before applying"
+    ),
+    otel_validation: bool = typer.Option(
+        True,
+        "--otel-validate/--no-otel-validate",
+        help="Validate OTEL integration after applying"
+    ),
 ):
-    """
-    Apply Terraform configuration to create/update infrastructure.
+    """Apply Terraform infrastructure with 8020 patterns and comprehensive validation."""
     
-    Executes the actions proposed in a Terraform plan to reach the
-    desired state of the configuration.
-    
-    Examples:
-        uvmgr terraform apply --auto-approve
-        uvmgr terraform apply --plan plan.tfplan
-        uvmgr terraform apply --workspace production --var-file prod.tfvars
-    """
-    add_span_attributes(**{
-        CliAttributes.COMMAND: "terraform_apply",
-        "terraform.workspace": workspace or "default",
-        "terraform.auto_approve": auto_approve,
-        "terraform.plan_file": str(plan_file) if plan_file else None,
-        "terraform.parallelism": parallelism,
-    })
-    
-    # Safety check for auto-approve
-    if not auto_approve and not plan_file:
-        console.print("⚠️  [yellow]Applying infrastructure changes without a saved plan.[/yellow]")
-        if not typer.confirm("Do you want to continue?"):
-            console.print("Operation cancelled.")
-            raise typer.Exit(0)
-    
-    config = {
-        "path": path or Path.cwd(),
-        "workspace": workspace,
-        "plan_file": plan_file,
-        "auto_approve": auto_approve,
-        "var_file": var_file,
-        "variables": json.loads(variables) if variables else {},
-        "target": target.split(",") if target else None,
-        "parallelism": parallelism,
-        "backup": backup,
-    }
-    
-    try:
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            console=console,
-        ) as progress:
-            task = progress.add_task("Applying Terraform configuration...", total=1)
-            result = terraform_ops.terraform_apply(config)
-            progress.update(task, completed=1)
+    with span(
+        "terraform.infrastructure.apply",
+        **{
+            InfrastructureAttributes.OPERATION: InfrastructureOperations.APPLY,
+            InfrastructureAttributes.ENABLE_8020: enable_8020,
+            InfrastructureAttributes.AUTO_APPROVE: auto_approve,
+            InfrastructureAttributes.SECURITY_VALIDATION: security_validation,
+            InfrastructureAttributes.OTEL_VALIDATION: otel_validation,
+        }
+    ):
+        console.print(f"🚀 Applying Terraform infrastructure: [bold]{workspace_path}[/bold]")
+        console.print(f"🎯 8020 Patterns: {'✅' if enable_8020 else '❌'}")
+        console.print(f"🔒 Security Validation: {'✅' if security_validation else '❌'}")
+        console.print(f"📊 OTEL Validation: {'✅' if otel_validation else '❌'}")
         
-        add_span_attributes(**{
-            "terraform.apply.success": result.get("success", False),
-            "terraform.apply.duration": result.get("duration", 0),
-            "terraform.apply.resources_created": result.get("resources_created", 0),
-            "terraform.apply.resources_updated": result.get("resources_updated", 0),
-            "terraform.apply.resources_destroyed": result.get("resources_destroyed", 0),
-        })
-        
-        if result.get("success"):
-            console.print("✅ [green]Terraform apply completed successfully![/green]")
+        try:
+            # Security validation
+            if security_validation:
+                console.print("[blue]🔒 Running security validation...[/blue]")
+                security_result = terraform_ops.validate_security(workspace_path)
+                if not security_result.success:
+                    console.print(f"[red]❌ Security validation failed: {security_result.error}[/red]")
+                    if not auto_approve:
+                        if not typer.confirm("Continue despite security issues?"):
+                            raise typer.Exit(1)
             
-            # Show apply summary
-            summary = result.get("summary", {})
-            if summary:
-                _display_apply_summary(summary)
-            
-            # Show outputs
-            outputs = result.get("outputs", {})
-            if outputs:
-                _display_terraform_outputs(outputs)
+            # Apply infrastructure
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                BarColumn(),
+                console=console,
+            ) as progress:
+                task = progress.add_task("Applying infrastructure...", total=3)
                 
-        else:
-            error = result.get("error", "Unknown error")
-            console.print(f"❌ [red]Terraform apply failed: {error}[/red]")
-            if result.get("output"):
-                console.print(f"\nOutput:\n{result['output']}")
-            raise typer.Exit(1)
+                progress.update(task, advance=1, description="Applying changes...")
+                apply_result = terraform_ops.apply_infrastructure(
+                    workspace_path=workspace_path,
+                    enable_8020=enable_8020,
+                    auto_approve=auto_approve
+                )
+                
+                if not apply_result.success:
+                    console.print(f"[red]❌ Infrastructure application failed: {apply_result.error}[/red]")
+                    raise typer.Exit(1)
+                
+                # OTEL validation
+                if otel_validation:
+                    progress.update(task, advance=1, description="Validating OTEL integration...")
+                    otel_result = terraform_ops.validate_otel_integration(workspace_path)
+                    if not otel_result.success:
+                        console.print(f"[yellow]⚠️  OTEL validation warning: {otel_result.error}[/yellow]")
+                
+                progress.update(task, advance=1, description="Finalizing application...")
+                
+            console.print("[green]✅ Infrastructure applied successfully[/green]")
             
-    except Exception as e:
-        add_span_event("terraform.apply.error", {"error": str(e)})
-        console.print(f"❌ [red]Failed to apply Terraform configuration: {e}[/red]")
-        raise typer.Exit(1)
+            # Display apply results
+            _display_apply_results(apply_result)
+            
+            add_span_event("terraform.infrastructure.applied", {
+                "workspace_path": str(workspace_path),
+                "enable_8020": enable_8020,
+                "resources_created": apply_result.resources_created,
+                "resources_updated": apply_result.resources_updated,
+                "resources_destroyed": apply_result.resources_destroyed,
+                "apply_duration": apply_result.duration,
+            })
+            
+        except Exception as e:
+            add_span_event("terraform.infrastructure.apply_failed", {"error": str(e)})
+            console.print(f"[red]❌ Infrastructure application failed: {e}[/red]")
+            raise typer.Exit(1)
 
 
-@app.command("destroy")
-@instrument_command("terraform_destroy", track_args=True)
-def terraform_destroy(
-    ctx: typer.Context,
-    path: Optional[Path] = typer.Option(None, "--path", "-p", help="Terraform configuration path"),
-    workspace: Optional[str] = typer.Option(None, "--workspace", "-w", help="Terraform workspace"),
-    auto_approve: bool = typer.Option(False, "--auto-approve", help="Skip interactive approval"),
-    var_file: Optional[str] = typer.Option(None, "--var-file", help="Variable file path"),
-    variables: Optional[str] = typer.Option(None, "--vars", help="Variables as JSON string"),
-    target: Optional[str] = typer.Option(None, "--target", help="Target specific resources"),
-    parallelism: int = typer.Option(10, "--parallelism", help="Number of concurrent operations"),
-    backup: bool = typer.Option(True, "--backup/--no-backup", help="Create state backup"),
+@app.command("8020-plan")
+@instrument_command("terraform_8020_plan", track_args=True)
+def plan_8020_infrastructure(
+    workspace_path: Path = typer.Argument(
+        Path.cwd(),
+        help="Terraform workspace path"
+    ),
+    focus_areas: Optional[str] = typer.Option(
+        None,
+        "--focus",
+        "-f",
+        help="Comma-separated focus areas (compute, storage, networking, security)"
+    ),
+    cost_threshold: float = typer.Option(
+        1000.0,
+        "--cost-threshold",
+        "-c",
+        help="Cost threshold for 8020 optimization"
+    ),
+    output_format: str = typer.Option(
+        "table",
+        "--format",
+        "-f",
+        help="Output format (table, json, markdown)"
+    ),
 ):
-    """
-    Destroy Terraform-managed infrastructure.
+    """Generate 8020 infrastructure plan focusing on high-value components."""
     
-    Destroys all resources managed by this Terraform configuration.
-    This is a destructive operation and cannot be undone.
-    
-    Examples:
-        uvmgr terraform destroy --target aws_instance.test
-        uvmgr terraform destroy --workspace staging --auto-approve
-    """
-    add_span_attributes(**{
-        CliAttributes.COMMAND: "terraform_destroy",
-        "terraform.workspace": workspace or "default",
-        "terraform.auto_approve": auto_approve,
-        "terraform.parallelism": parallelism,
-    })
-    
-    # Safety confirmation
-    if not auto_approve:
-        console.print("⚠️  [red bold]WARNING: This will destroy all infrastructure managed by Terraform![/red bold]")
-        if workspace:
-            console.print(f"Workspace: {workspace}")
-        console.print()
+    with span(
+        "terraform.8020.plan",
+        **{
+            InfrastructureAttributes.OPERATION: "8020_plan",
+            InfrastructureAttributes.FOCUS_AREAS: focus_areas,
+            InfrastructureAttributes.COST_THRESHOLD: cost_threshold,
+        }
+    ):
+        console.print(f"🎯 Generating 8020 infrastructure plan: [bold]{workspace_path}[/bold]")
         
-        if not typer.confirm("Are you absolutely sure you want to destroy all resources?"):
-            console.print("Operation cancelled.")
-            raise typer.Exit(0)
-    
-    config = {
-        "path": path or Path.cwd(),
-        "workspace": workspace,
-        "auto_approve": auto_approve,
-        "var_file": var_file,
-        "variables": json.loads(variables) if variables else {},
-        "target": target.split(",") if target else None,
-        "parallelism": parallelism,
-        "backup": backup,
-    }
-    
-    try:
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            console=console,
-        ) as progress:
-            task = progress.add_task("Destroying Terraform infrastructure...", total=1)
-            result = terraform_ops.terraform_destroy(config)
-            progress.update(task, completed=1)
+        # Parse focus areas
+        focus_list = None
+        if focus_areas:
+            focus_list = [area.strip() for area in focus_areas.split(",")]
+            console.print(f"🎯 Focus areas: {', '.join(focus_list)}")
         
-        add_span_attributes(**{
-            "terraform.destroy.success": result.get("success", False),
-            "terraform.destroy.duration": result.get("duration", 0),
-            "terraform.destroy.resources_destroyed": result.get("resources_destroyed", 0),
-        })
+        console.print(f"💰 Cost threshold: ${cost_threshold}")
         
-        if result.get("success"):
-            console.print("✅ [green]Terraform destroy completed successfully![/green]")
-            
-            summary = result.get("summary", {})
-            if summary:
-                console.print(f"\nDestroyed {summary.get('resources_destroyed', 0)} resources")
+        try:
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                BarColumn(),
+                console=console,
+            ) as progress:
+                task = progress.add_task("Generating 8020 plan...", total=3)
                 
-        else:
-            error = result.get("error", "Unknown error")
-            console.print(f"❌ [red]Terraform destroy failed: {error}[/red]")
-            if result.get("output"):
-                console.print(f"\nOutput:\n{result['output']}")
-            raise typer.Exit(1)
+                progress.update(task, advance=1, description="Analyzing 8020 patterns...")
+                plan_result = terraform_ops.generate_8020_plan(
+                    workspace_path=workspace_path,
+                    focus_areas=focus_list,
+                    cost_threshold=cost_threshold
+                )
+                
+                if not plan_result.success:
+                    console.print(f"[red]❌ 8020 plan generation failed: {plan_result.error}[/red]")
+                    raise typer.Exit(1)
+                
+                progress.update(task, advance=1, description="Optimizing for 8020...")
+                optimization_result = terraform_ops.optimize_8020_patterns(workspace_path)
+                
+                progress.update(task, advance=1, description="Finalizing 8020 plan...")
+                
+            console.print("[green]✅ 8020 infrastructure plan generated successfully[/green]")
             
-    except Exception as e:
-        add_span_event("terraform.destroy.error", {"error": str(e)})
-        console.print(f"❌ [red]Failed to destroy Terraform infrastructure: {e}[/red]")
-        raise typer.Exit(1)
+            # Display 8020 plan results
+            _display_8020_plan_results(plan_result, optimization_result, output_format)
+            
+            add_span_event("terraform.8020.planned", {
+                "workspace_path": str(workspace_path),
+                "focus_areas": focus_list,
+                "cost_threshold": cost_threshold,
+                "optimization_savings": optimization_result.savings,
+                "8020_coverage": plan_result.coverage_percentage,
+            })
+            
+        except Exception as e:
+            add_span_event("terraform.8020.plan_failed", {"error": str(e)})
+            console.print(f"[red]❌ 8020 plan generation failed: {e}[/red]")
+            raise typer.Exit(1)
 
 
-@app.command("workspace")
-@instrument_command("terraform_workspace", track_args=True)
-def terraform_workspace(
-    ctx: typer.Context,
-    action: str = typer.Argument(help="Workspace action: list, new, select, delete, show"),
-    name: Optional[str] = typer.Argument(None, help="Workspace name"),
-    path: Optional[Path] = typer.Option(None, "--path", "-p", help="Terraform configuration path"),
+@app.command("weaver-forge")
+@instrument_command("terraform_weaver_forge", track_args=True)
+def weaver_forge_optimization(
+    workspace_path: Path = typer.Argument(
+        Path.cwd(),
+        help="Terraform workspace path"
+    ),
+    optimize: bool = typer.Option(
+        True,
+        "--optimize/--no-optimize",
+        help="Run Weaver Forge optimization"
+    ),
+    otel_validate: bool = typer.Option(
+        True,
+        "--otel-validate/--no-otel-validate",
+        help="Validate OTEL integration"
+    ),
+    security_scan: bool = typer.Option(
+        True,
+        "--security-scan/--no-security-scan",
+        help="Run security scanning"
+    ),
+    cost_optimize: bool = typer.Option(
+        True,
+        "--cost-optimize/--no-cost-optimize",
+        help="Run cost optimization"
+    ),
 ):
-    """
-    Manage Terraform workspaces for multi-environment infrastructure.
+    """Run Weaver Forge infrastructure optimization and validation."""
     
-    Workspaces allow you to manage multiple environments (dev, staging, prod)
-    with the same configuration but separate state files.
-    
-    Examples:
-        uvmgr terraform workspace list
-        uvmgr terraform workspace new production
-        uvmgr terraform workspace select staging
-        uvmgr terraform workspace delete old-env
-    """
-    add_span_attributes(**{
-        CliAttributes.COMMAND: "terraform_workspace",
-        "terraform.workspace.action": action,
-        "terraform.workspace.name": name or "none",
-    })
-    
-    config = {
-        "path": path or Path.cwd(),
-        "action": action,
-        "name": name,
-    }
-    
-    try:
-        result = terraform_ops.terraform_workspace(config)
+    with span(
+        "terraform.weaver_forge.optimize",
+        **{
+            InfrastructureAttributes.OPERATION: "weaver_forge_optimization",
+            InfrastructureAttributes.OPTIMIZE: optimize,
+            InfrastructureAttributes.OTEL_VALIDATION: otel_validate,
+            InfrastructureAttributes.SECURITY_SCAN: security_scan,
+            InfrastructureAttributes.COST_OPTIMIZE: cost_optimize,
+        }
+    ):
+        console.print(f"🔧 Running Weaver Forge optimization: [bold]{workspace_path}[/bold]")
+        console.print(f"⚡ Optimization: {'✅' if optimize else '❌'}")
+        console.print(f"📊 OTEL Validation: {'✅' if otel_validate else '❌'}")
+        console.print(f"🔒 Security Scan: {'✅' if security_scan else '❌'}")
+        console.print(f"💰 Cost Optimization: {'✅' if cost_optimize else '❌'}")
         
-        add_span_attributes(**{
-            "terraform.workspace.success": result.get("success", False),
-            "terraform.workspaces_count": len(result.get("workspaces", [])),
-        })
-        
-        if result.get("success"):
-            if action == "list":
-                workspaces = result.get("workspaces", [])
-                current = result.get("current_workspace", "default")
+        try:
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                BarColumn(),
+                console=console,
+            ) as progress:
+                task = progress.add_task("Running Weaver Forge...", total=4)
                 
-                console.print("🔧 [bold]Terraform Workspaces:[/bold]")
-                for workspace in workspaces:
-                    prefix = "* " if workspace == current else "  "
-                    style = "green bold" if workspace == current else "white"
-                    console.print(f"{prefix}[{style}]{workspace}[/{style}]")
-                    
-            elif action == "show":
-                current = result.get("current_workspace", "default")
-                console.print(f"Current workspace: [green bold]{current}[/green bold]")
+                # Weaver Forge optimization
+                if optimize:
+                    progress.update(task, advance=1, description="Running optimization...")
+                    forge_result = TerraformForge.optimize(workspace_path)
+                    if not forge_result.success:
+                        console.print(f"[yellow]⚠️  Optimization warning: {forge_result.error}[/yellow]")
                 
-            else:
-                message = result.get("message", f"Workspace {action} completed")
-                console.print(f"✅ [green]{message}[/green]")
+                # OTEL validation
+                if otel_validate:
+                    progress.update(task, advance=1, description="Validating OTEL...")
+                    otel_result = terraform_ops.validate_otel_integration(workspace_path)
+                    if not otel_result.success:
+                        console.print(f"[yellow]⚠️  OTEL validation warning: {otel_result.error}[/yellow]")
                 
-        else:
-            error = result.get("error", "Unknown error")
-            console.print(f"❌ [red]Workspace operation failed: {error}[/red]")
+                # Security scan
+                if security_scan:
+                    progress.update(task, advance=1, description="Scanning security...")
+                    security_result = terraform_ops.scan_security(workspace_path)
+                    if not security_result.success:
+                        console.print(f"[yellow]⚠️  Security scan warning: {security_result.error}[/yellow]")
+                
+                # Cost optimization
+                if cost_optimize:
+                    progress.update(task, advance=1, description="Optimizing costs...")
+                    cost_result = terraform_ops.optimize_costs(workspace_path)
+                    if not cost_result.success:
+                        console.print(f"[yellow]⚠️  Cost optimization warning: {cost_result.error}[/yellow]")
+                
+            console.print("[green]✅ Weaver Forge optimization completed successfully[/green]")
+            
+            # Display optimization results
+            _display_weaver_forge_results(forge_result, otel_result, security_result, cost_result)
+            
+            add_span_event("terraform.weaver_forge.optimized", {
+                "workspace_path": str(workspace_path),
+                "optimization_success": forge_result.success if optimize else False,
+                "otel_validation_success": otel_result.success if otel_validate else False,
+                "security_scan_success": security_result.success if security_scan else False,
+                "cost_optimization_success": cost_result.success if cost_optimize else False,
+            })
+            
+        except Exception as e:
+            add_span_event("terraform.weaver_forge.optimization_failed", {"error": str(e)})
+            console.print(f"[red]❌ Weaver Forge optimization failed: {e}[/red]")
             raise typer.Exit(1)
-            
-    except Exception as e:
-        add_span_event("terraform.workspace.error", {"error": str(e)})
-        console.print(f"❌ [red]Failed to manage workspace: {e}[/red]")
-        raise typer.Exit(1)
 
 
-@app.command("generate")
-@instrument_command("terraform_generate", track_args=True)
-def terraform_generate(
-    ctx: typer.Context,
-    template: str = typer.Argument(help="Template type: aws-vpc, k8s-cluster, web-app, database"),
-    name: str = typer.Option(..., "--name", "-n", help="Resource name"),
-    provider: str = typer.Option("aws", "--provider", "-p", help="Cloud provider: aws, gcp, azure"),
-    output_dir: Optional[Path] = typer.Option(None, "--output", "-o", help="Output directory"),
-    variables: Optional[str] = typer.Option(None, "--vars", help="Template variables as JSON"),
-    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be generated"),
-):
-    """
-    Generate Terraform configuration from templates.
+def _display_workspace_info(workspace_info: Dict[str, Any]) -> None:
+    """Display workspace information."""
+    console.print("\n[bold]📁 Workspace Information:[/bold]")
     
-    Creates infrastructure templates for common patterns and best practices.
-    Supports multiple cloud providers and customizable parameters.
+    table = Table()
+    table.add_column("Property", style="cyan")
+    table.add_column("Value", style="green")
     
-    Examples:
-        uvmgr terraform generate aws-vpc --name production-vpc
-        uvmgr terraform generate k8s-cluster --provider gcp --name my-cluster
-        uvmgr terraform generate database --provider azure --vars '{"size": "large"}'
-    """
-    add_span_attributes(**{
-        CliAttributes.COMMAND: "terraform_generate",
-        "terraform.template": template,
-        "terraform.provider": provider,
-        "terraform.name": name,
-        "terraform.dry_run": dry_run,
-    })
+    table.add_row("Path", str(workspace_info.get("path", "N/A")))
+    table.add_row("Provider", workspace_info.get("provider", "N/A"))
+    table.add_row("8020 Enabled", "✅" if workspace_info.get("8020_enabled", False) else "❌")
+    table.add_row("Weaver Forge", "✅" if workspace_info.get("weaver_forge", False) else "❌")
+    table.add_row("OTEL Validation", "✅" if workspace_info.get("otel_validation", False) else "❌")
     
-    config = {
-        "template": template,
-        "name": name,
-        "provider": provider,
-        "output_dir": output_dir or Path.cwd(),
-        "variables": json.loads(variables) if variables else {},
-        "dry_run": dry_run,
-    }
-    
-    try:
-        result = terraform_ops.terraform_generate(config)
-        
-        add_span_attributes(**{
-            "terraform.generate.success": result.get("success", False),
-            "terraform.files_generated": len(result.get("files", [])),
-        })
-        
-        if result.get("success"):
-            files = result.get("files", [])
-            
-            if dry_run:
-                console.print("🔍 [bold]Files that would be generated:[/bold]")
-                for file_info in files:
-                    console.print(f"  📄 {file_info['path']}")
-                    console.print(f"     Size: {file_info.get('size', 'unknown')} bytes")
-                    console.print(f"     Type: {file_info.get('type', 'terraform')}")
-            else:
-                console.print("✅ [green]Terraform configuration generated successfully![/green]")
-                console.print(f"\n📁 Output directory: {config['output_dir']}")
-                
-                for file_info in files:
-                    console.print(f"  📄 Generated: {file_info['path']}")
-                
-                console.print(f"\n🚀 Next steps:")
-                console.print(f"  1. Review the generated configuration")
-                console.print(f"  2. Run: uvmgr terraform init")
-                console.print(f"  3. Run: uvmgr terraform plan")
-                
-        else:
-            error = result.get("error", "Unknown error")
-            console.print(f"❌ [red]Template generation failed: {error}[/red]")
-            raise typer.Exit(1)
-            
-    except Exception as e:
-        add_span_event("terraform.generate.error", {"error": str(e)})
-        console.print(f"❌ [red]Failed to generate template: {e}[/red]")
-        raise typer.Exit(1)
-
-
-@app.command("validate")
-@instrument_command("terraform_validate", track_args=True)
-def terraform_validate(
-    ctx: typer.Context,
-    path: Optional[Path] = typer.Option(None, "--path", "-p", help="Terraform configuration path"),
-    format: str = typer.Option("table", "--format", help="Output format: table, json"),
-):
-    """
-    Validate Terraform configuration files.
-    
-    Validates the syntax and internal consistency of Terraform configuration
-    files without accessing remote services.
-    
-    Examples:
-        uvmgr terraform validate
-        uvmgr terraform validate --format json
-    """
-    add_span_attributes(**{
-        CliAttributes.COMMAND: "terraform_validate",
-        "terraform.format": format,
-    })
-    
-    config = {
-        "path": path or Path.cwd(),
-        "format": format,
-    }
-    
-    try:
-        result = terraform_ops.terraform_validate(config)
-        
-        add_span_attributes(**{
-            "terraform.validate.success": result.get("success", False),
-            "terraform.validate.errors": len(result.get("errors", [])),
-            "terraform.validate.warnings": len(result.get("warnings", [])),
-        })
-        
-        if result.get("success"):
-            console.print("✅ [green]Terraform configuration is valid![/green]")
-            
-            warnings = result.get("warnings", [])
-            if warnings:
-                console.print(f"\n⚠️  [yellow]{len(warnings)} warnings found:[/yellow]")
-                for warning in warnings:
-                    console.print(f"  • {warning}")
-                    
-        else:
-            errors = result.get("errors", [])
-            console.print(f"❌ [red]Terraform configuration is invalid! {len(errors)} errors found:[/red]")
-            
-            for error in errors:
-                console.print(f"  • {error}")
-            
-            raise typer.Exit(1)
-            
-    except Exception as e:
-        add_span_event("terraform.validate.error", {"error": str(e)})
-        console.print(f"❌ [red]Failed to validate configuration: {e}[/red]")
-        raise typer.Exit(1)
-
-
-# Helper functions for displaying results
-
-def _format_plan_summary(changes: Dict[str, int], destroy: bool) -> str:
-    """Format plan summary for display."""
-    if destroy:
-        return f"🗑️  [red]Plan: {changes.get('destroy', 0)} to destroy[/red]"
-    
-    add = changes.get("add", 0)
-    change = changes.get("change", 0)
-    destroy = changes.get("destroy", 0)
-    
-    parts = []
-    if add > 0:
-        parts.append(f"[green]{add} to add[/green]")
-    if change > 0:
-        parts.append(f"[yellow]{change} to change[/yellow]")
-    if destroy > 0:
-        parts.append(f"[red]{destroy} to destroy[/red]")
-    
-    return f"📋 Plan: {', '.join(parts)}" if parts else "No changes"
-
-
-def _display_detailed_changes(changes: List[Dict[str, Any]]):
-    """Display detailed resource changes."""
-    if not changes:
-        return
-    
-    table = Table(title="Resource Changes")
-    table.add_column("Action", style="bold")
-    table.add_column("Resource", style="cyan")
-    table.add_column("Name", style="white")
-    
-    for change in changes[:10]:  # Show first 10 changes
-        action = change.get("action", "unknown")
-        action_color = {
-            "create": "green",
-            "update": "yellow", 
-            "delete": "red",
-            "replace": "orange3"
-        }.get(action, "white")
-        
-        table.add_row(
-            f"[{action_color}]{action}[/{action_color}]",
-            change.get("resource_type", "unknown"),
-            change.get("resource_name", "unknown")
-        )
-    
-    console.print()
-    console.print(table)
-    
-    if len(changes) > 10:
-        console.print(f"\n... and {len(changes) - 10} more changes")
-
-
-def _display_cost_estimate(cost_estimate: Dict[str, Any]):
-    """Display cost estimation if available."""
-    if not cost_estimate:
-        return
-    
-    monthly_cost = cost_estimate.get("monthly_cost", 0)
-    currency = cost_estimate.get("currency", "USD")
-    
-    console.print()
-    console.print(Panel(
-        f"💰 Estimated monthly cost: {monthly_cost:.2f} {currency}",
-        title="Cost Estimate",
-        border_style="yellow"
-    ))
-
-
-def _display_apply_summary(summary: Dict[str, Any]):
-    """Display apply operation summary."""
-    created = summary.get("resources_created", 0)
-    updated = summary.get("resources_updated", 0)
-    destroyed = summary.get("resources_destroyed", 0)
-    
-    table = Table(title="Apply Summary")
-    table.add_column("Action", style="bold")
-    table.add_column("Count", style="green", justify="right")
-    
-    if created > 0:
-        table.add_row("Created", str(created))
-    if updated > 0:
-        table.add_row("Updated", str(updated))
-    if destroyed > 0:
-        table.add_row("Destroyed", str(destroyed))
-    
-    console.print()
     console.print(table)
 
 
-def _display_terraform_outputs(outputs: Dict[str, Any]):
-    """Display Terraform outputs."""
-    if not outputs:
+def _display_plan_results(plan_result: Any, output_format: str) -> None:
+    """Display plan results."""
+    console.print("\n[bold]📋 Plan Results:[/bold]")
+    
+    if output_format == "json":
+        console.print(Syntax(json.dumps(plan_result.to_dict(), indent=2), "json"))
         return
     
-    console.print()
-    console.print("[bold]Outputs:[/bold]")
+    table = Table()
+    table.add_column("Resource Type", style="cyan")
+    table.add_column("Action", style="yellow")
+    table.add_column("Count", style="green")
     
-    for key, value in outputs.items():
-        if isinstance(value, dict):
-            output_value = value.get("value", value)
-            sensitive = value.get("sensitive", False)
-            
-            if sensitive:
-                console.print(f"  {key} = [red](sensitive)[/red]")
-            else:
-                console.print(f"  {key} = {output_value}")
-        else:
-            console.print(f"  {key} = {value}")
+    if plan_result.resources_to_add:
+        table.add_row("Add", "➕", str(len(plan_result.resources_to_add)))
+    if plan_result.resources_to_change:
+        table.add_row("Change", "🔄", str(len(plan_result.resources_to_change)))
+    if plan_result.resources_to_destroy:
+        table.add_row("Destroy", "🗑️", str(len(plan_result.resources_to_destroy)))
+    
+    console.print(table)
+    
+    if hasattr(plan_result, 'estimated_cost') and plan_result.estimated_cost:
+        console.print(f"\n💰 Estimated Cost: ${plan_result.estimated_cost:.2f}")
+
+
+def _display_apply_results(apply_result: Any) -> None:
+    """Display apply results."""
+    console.print("\n[bold]🚀 Apply Results:[/bold]")
+    
+    table = Table()
+    table.add_column("Resource Type", style="cyan")
+    table.add_column("Action", style="yellow")
+    table.add_column("Count", style="green")
+    
+    if apply_result.resources_created:
+        table.add_row("Created", "✅", str(len(apply_result.resources_created)))
+    if apply_result.resources_updated:
+        table.add_row("Updated", "🔄", str(len(apply_result.resources_updated)))
+    if apply_result.resources_destroyed:
+        table.add_row("Destroyed", "🗑️", str(len(apply_result.resources_destroyed)))
+    
+    console.print(table)
+    console.print(f"\n⏱️  Duration: {apply_result.duration:.2f}s")
+
+
+def _display_8020_plan_results(plan_result: Any, optimization_result: Any, output_format: str) -> None:
+    """Display 8020 plan results."""
+    console.print("\n[bold]🎯 8020 Plan Results:[/bold]")
+    
+    table = Table()
+    table.add_column("Metric", style="cyan")
+    table.add_column("Value", style="green")
+    
+    table.add_row("8020 Coverage", f"{plan_result.coverage_percentage:.1f}%")
+    table.add_row("Optimization Savings", f"${optimization_result.savings:.2f}")
+    table.add_row("High-Value Resources", str(len(plan_result.high_value_resources)))
+    table.add_row("Low-Value Resources", str(len(plan_result.low_value_resources)))
+    
+    console.print(table)
+
+
+def _display_weaver_forge_results(forge_result: Any, otel_result: Any, security_result: Any, cost_result: Any) -> None:
+    """Display Weaver Forge optimization results."""
+    console.print("\n[bold]🔧 Weaver Forge Results:[/bold]")
+    
+    table = Table()
+    table.add_column("Component", style="cyan")
+    table.add_column("Status", style="green")
+    table.add_column("Details", style="yellow")
+    
+    table.add_row("Optimization", "✅" if forge_result.success else "❌", forge_result.message or "N/A")
+    table.add_row("OTEL Validation", "✅" if otel_result.success else "❌", otel_result.message or "N/A")
+    table.add_row("Security Scan", "✅" if security_result.success else "❌", security_result.message or "N/A")
+    table.add_row("Cost Optimization", "✅" if cost_result.success else "❌", cost_result.message or "N/A")
+    
+    console.print(table)

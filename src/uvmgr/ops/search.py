@@ -1100,7 +1100,7 @@ class LogSearchEngine:
             "search_config": config,
         }
     
-    def follow_logs(self, config: Dict[str, Any], callback: Callable[[Dict[str, Any]], None]):
+    def follow_logs(self, config: Dict[str, Any], callback: "Callable[[Dict[str, Any]], None]"):
         """Follow logs in real-time."""
         import time
         import threading
@@ -1770,7 +1770,7 @@ def search_logs(config: Dict[str, Any]) -> Dict[str, Any]:
     return engine.search(config)
 
 
-def follow_logs(config: Dict[str, Any], callback: Callable[[Dict[str, Any]], None]):
+def follow_logs(config: Dict[str, Any], callback: "Callable[[Dict[str, Any]], None]"):
     """Follow logs in real-time."""
     engine = LogSearchEngine()
     engine.follow_logs(config, callback)

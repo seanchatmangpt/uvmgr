@@ -1,7 +1,6 @@
 
 import requests
 
-
 def get_python_org():
     """Simple function that makes HTTP request."""
     try:

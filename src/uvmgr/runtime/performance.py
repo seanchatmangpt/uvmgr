@@ -218,9 +218,7 @@ def profile_function(func: "Callable", *args, duration: int = 10, **kwargs) -> P
                 "profile.calls": profile_result.calls
             })
             
-            metric_histogram("performance.function.duration")(duration, {
-                "function": func.__name__
-            })
+            metric_histogram("performance.function.duration")(duration)
             
             return profile_result
             
@@ -264,8 +262,16 @@ def measure_operation(operation_name: str, operation: "Callable",
         for run in range(measurement_runs):
             # Get initial state
             initial_memory = process.memory_info().rss
-            initial_io = process.io_counters()
-            initial_ctx_switches = process.num_ctx_switches()
+            try:
+                initial_io = process.io_counters()
+            except AttributeError:
+                # io_counters() not available on some systems (e.g., macOS)
+                initial_io = None
+            try:
+                initial_ctx_switches = process.num_ctx_switches()
+            except AttributeError:
+                # num_ctx_switches() not available on some systems
+                initial_ctx_switches = None
             
             start_time = time.time()
             cpu_start = time.process_time()
@@ -279,8 +285,14 @@ def measure_operation(operation_name: str, operation: "Callable",
                 cpu_end = time.process_time()
                 
                 final_memory = process.memory_info().rss
-                final_io = process.io_counters()
-                final_ctx_switches = process.num_ctx_switches()
+                try:
+                    final_io = process.io_counters()
+                except AttributeError:
+                    final_io = None
+                try:
+                    final_ctx_switches = process.num_ctx_switches()
+                except AttributeError:
+                    final_ctx_switches = None
                 
                 # Calculate metrics
                 duration = end_time - start_time
@@ -290,11 +302,20 @@ def measure_operation(operation_name: str, operation: "Callable",
                 memory_delta = final_memory - initial_memory
                 peak_memory = max(initial_memory, final_memory)
                 
-                io_read_delta = final_io.read_bytes - initial_io.read_bytes
-                io_write_delta = final_io.write_bytes - initial_io.write_bytes
+                # Calculate I/O metrics if available
+                if initial_io and final_io:
+                    io_read_delta = final_io.read_bytes - initial_io.read_bytes
+                    io_write_delta = final_io.write_bytes - initial_io.write_bytes
+                else:
+                    io_read_delta = 0
+                    io_write_delta = 0
                 
-                ctx_switch_delta = (final_ctx_switches.voluntary + final_ctx_switches.involuntary) - \
-                                 (initial_ctx_switches.voluntary + initial_ctx_switches.involuntary)
+                # Calculate context switch metrics if available
+                if initial_ctx_switches and final_ctx_switches:
+                    ctx_switch_delta = (final_ctx_switches.voluntary + final_ctx_switches.involuntary) - \
+                                     (initial_ctx_switches.voluntary + initial_ctx_switches.involuntary)
+                else:
+                    ctx_switch_delta = 0
                 
                 durations.append(duration)
                 cpu_usages.append(cpu_usage)
@@ -335,15 +356,9 @@ def measure_operation(operation_name: str, operation: "Callable",
         )
         
         # Record metrics
-        metric_histogram("performance.operation.duration")(avg_duration, {
-            "operation": operation_name
-        })
-        metric_histogram("performance.operation.memory")(avg_memory, {
-            "operation": operation_name
-        })
-        metric_counter("performance.measurements")(1, {
-            "operation": operation_name
-        })
+        metric_histogram("performance.operation.duration")(avg_duration)
+        metric_histogram("performance.operation.memory")(avg_memory)
+        metric_counter("performance.measurements")(1)
         
         add_span_attributes(**{
             "metrics.duration": avg_duration,

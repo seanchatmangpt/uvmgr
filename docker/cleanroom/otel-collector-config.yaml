@@ -1,0 +1,65 @@
+# OpenTelemetry Collector Configuration for DoD Validation
+# ========================================================
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: 'dod-validation'
+          static_configs:
+            - targets: ['localhost:8889']
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+    send_batch_max_size: 2048
+
+  attributes:
+    actions:
+      - key: service.name
+        value: uvmgr-dod-validation
+        action: upsert
+      - key: service.version
+        value: "1.0.0"
+        action: upsert
+      - key: deployment.environment
+        value: cleanroom-docker
+        action: upsert
+
+  memory_limiter:
+    limit_mib: 256
+
+exporters:
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    
+  logging:
+    loglevel: info
+
+  file:
+    path: /tmp/otel-traces.json
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, attributes, batch]
+      exporters: [logging, file]
+    
+    metrics:
+      receivers: [otlp, prometheus]
+      processors: [memory_limiter, attributes, batch]
+      exporters: [prometheus, logging]
+    
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, attributes, batch]
+      exporters: [logging, file]

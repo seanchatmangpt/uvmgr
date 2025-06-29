@@ -48,6 +48,8 @@ class PackageAttributes:
     PACKAGE_OPERATION: Final[str] = "package.operation"  # The type of package operation
     
     OPERATION: Final[str] = "package.operation"  # Alias for PACKAGE_OPERATION
+    
+    DEV_DEPENDENCY: Final[str] = "package.dev_dependency"  # Whether it's a dev dependency
 
 
 # Security operation attributes
@@ -249,25 +251,29 @@ class InfoDesignOperations:
 # Validation helpers
 def validate_attribute(attribute_name: str, attribute_value: str) -> bool:
     """Validate that an attribute name and value are valid semantic conventions."""
-    valid_attributes = {
-        
-        
-        CliAttributes.CLI_COMMAND,
-        
-        CliAttributes.CLI_SUBCOMMAND,
-        
-        CliAttributes.CLI_EXIT_CODE,
-        
-        
-        
-        PackageAttributes.PACKAGE_NAME,
-        
-        PackageAttributes.PACKAGE_VERSION,
-        
-        PackageAttributes.PACKAGE_OPERATION,
-        
-        
-    }
+    # Dynamically collect all attribute constants from all classes
+    valid_attributes = set()
+    
+    # Get all attribute classes
+    attribute_classes = [
+        CliAttributes, PackageAttributes, SecurityAttributes, WorktreeAttributes,
+        RemoteAttributes, GuideAttributes, InfoDesignAttributes, ProcessAttributes,
+        TestAttributes, ToolAttributes, PluginAttributes, BuildAttributes,
+        ProjectAttributes, AIAttributes, CIAttributes, WorkflowAttributes,
+        ReleaseAttributes, UvxAttributes, CacheAttributes, IndexAttributes,
+        SearchAttributes, ServerAttributes, ShellAttributes, McpAttributes,
+        GitHubAttributes, MultiLangAttributes, PerformanceAttributes,
+        ContainerAttributes, CiCdAttributes, AgentAttributes, InfrastructureAttributes
+    ]
+    
+    # Collect all Final string attributes from each class
+    for attr_class in attribute_classes:
+        for attr_name in dir(attr_class):
+            if not attr_name.startswith('_'):  # Skip private/magic methods
+                attr_value = getattr(attr_class, attr_name)
+                if isinstance(attr_value, str):
+                    valid_attributes.add(attr_value)
+    
     return attribute_name in valid_attributes
 
 # Process execution attributes
@@ -810,6 +816,191 @@ class GitHubAttributes:
     WORKFLOW_BRANCH = "github.workflow.branch"
 
 
+# Multi-language project support attributes
+class MultiLangAttributes:
+    """Multi-language project support semantic convention attributes."""
+    OPERATION = "multilang.operation"
+    LANGUAGE = "multilang.language"
+    LANGUAGES_DETECTED = "multilang.languages.detected"
+    PRIMARY_LANGUAGE = "multilang.languages.primary"
+    FILES_TOTAL = "multilang.files.total"
+    LINES_TOTAL = "multilang.lines.total"
+    PACKAGE_MANAGER = "multilang.package_manager"
+    BUILD_TOOL = "multilang.build_tool"
+    DEPENDENCIES_TOTAL = "multilang.dependencies.total"
+    BUILD_SUCCESS = "multilang.build.success"
+    BUILD_DURATION = "multilang.build.duration"
+
+
+class MultiLangOperations:
+    """Multi-language project support operation constants."""
+    DETECT_LANGUAGES = "detect_languages"
+    ANALYZE_DEPENDENCIES = "analyze_dependencies"
+    BUILD = "build"
+    VALIDATE = "validate"
+    INSTALL = "install"
+
+
+# Performance profiling and optimization attributes
+class PerformanceAttributes:
+    """Performance profiling and optimization semantic convention attributes."""
+    OPERATION = "performance.operation"
+    FUNCTION_NAME = "performance.function.name"
+    DURATION = "performance.duration"
+    CPU_USAGE = "performance.cpu.usage"
+    MEMORY_USAGE = "performance.memory.usage"
+    PEAK_MEMORY = "performance.memory.peak"
+    IO_READ = "performance.io.read"
+    IO_WRITE = "performance.io.write"
+    CONTEXT_SWITCHES = "performance.context_switches"
+    BOTTLENECK_CATEGORY = "performance.bottleneck.category"
+    BOTTLENECK_SEVERITY = "performance.bottleneck.severity"
+    OPTIMIZATION_SCORE = "performance.optimization.score"
+
+
+class PerformanceOperations:
+    """Performance profiling and optimization operation constants."""
+    PROFILE = "profile"
+    MEASURE = "measure"
+    BENCHMARK = "benchmark"
+    ANALYZE = "analyze"
+    OPTIMIZE = "optimize"
+
+
+# Container management attributes
+class ContainerAttributes:
+    """Container management semantic convention attributes."""
+    OPERATION = "container.operation"
+    ENGINE = "container.engine"
+    IMAGE = "container.image"
+    TAG = "container.tag"
+    NAME = "container.name"
+    STATUS = "container.status"
+    RUNTIME = "container.runtime"
+    PORT = "container.port"
+    VOLUME = "container.volume"
+
+
+class ContainerOperations:
+    """Container management operation constants."""
+    BUILD = "build"
+    RUN = "run"
+    STOP = "stop"
+    START = "start"
+    REMOVE = "remove"
+    LIST = "list"
+    LOGS = "logs"
+
+
+# CI/CD pipeline attributes
+class CiCdAttributes:
+    """CI/CD pipeline semantic convention attributes."""
+    OPERATION = "cicd.operation"
+    PIPELINE = "cicd.pipeline"
+    STAGE = "cicd.stage"
+    JOB = "cicd.job"
+    STATUS = "cicd.status"
+    DURATION = "cicd.duration"
+    TRIGGER = "cicd.trigger"
+    BRANCH = "cicd.branch"
+    COMMIT = "cicd.commit"
+    PLATFORM = "cicd.platform"
+    WORKFLOW_NAME = "cicd.workflow.name"
+    RUN_ID = "cicd.run.id"
+
+
+class CiCdOperations:
+    """CI/CD pipeline operation constants."""
+    TRIGGER = "trigger"
+    VALIDATE = "validate"
+    BUILD = "build"
+    TEST = "test"
+    DEPLOY = "deploy"
+    MONITOR = "monitor"
+    LIST_RUNS = "list_runs"
+    GET_ARTIFACTS = "get_artifacts"
+    GET_DEPLOYMENTS = "get_deployments"
+    CREATE_WORKFLOW = "create_workflow"
+
+
+# Agent guides attributes
+class AgentAttributes:
+    """Agent guides semantic convention attributes."""
+    OPERATION = "agent.operation"
+    GUIDE_NAME = "agent.guide.name"
+    VERSION = "agent.guide.version"
+    COMMAND = "agent.command"
+    SOURCE = "agent.source"
+    STATUS = "agent.status"
+    ANALYSIS_TOPIC = "agent.analysis.topic"
+    SPECIALISTS = "agent.specialists"
+
+
+class AgentOperations:
+    """Agent guides operation constants."""
+    INSTALL = "install"
+    LIST = "list"
+    CREATE = "create"
+    VALIDATE = "validate"
+    STATUS = "status"
+    ANALYZE = "analyze"
+    SEARCH = "search"
+
+
+# Infrastructure operation attributes
+class InfrastructureAttributes:
+    """Infrastructure operation attributes for Terraform and IaC."""
+    
+    OPERATION: Final[str] = "infrastructure.operation"  # Infrastructure operation type
+    
+    PROVIDER: Final[str] = "infrastructure.provider"  # Cloud provider (aws, azure, gcp)
+    
+    ENABLE_8020: Final[str] = "infrastructure.enable_8020"  # Whether 8020 patterns are enabled
+    
+    WEAVER_FORGE: Final[str] = "infrastructure.weaver_forge"  # Whether Weaver Forge is enabled
+    
+    OTEL_VALIDATION: Final[str] = "infrastructure.otel_validation"  # Whether OTEL validation is enabled
+    
+    AUTO_APPROVE: Final[str] = "infrastructure.auto_approve"  # Whether auto-approval is enabled
+    
+    SECURITY_VALIDATION: Final[str] = "infrastructure.security_validation"  # Whether security validation is enabled
+    
+    COST_ANALYSIS: Final[str] = "infrastructure.cost_analysis"  # Whether cost analysis is enabled
+    
+    SECURITY_SCAN: Final[str] = "infrastructure.security_scan"  # Whether security scanning is enabled
+    
+    OPTIMIZE: Final[str] = "infrastructure.optimize"  # Whether optimization is enabled
+    
+    COST_OPTIMIZE: Final[str] = "infrastructure.cost_optimize"  # Whether cost optimization is enabled
+    
+    FOCUS_AREAS: Final[str] = "infrastructure.focus_areas"  # Focus areas for 8020 optimization
+    
+    COST_THRESHOLD: Final[str] = "infrastructure.cost_threshold"  # Cost threshold for optimization
+
+
+# Infrastructure operation values
+class InfrastructureOperations:
+    """Standard infrastructure operation values."""
+    
+    INIT: Final[str] = "init"  # Initialize infrastructure workspace
+    
+    PLAN: Final[str] = "plan"  # Generate infrastructure plan
+    
+    APPLY: Final[str] = "apply"  # Apply infrastructure changes
+    
+    DESTROY: Final[str] = "destroy"  # Destroy infrastructure
+    
+    VALIDATE: Final[str] = "validate"  # Validate infrastructure configuration
+    
+    OPTIMIZE: Final[str] = "optimize"  # Optimize infrastructure
+    
+    SECURITY_SCAN: Final[str] = "security_scan"  # Security scanning
+    
+    COST_ANALYSIS: Final[str] = "cost_analysis"  # Cost analysis
+    
+    OTEL_VALIDATE: Final[str] = "otel_validate"  # OTEL validation
+
+
 # Export all classes for convenient importing
 __all__ = [
     "CliAttributes",
@@ -849,4 +1040,16 @@ __all__ = [
     "InfoDesignOperations",
     "validate_attribute",
     "GitHubAttributes",
+    "MultiLangAttributes",
+    "MultiLangOperations",
+    "PerformanceAttributes",
+    "PerformanceOperations",
+    "ContainerAttributes",
+    "ContainerOperations",
+    "CiCdAttributes",
+    "CiCdOperations",
+    "AgentAttributes",
+    "AgentOperations",
+    "InfrastructureAttributes",
+    "InfrastructureOperations",
 ]

@@ -41,10 +41,16 @@ from collections.abc import Callable
 from functools import wraps
 from typing import Any
 
-import typer
-
 from .semconv import CliAttributes
 from .telemetry import metric_counter, record_exception, span
+
+# Import typer only when needed to avoid circular dependencies
+try:
+    import typer
+    TYPER_AVAILABLE = True
+except ImportError:
+    TYPER_AVAILABLE = False
+    typer = None
 
 # Try to import OTEL components for type checking and constants
 try:
@@ -199,36 +205,37 @@ def instrument_command(
 
                     return result
 
-                except typer.Exit as e:
-                    # Normal exit (like --help)
-                    exit_code = e.exit_code
-                    if exit_code == 0:
-                        current_span.set_status(Status(StatusCode.OK))
-                    else:
-                        current_span.set_status(
-                            Status(StatusCode.ERROR, f"Exit code: {exit_code}")
-                        )
-                    current_span.set_attribute(CliAttributes.EXIT_CODE, exit_code)
-                    raise
-
                 except Exception as e:
-                    # Error - record exception and set error status
-                    record_exception(e, escaped=True)
-                    current_span.set_status(
-                        Status(StatusCode.ERROR, str(e))
-                    )
-                    current_span.add_event(
-                        "command.failed",
-                        {
-                            CliAttributes.COMMAND: command_name,
-                            "cli.success": False,
-                            "exception.type": type(e).__name__,
-                        }
-                    )
+                    # Handle typer.Exit if available, otherwise treat as general exception
+                    if TYPER_AVAILABLE and typer and isinstance(e, typer.Exit):
+                        # Normal exit (like --help)
+                        exit_code = e.exit_code
+                        if exit_code == 0:
+                            current_span.set_status(Status(StatusCode.OK))
+                        else:
+                            current_span.set_status(
+                                Status(StatusCode.ERROR, f"Exit code: {exit_code}")
+                            )
+                        current_span.set_attribute(CliAttributes.EXIT_CODE, exit_code)
+                        raise
+                    else:
+                        # Error - record exception and set error status
+                        record_exception(e, escaped=True)
+                        current_span.set_status(
+                            Status(StatusCode.ERROR, str(e))
+                        )
+                        current_span.add_event(
+                            "command.failed",
+                            {
+                                CliAttributes.COMMAND: command_name,
+                                "cli.success": False,
+                                "exception.type": type(e).__name__,
+                            }
+                        )
 
-                    # Increment error counter
-                    metric_counter(f"cli.command.{command_name}.errors")(1)
-                    raise
+                        # Increment error counter
+                        metric_counter(f"cli.command.{command_name}.errors")(1)
+                        raise
 
         return wrapper
     return decorator

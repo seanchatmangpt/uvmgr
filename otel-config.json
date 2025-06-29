@@ -1,0 +1,9 @@
+{
+  "service_name": "terraform-infrastructure",
+  "endpoint": "http://localhost:4318",
+  "instrumentation": [
+    "terraform",
+    "aws",
+    "security"
+  ]
+}

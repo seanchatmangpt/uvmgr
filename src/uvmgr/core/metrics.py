@@ -118,11 +118,11 @@ class BaseMetrics:
         attrs["operation"] = operation
         attrs["success"] = str(success)
 
-        self.operation_counter(1, **attrs)
-        self.duration_histogram(duration, **attrs)
+        self.operation_counter(1)
+        self.duration_histogram(duration)
 
         if not success:
-            self.error_counter(1, **attrs)
+            self.error_counter(1)
 
 
 class PackageMetrics(BaseMetrics):
@@ -151,23 +151,23 @@ class PackageMetrics(BaseMetrics):
         """Record package-specific metrics."""
         attributes = {
             PackageAttributes.OPERATION: operation,
-            PackageAttributes.NAME: package_name,
+            PackageAttributes.PACKAGE_NAME: package_name,
             PackageAttributes.DEV_DEPENDENCY: str(dev),
         }
 
         if version:
-            attributes[PackageAttributes.VERSION] = version
+            attributes[PackageAttributes.PACKAGE_VERSION] = version
 
         self.record_operation(operation, duration, success, attributes)
 
         # Update specific counters
         if success:
             if operation == "add":
-                self.packages_added(1, **attributes)
+                self.packages_added(1)
             elif operation == "remove":
-                self.packages_removed(1, **attributes)
+                self.packages_removed(1)
             elif operation == "update":
-                self.packages_updated(1, **attributes)
+                self.packages_updated(1)
 
     def record_add(self, package_name: str, version: str | None, dev: bool, result: OperationResult):
         """Record package add operation."""

@@ -164,7 +164,7 @@ def markdown(md: str) -> None:
     _console.print(Markdown(md))
 
 
-def timed(fn: Callable[..., Any]) -> Callable[..., Any]:
+def timed(fn: "Callable[..., Any]") -> "Callable[..., Any]":
     """
     Decorator: run *fn*, then print "✔ fn_name 1.23s" in green.
 

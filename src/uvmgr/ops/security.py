@@ -63,10 +63,7 @@ def run_comprehensive_scan(
             "scan.categories_scanned": len(results)
         })
         
-        metric_counter("security.scans_completed")(1, {
-            "severity_threshold": severity_threshold,
-            "total_issues": str(total_issues)
-        })
+        metric_counter("security.scans_completed")(1)
     
     return results
 

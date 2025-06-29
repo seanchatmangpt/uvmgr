@@ -376,7 +376,7 @@ class HallucinationDetector:
             # Check field values
             if "status" in data and data["status"] not in pattern["status_values"]:
                 issues.append(f"Invalid status value: {data['status']}")
-                confidence -= 0.3
+                confidence -= 0.6  # More severe penalty for invalid status
             
             if "conclusion" in data and data["conclusion"] not in pattern["conclusion_values"]:
                 issues.append(f"Invalid conclusion value: {data['conclusion']}")
@@ -406,18 +406,18 @@ class HallucinationDetector:
                     for pattern in self.suspicious_patterns:
                         if pattern.lower() in value.lower():
                             issues.append(f"Suspicious pattern in {field}: {pattern}")
-                            confidence -= 0.4
+                            confidence -= 0.6  # More severe penalty for suspicious patterns
             
             # Timestamp validation
             if "created_at" in data:
                 if not self._is_valid_timestamp(data["created_at"]):
                     issues.append("Invalid created_at timestamp")
-                    confidence -= 0.3
+                    confidence -= 0.6  # More severe penalty for invalid timestamps
             
             if "updated_at" in data:
                 if not self._is_valid_timestamp(data["updated_at"]):
                     issues.append("Invalid updated_at timestamp")
-                    confidence -= 0.3
+                    confidence -= 0.6  # More severe penalty for invalid timestamps
             
             # URL validation
             if "html_url" in data:

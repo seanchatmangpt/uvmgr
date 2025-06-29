@@ -100,7 +100,7 @@ def multi_mind_analysis(
     rounds: int = 3,
     specialists: Optional[List[str]] = None,
     enable_web_search: bool = True,
-    progress_callback: Optional[Callable[[int, str], None]] = None,
+    progress_callback: "Optional[Callable[[int, str], None]]" = None,
 ) -> Dict[str, Any]:
     """
     Execute multi-specialist collaborative analysis.

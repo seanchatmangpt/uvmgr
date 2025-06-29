@@ -62,7 +62,7 @@ from .shell import progress_bar
 T = TypeVar("T")
 
 
-def run_wave(funcs: Iterable[Callable[[], T]]) -> list[T]:
+def run_wave(funcs: Iterable["Callable[[], T]"]) -> list[T]:
     funcs = list(funcs)
     with ThreadPoolExecutor() as pool, progress_bar(len(funcs)) as tick:
         futures = [pool.submit(f) for f in funcs]

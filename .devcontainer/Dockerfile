@@ -1,23 +1,26 @@
 FROM mcr.microsoft.com/devcontainers/python:3.12
 
-# Install system dependencies
+# Install system dependencies for exponential capabilities testing
 RUN apt-get update && apt-get install -y \
     curl \
     git \
     build-essential \
     sudo \
+    jq \
+    wget \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
 
 # Install UV package manager as root first
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-ENV PATH="/root/.cargo/bin:$PATH"
+ENV PATH="/root/.local/bin:$PATH"
 
 # Use existing vscode user from base image
 USER vscode
 
 # Install UV for the user
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-ENV PATH="/home/vscode/.cargo/bin:$PATH"
+ENV PATH="/home/vscode/.local/bin:$PATH"
 
 # Set up workspace
 WORKDIR /workspace
