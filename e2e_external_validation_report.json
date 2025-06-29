@@ -1,0 +1,330 @@
+{
+  "timestamp": "2025-06-28T20:39:02.776912",
+  "uvmgr_path": "/Users/sac/dev/uvmgr",
+  "python_version": "3.13.0 (main, Oct 16 2024, 08:05:40) [Clang 18.1.8 ]",
+  "test_results": [
+    {
+      "project_type": "minimal",
+      "project_path": "/Users/sac/.cache/tmp/tmpdrn1_wd6/test-minimal",
+      "steps": [
+        {
+          "name": "Create virtual environment",
+          "command": [
+            "uv",
+            "venv"
+          ],
+          "success": true,
+          "duration": 0.012224912643432617,
+          "error": null
+        },
+        {
+          "name": "Install project",
+          "command": [
+            "uv",
+            "pip",
+            "install",
+            "-e",
+            "."
+          ],
+          "success": true,
+          "duration": 0.2862539291381836,
+          "error": null
+        },
+        {
+          "name": "Add dependency",
+          "command": [
+            "deps",
+            "add",
+            "httpx"
+          ],
+          "success": true,
+          "duration": 0.6350100040435791,
+          "error": null
+        },
+        {
+          "name": "List dependencies",
+          "command": [
+            "deps",
+            "list"
+          ],
+          "success": true,
+          "duration": 0.30513882637023926,
+          "error": null
+        },
+        {
+          "name": "Run tests",
+          "command": [
+            "tests",
+            "run"
+          ],
+          "success": true,
+          "duration": 0.4532582759857178,
+          "error": null
+        },
+        {
+          "name": "Check code quality",
+          "command": [
+            "lint",
+            "check",
+            "--help"
+          ],
+          "success": true,
+          "duration": 0.26278090476989746,
+          "error": null
+        },
+        {
+          "name": "Build distribution",
+          "command": [
+            "build",
+            "wheel"
+          ],
+          "success": true,
+          "duration": 3.5209991931915283,
+          "error": null
+        },
+        {
+          "name": "Build source dist",
+          "command": [
+            "build",
+            "sdist"
+          ],
+          "success": true,
+          "duration": 3.4815380573272705,
+          "error": null
+        }
+      ],
+      "success_rate": 1.0,
+      "summary": "8/8 steps passed"
+    },
+    {
+      "project_type": "library",
+      "project_path": "/Users/sac/.cache/tmp/tmpa31yfpow/test-library",
+      "steps": [
+        {
+          "name": "Create virtual environment",
+          "command": [
+            "uv",
+            "venv"
+          ],
+          "success": true,
+          "duration": 0.010491132736206055,
+          "error": null
+        },
+        {
+          "name": "Install project",
+          "command": [
+            "uv",
+            "pip",
+            "install",
+            "-e",
+            "."
+          ],
+          "success": true,
+          "duration": 0.26265597343444824,
+          "error": null
+        },
+        {
+          "name": "Add dependency",
+          "command": [
+            "deps",
+            "add",
+            "httpx"
+          ],
+          "success": true,
+          "duration": 0.5722670555114746,
+          "error": null
+        },
+        {
+          "name": "List dependencies",
+          "command": [
+            "deps",
+            "list"
+          ],
+          "success": true,
+          "duration": 0.3189990520477295,
+          "error": null
+        },
+        {
+          "name": "Run tests",
+          "command": [
+            "tests",
+            "run"
+          ],
+          "success": true,
+          "duration": 0.47919178009033203,
+          "error": null
+        },
+        {
+          "name": "Check code quality",
+          "command": [
+            "lint",
+            "check",
+            "--help"
+          ],
+          "success": true,
+          "duration": 0.2755448818206787,
+          "error": null
+        },
+        {
+          "name": "Build distribution",
+          "command": [
+            "build",
+            "wheel"
+          ],
+          "success": true,
+          "duration": 3.3840959072113037,
+          "error": null
+        },
+        {
+          "name": "Build source dist",
+          "command": [
+            "build",
+            "sdist"
+          ],
+          "success": true,
+          "duration": 3.8052940368652344,
+          "error": null
+        }
+      ],
+      "success_rate": 1.0,
+      "summary": "8/8 steps passed"
+    },
+    {
+      "project_type": "application",
+      "project_path": "/Users/sac/.cache/tmp/tmpyh5cccqy/test-application",
+      "steps": [
+        {
+          "name": "Create virtual environment",
+          "command": [
+            "uv",
+            "venv"
+          ],
+          "success": true,
+          "duration": 0.011779069900512695,
+          "error": null
+        },
+        {
+          "name": "Install project",
+          "command": [
+            "uv",
+            "pip",
+            "install",
+            "-e",
+            "."
+          ],
+          "success": true,
+          "duration": 0.26131510734558105,
+          "error": null
+        },
+        {
+          "name": "Add dependency",
+          "command": [
+            "deps",
+            "add",
+            "httpx"
+          ],
+          "success": true,
+          "duration": 0.7174468040466309,
+          "error": null
+        },
+        {
+          "name": "List dependencies",
+          "command": [
+            "deps",
+            "list"
+          ],
+          "success": true,
+          "duration": 0.305034875869751,
+          "error": null
+        },
+        {
+          "name": "Run tests",
+          "command": [
+            "tests",
+            "run"
+          ],
+          "success": true,
+          "duration": 0.48053598403930664,
+          "error": null
+        },
+        {
+          "name": "Check code quality",
+          "command": [
+            "lint",
+            "check",
+            "--help"
+          ],
+          "success": true,
+          "duration": 0.2793920040130615,
+          "error": null
+        },
+        {
+          "name": "Build distribution",
+          "command": [
+            "build",
+            "wheel"
+          ],
+          "success": true,
+          "duration": 3.3131210803985596,
+          "error": null
+        },
+        {
+          "name": "Build source dist",
+          "command": [
+            "build",
+            "sdist"
+          ],
+          "success": true,
+          "duration": 3.487311840057373,
+          "error": null
+        },
+        {
+          "name": "Create executable",
+          "command": [
+            "build",
+            "exe",
+            "--help"
+          ],
+          "success": true,
+          "duration": 0.33724379539489746,
+          "error": null
+        }
+      ],
+      "success_rate": 1.0,
+      "summary": "9/9 steps passed"
+    },
+    {
+      "feature": "advanced",
+      "tests": [
+        {
+          "name": "OTEL Validation",
+          "success": true,
+          "details": "All OTEL features working"
+        },
+        {
+          "name": "Mermaid Validation",
+          "success": true,
+          "details": "Diagram validation working"
+        },
+        {
+          "name": "Guide Catalog",
+          "success": true,
+          "details": "Guide system operational"
+        },
+        {
+          "name": "Worktree Management",
+          "success": false,
+          "details": ""
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "total_tests": 29,
+    "passed_tests": 28,
+    "success_rate": 0.9655172413793104,
+    "project_types_tested": 3,
+    "all_lifecycles_pass": true,
+    "advanced_features_pass": false
+  }
+}

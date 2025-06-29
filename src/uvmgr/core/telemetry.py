@@ -142,8 +142,8 @@ try:
         kwargs = {"attributes": attrs}
         if span_kind is not None:
             kwargs["kind"] = span_kind
-        with _TRACER.start_as_current_span(name, **kwargs):
-            yield
+        with _TRACER.start_as_current_span(name, **kwargs) as current_span:
+            yield current_span
 
     def metric_counter(name: str) -> "Callable[[int], None]":
         return _METER.create_counter(name).add
@@ -338,7 +338,13 @@ except ImportError:  # SDK not installed – degrade gracefully
 
     @contextmanager
     def span(name: str, span_kind=None, **attrs: Any):  # type: ignore[arg-type]
-        yield
+        class _NoopSpan:
+            def is_recording(self): return False
+            def set_status(self, *args, **kwargs): pass
+            def set_attribute(self, *args, **kwargs): pass
+            def set_attributes(self, *args, **kwargs): pass
+            def add_event(self, *args, **kwargs): pass
+        yield _NoopSpan()
 
     def metric_counter(name: str):  # type: ignore[return-value]
         def _noop(_=1, **__): ...
