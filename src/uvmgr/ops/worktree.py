@@ -34,7 +34,7 @@ def create_worktree(
     from uvmgr.runtime import worktree as _rt
     
     with span("worktree.create", branch=branch, isolated=isolated):
-        add_span_attributes({
+        add_span_attributes(**{
             "worktree.branch": branch,
             "worktree.isolated": isolated,
             "worktree.track_remote": track_remote,
@@ -69,7 +69,7 @@ def list_worktrees(verbose: bool = False, status: bool = False) -> List[Dict[str
     from uvmgr.runtime import worktree as _rt
     
     with span("worktree.list"):
-        add_span_attributes({
+        add_span_attributes(**{
             "worktree.verbose": verbose,
             "worktree.show_status": status,
         })
@@ -77,7 +77,7 @@ def list_worktrees(verbose: bool = False, status: bool = False) -> List[Dict[str
         try:
             worktrees = _rt.list_worktrees(verbose=verbose, status=status)
             
-            add_span_attributes({"worktree.count": len(worktrees)})
+            add_span_attributes(**{"worktree.count": len(worktrees)})
             
             return worktrees
             
@@ -96,7 +96,7 @@ def remove_worktree(
     from uvmgr.runtime import worktree as _rt
     
     with span("worktree.remove", path=str(path)):
-        add_span_attributes({
+        add_span_attributes(**{
             "worktree.path": str(path),
             "worktree.force": force,
             "worktree.cleanup_env": cleanup_env,
@@ -130,7 +130,7 @@ def switch_to_worktree(
     from uvmgr.runtime import worktree as _rt
     
     with span("worktree.switch", path=str(path)):
-        add_span_attributes({
+        add_span_attributes(**{
             "worktree.path": str(path),
             "worktree.activate_env": activate_env,
         })
@@ -166,7 +166,7 @@ def create_isolated_environment(
     from uvmgr.runtime import worktree as _rt
     
     with span("worktree.isolate", project_path=str(project_path)):
-        add_span_attributes({
+        add_span_attributes(**{
             "worktree.project_path": str(project_path),
             "worktree.branch": branch or "main",
             "worktree.install_uvmgr": install_uvmgr,
@@ -206,7 +206,7 @@ def cleanup_worktrees(
     from uvmgr.runtime import worktree as _rt
     
     with span("worktree.cleanup"):
-        add_span_attributes({
+        add_span_attributes(**{
             "worktree.dry_run": dry_run,
             "worktree.force": force,
             "worktree.max_age_days": max_age_days,
@@ -243,7 +243,7 @@ def get_worktree_status(
     from uvmgr.runtime import worktree as _rt
     
     with span("worktree.status"):
-        add_span_attributes({
+        add_span_attributes(**{
             "worktree.path": str(path) if path else "all",
             "worktree.detailed": detailed,
         })
@@ -251,7 +251,7 @@ def get_worktree_status(
         try:
             result = _rt.get_worktree_status(path=path, detailed=detailed)
             
-            add_span_attributes({
+            add_span_attributes(**{
                 "worktree.total_count": result.get("total_count", 0),
                 "worktree.isolated_count": result.get("isolated_count", 0),
             })

@@ -49,23 +49,37 @@ def create_worktree(
             if path.exists() and not force:
                 raise WorktreeError(f"Worktree path already exists: {path}")
             
+            # Check if branch exists, create if it doesn't
+            try:
+                run(["git", "show-ref", "--verify", "--quiet", f"refs/heads/{branch}"], 
+                    capture=True, cwd=_get_git_root())
+                branch_exists = True
+            except subprocess.CalledProcessError:
+                branch_exists = False
+            
+            if not branch_exists:
+                # Create the branch first
+                add_span_event("git.branch.create", {"branch": branch})
+                run(["git", "checkout", "-b", branch], capture=True, cwd=_get_git_root())
+            
             # Create Git worktree
             git_cmd = ["git", "worktree", "add"]
             
             if force:
                 git_cmd.append("--force")
             
-            if track_remote:
+            # Don't use -b if branch already exists
+            if track_remote and not branch_exists:
                 git_cmd.extend(["-b", branch])
             
             git_cmd.extend([str(path), branch])
             
             add_span_event("git.worktree.create", {"command": " ".join(git_cmd)})
             
-            result = run(git_cmd, cwd=_get_git_root())
+            output = run(git_cmd, capture=True, cwd=_get_git_root())
             
-            if result.returncode != 0:
-                raise WorktreeError(f"Failed to create worktree: {result.stderr}")
+            if output is None:
+                raise WorktreeError("Failed to create worktree: Command failed")
             
             # Set up isolated environment if requested
             env_path = None
@@ -105,16 +119,16 @@ def list_worktrees(verbose: bool = False, status: bool = False) -> List[Dict[str
     with span("runtime.worktree.list"):
         try:
             # Get Git worktrees
-            result = run(["git", "worktree", "list", "--porcelain"], cwd=_get_git_root())
+            output = run(["git", "worktree", "list", "--porcelain"], capture=True, cwd=_get_git_root())
             
-            if result.returncode != 0:
-                raise WorktreeError(f"Failed to list worktrees: {result.stderr}")
+            if output is None:
+                raise WorktreeError("Failed to list worktrees: No output received")
             
             # Parse Git worktree output
             worktrees = []
             current_wt = {}
             
-            for line in result.stdout.split('\n'):
+            for line in output.split('\n'):
                 line = line.strip()
                 if not line:
                     if current_wt:
@@ -200,10 +214,10 @@ def remove_worktree(
             
             add_span_event("git.worktree.remove", {"command": " ".join(git_cmd)})
             
-            result = run(git_cmd, cwd=_get_git_root())
+            output = run(git_cmd, capture=True, cwd=_get_git_root())
             
-            if result.returncode != 0:
-                raise WorktreeError(f"Failed to remove worktree: {result.stderr}")
+            if output is None:
+                raise WorktreeError("Failed to remove worktree: Command failed")
             
             # Clean up environment if exists and requested
             env_removed = False
@@ -495,9 +509,9 @@ def get_worktree_status(
 def _get_git_root() -> Path:
     """Get the root directory of the current Git repository."""
     try:
-        result = run(["git", "rev-parse", "--show-toplevel"])
-        if result.returncode == 0:
-            return Path(result.stdout.strip())
+        output = run(["git", "rev-parse", "--show-toplevel"], capture=True)
+        if output is not None:
+            return Path(output.strip())
         else:
             raise WorktreeError("Not in a Git repository")
     except subprocess.CalledProcessError:
@@ -518,14 +532,14 @@ def _setup_isolated_environment(path: Path) -> tuple[Optional[Path], bool]:
             shutil.rmtree(env_path)
         
         # Create virtual environment using uv
-        result = run(["uv", "venv", str(env_path)])
+        output = run(["uv", "venv", str(env_path)], capture=True)
         
-        if result.returncode == 0:
+        if output is not None:
             return env_path, True
         else:
             # Fall back to python -m venv
-            result = run(["python", "-m", "venv", str(env_path)])
-            return (env_path, True) if result.returncode == 0 else (None, False)
+            output = run(["python", "-m", "venv", str(env_path)], capture=True)
+            return (env_path, True) if output is not None else (None, False)
             
     except Exception:
         return None, False
@@ -534,10 +548,10 @@ def _setup_isolated_environment(path: Path) -> tuple[Optional[Path], bool]:
 def _get_worktree_git_status(path: Path) -> Dict[str, Any]:
     """Get Git status for a worktree."""
     try:
-        result = run(["git", "status", "--porcelain"], cwd=path)
+        output = run(["git", "status", "--porcelain"], capture=True, cwd=path)
         
-        if result.returncode == 0:
-            lines = [line for line in result.stdout.split('\n') if line.strip()]
+        if output is not None:
+            lines = [line for line in output.split('\n') if line.strip()]
             status = "clean" if not lines else "dirty"
             return {
                 "status": status,
@@ -553,8 +567,8 @@ def _get_worktree_git_status(path: Path) -> Dict[str, Any]:
 def _get_last_commit(path: Path) -> str:
     """Get the last commit message for a worktree."""
     try:
-        result = run(["git", "log", "-1", "--pretty=format:%h %s"], cwd=path)
-        return result.stdout.strip() if result.returncode == 0 else ""
+        output = run(["git", "log", "-1", "--pretty=format:%h %s"], capture=True, cwd=path)
+        return output.strip() if output is not None else ""
     except Exception:
         return ""
 
@@ -562,8 +576,8 @@ def _get_last_commit(path: Path) -> str:
 def _get_current_branch(path: Path) -> str:
     """Get the current branch for a worktree."""
     try:
-        result = run(["git", "branch", "--show-current"], cwd=path)
-        return result.stdout.strip() if result.returncode == 0 else "unknown"
+        output = run(["git", "branch", "--show-current"], capture=True, cwd=path)
+        return output.strip() if output is not None else "unknown"
     except Exception:
         return "unknown"
 
@@ -575,8 +589,8 @@ def _detect_default_branch(path: Path) -> str:
     
     for branch in default_branches:
         try:
-            result = run(["git", "show-ref", "--verify", f"refs/heads/{branch}"], cwd=path)
-            if result.returncode == 0:
+            output = run(["git", "show-ref", "--verify", f"refs/heads/{branch}"], capture=True, cwd=path)
+            if output is not None:
                 return branch
         except Exception:
             continue
@@ -596,8 +610,8 @@ def _setup_git_in_isolated_env(path: Path, branch: str) -> None:
         run(["git", "checkout", "-B", branch], cwd=path)
         
         # Set up basic Git config if needed
-        result = run(["git", "config", "user.email"], cwd=path)
-        if result.returncode != 0:
+        output = run(["git", "config", "user.email"], capture=True, cwd=path)
+        if output is None:
             run(["git", "config", "user.email", "uvmgr@isolated.local"], cwd=path)
             run(["git", "config", "user.name", "uvmgr-isolated"], cwd=path)
         
@@ -615,8 +629,8 @@ def _install_uvmgr_in_env(env_path: Path) -> bool:
         
         if pip_path.exists():
             # Try to install uvmgr from PyPI
-            result = run([str(pip_path), "install", "uvmgr"])
-            return result.returncode == 0
+            output = run([str(pip_path), "install", "uvmgr"], capture=True)
+            return output is not None
         
         return False
         
@@ -646,15 +660,15 @@ def _sync_project_dependencies(project_path: Path, env_path: Path) -> bool:
             dep_path = project_path / dep_file
             if dep_path.exists():
                 if dep_file == "requirements.txt":
-                    result = run([str(pip_path), "install", "-r", str(dep_path)])
+                    output = run([str(pip_path), "install", "-r", str(dep_path)], capture=True)
                 elif dep_file == "pyproject.toml":
-                    result = run([str(pip_path), "install", "-e", str(project_path)])
+                    output = run([str(pip_path), "install", "-e", str(project_path)], capture=True)
                 elif dep_file == "setup.py":
-                    result = run([str(pip_path), "install", "-e", str(project_path)])
+                    output = run([str(pip_path), "install", "-e", str(project_path)], capture=True)
                 else:
                     continue
                 
-                return result.returncode == 0
+                return output is not None
         
         return False
         
@@ -668,10 +682,10 @@ def _is_valid_worktree(path: Path) -> bool:
         if not path.exists():
             return False
         
-        result = run(["git", "worktree", "list"], cwd=_get_git_root())
-        if result.returncode == 0:
+        output = run(["git", "worktree", "list"], capture=True, cwd=_get_git_root())
+        if output is not None:
             worktree_paths = []
-            for line in result.stdout.split('\n'):
+            for line in output.split('\n'):
                 if line.strip():
                     # Extract path from worktree list output
                     parts = line.split()

@@ -138,7 +138,7 @@ def list_worktrees(
         
         worktrees = worktree_ops.list_worktrees(verbose=verbose, status=status)
         
-        add_span_attributes({"worktree.count": len(worktrees)})
+        add_span_attributes(**{"worktree.count": len(worktrees)})
         
         if not worktrees:
             console.print("[yellow]No worktrees found[/yellow]")
@@ -440,7 +440,7 @@ def status(
         
         result = worktree_ops.get_worktree_status(path=path, detailed=detailed)
         
-        add_span_attributes({
+        add_span_attributes(**{
             "worktree.total_count": result.get("total_count", 0),
             "worktree.isolated_count": result.get("isolated_count", 0),
         })

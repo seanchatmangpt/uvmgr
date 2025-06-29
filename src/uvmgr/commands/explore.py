@@ -71,7 +71,7 @@ def main(
     if user_level:
         context.user_level = user_level
     
-    add_span_attributes({
+    add_span_attributes(**{
         CliAttributes.COMMAND: "explore_interactive",
         "project_type": context.project_type,
         "user_level": context.user_level,
@@ -167,7 +167,7 @@ def show_suggestions(
     
     suggestions = suggestions[:limit]
     
-    add_span_attributes({
+    add_span_attributes(**{
         CliAttributes.COMMAND: "explore_suggest",
         "query": query or "",
         "category": category or "all",
@@ -224,7 +224,7 @@ def show_workflows(
     if category:
         workflows = [w for w in workflows if w.category == category]
     
-    add_span_attributes({
+    add_span_attributes(**{
         CliAttributes.COMMAND: "explore_workflows",
         "difficulty_filter": difficulty or "all",
         "category_filter": category or "all",
@@ -283,7 +283,7 @@ def show_guide(
             console.print(f"   • {w.name}")
         raise typer.Exit(1)
     
-    add_span_attributes({
+    add_span_attributes(**{
         CliAttributes.COMMAND: "explore_guide",
         "workflow_name": workflow_name,
         "interactive_run": str(run)
@@ -363,7 +363,7 @@ def search_commands(
             for s in suggestions
         ]
     
-    add_span_attributes({
+    add_span_attributes(**{
         CliAttributes.COMMAND: "explore_search",
         "query": query,
         "fuzzy_search": str(fuzzy),

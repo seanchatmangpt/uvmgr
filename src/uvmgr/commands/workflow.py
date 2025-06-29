@@ -59,7 +59,7 @@ def list_templates(
     if tag:
         templates = [t for t in templates if tag in t.tags]
     
-    add_span_attributes({
+    add_span_attributes(**{
         WorkflowAttributes.OPERATION: "list_templates",
         "templates_count": str(len(templates)),
         "filter_tag": tag or "none"
@@ -126,7 +126,7 @@ def run_workflow(
                 typer.echo(f"❌ Invalid parameter format: {param} (expected key=value)")
                 raise typer.Exit(1)
     
-    add_span_attributes({
+    add_span_attributes(**{
         WorkflowAttributes.OPERATION: WorkflowOperations.RUN,
         WorkflowAttributes.DEFINITION_NAME: template_name,
         "parameters_count": str(len(workflow_params)),
@@ -188,7 +188,7 @@ def show_status(
         typer.echo(f"❌ Workflow execution '{workflow_id}' not found")
         raise typer.Exit(1)
     
-    add_span_attributes({
+    add_span_attributes(**{
         WorkflowAttributes.OPERATION: "status",
         "workflow_id": workflow_id,
         "detailed": str(detailed)
@@ -241,7 +241,7 @@ def list_executions(
     # Sort by start time (newest first) and limit
     executions = sorted(executions, key=lambda x: x.start_time or 0, reverse=True)[:limit]
     
-    add_span_attributes({
+    add_span_attributes(**{
         WorkflowAttributes.OPERATION: "list_executions",
         "executions_count": str(len(executions)),
         "status_filter": status_filter or "none"
@@ -316,7 +316,7 @@ def create_workflow(
             typer.echo(f"❌ Base template '{from_template}' not found")
             raise typer.Exit(1)
     
-    add_span_attributes({
+    add_span_attributes(**{
         WorkflowAttributes.OPERATION: "create",
         WorkflowAttributes.DEFINITION_NAME: name,
         "base_template": from_template or "none"

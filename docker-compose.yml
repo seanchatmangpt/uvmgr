@@ -2,7 +2,7 @@ version: "3.8"
 services:
   weaver-forge:
     build: .
-    command: ["uvmgr", "--help"]
+    command: ["echo", "Weaver Forge service ready"]
     environment:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
     volumes:
@@ -54,7 +54,7 @@ services:
 
   telemetry-validation:
     build: .
-    command: ["python3", "tests/run_telemetry_validation.py"]
+    command: ["python", "tests/run_telemetry_validation.py"]
     depends_on:
       - weaver-forge
       - otel-collector

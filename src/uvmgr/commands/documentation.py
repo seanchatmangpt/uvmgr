@@ -157,7 +157,7 @@ def generate_documentation(
             console.print(f"[red]❌ Generation failed: {str(e)}[/red]")
             raise typer.Exit(1)
     
-    add_span_attributes({
+    add_span_attributes(**{
         "documentation.type": doc_type_enum.value,
         "documentation.format": output_format_enum.value,
         "documentation.output_path": str(output_path)
@@ -264,7 +264,7 @@ def run_workflow(
         console.print(f"[red]❌ Workflow failed: {str(e)}[/red]")
         raise typer.Exit(1)
     
-    add_span_attributes({
+    add_span_attributes(**{
         WorkflowAttributes.OPERATION: WorkflowOperations.RUN,
         WorkflowAttributes.TYPE: "documentation_generation",
         WorkflowAttributes.DEFINITION_NAME: workflow_type

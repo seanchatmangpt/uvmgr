@@ -64,7 +64,7 @@ def scan(
     # Run the async scan
     available_tools = asyncio.run(_scan())
     
-    add_span_attributes({
+    add_span_attributes(**{
         CliAttributes.COMMAND: "tools_scan",
         ToolAttributes.OPERATION: "discovery",
         "tools_found": str(len(available_tools)),
@@ -176,7 +176,7 @@ def status(
     available_tools = engine.get_available_tools()
     all_tools = engine.registry.list_tools()
     
-    add_span_attributes({
+    add_span_attributes(**{
         CliAttributes.COMMAND: "tools_status",
         "available_tools": str(len(available_tools)),
         "total_tools": str(len(all_tools))
@@ -290,7 +290,7 @@ def exec_command(
     
     result = asyncio.run(_execute())
     
-    add_span_attributes({
+    add_span_attributes(**{
         CliAttributes.COMMAND: "tools_exec",
         ToolAttributes.OPERATION: operation,
         ToolAttributes.TOOL_NAME: result.tool_name,
@@ -353,7 +353,7 @@ def route(
     
     adapter = asyncio.run(_route())
     
-    add_span_attributes({
+    add_span_attributes(**{
         CliAttributes.COMMAND: "tools_route",
         ToolAttributes.OPERATION: operation,
         "tool_found": str(adapter is not None)
@@ -406,7 +406,7 @@ def history(
     if tool_name:
         executions = [e for e in executions if e.tool_name == tool_name]
     
-    add_span_attributes({
+    add_span_attributes(**{
         CliAttributes.COMMAND: "tools_history",
         "executions_found": str(len(executions)),
         "tool_filter": tool_name or "none"
@@ -470,7 +470,7 @@ def capabilities(
     
     engine = get_tool_integration_engine()
     
-    add_span_attributes({
+    add_span_attributes(**{
         CliAttributes.COMMAND: "tools_capabilities",
         "capability_filter": capability or "none"
     })

@@ -66,7 +66,7 @@ def analyze_project(
     # Perform analysis
     knowledge = analyze_project_knowledge(force_reanalysis=force)
     
-    add_span_attributes({
+    add_span_attributes(**{
         CliAttributes.COMMAND: "knowledge_analyze",
         ProjectAttributes.NAME: knowledge.project_name,
         AIAttributes.OPERATION: "analyze",
@@ -163,7 +163,7 @@ def semantic_search(
     # Perform search
     results = search_codebase(query, limit)
     
-    add_span_attributes({
+    add_span_attributes(**{
         CliAttributes.COMMAND: "knowledge_search",
         AIAttributes.OPERATION: "search",
         "query": query,
@@ -226,7 +226,7 @@ def show_insights(
         typer.echo("Available scopes: project, ai, patterns")
         raise typer.Exit(1)
     
-    add_span_attributes({
+    add_span_attributes(**{
         CliAttributes.COMMAND: "knowledge_insights",
         AIAttributes.OPERATION: "insights",
         "scope": scope,
@@ -261,7 +261,7 @@ def show_context(
     
     context = get_ai_context(scope)
     
-    add_span_attributes({
+    add_span_attributes(**{
         CliAttributes.COMMAND: "knowledge_context",
         AIAttributes.OPERATION: "context",
         "scope": scope
@@ -342,7 +342,7 @@ def show_stats(
             "ai_suggestions_count": len(knowledge.ai_suggestions)
         })
     
-    add_span_attributes({
+    add_span_attributes(**{
         CliAttributes.COMMAND: "knowledge_stats",
         "knowledge_available": str(KNOWLEDGE_AVAILABLE),
         "has_project_knowledge": str(has_knowledge)

@@ -62,6 +62,14 @@ from uvmgr.ops import build as build_ops
 app = typer.Typer(help="Build wheel + sdist")
 
 
+@app.callback()
+def build_callback(ctx: typer.Context):
+    """Build callback - default to dist if no subcommand provided."""
+    if ctx.invoked_subcommand is None:
+        # Default to dist command
+        dist(ctx)
+
+
 @app.command()
 @instrument_command("build_dist", track_args=True)
 def dist(

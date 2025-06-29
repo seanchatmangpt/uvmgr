@@ -41,6 +41,7 @@ dependencies = [
   "psutil>=5.9.0", # System monitoring
   "safety>=2.3.0", # Vulnerability scanning
   "mypy>=1.15.0",
+  "requests>=2.32.3",
 ]
 
 [project.scripts] # https://docs.astral.sh/uv/concepts/projects/config/#command-line-interfaces
@@ -70,7 +71,6 @@ dev = [
   "pytest-asyncio (>=0.25.0)",
   "pytest-mock (>=3.14.0)",
   "pytest-xdist (>=3.6.1)",
-  "requests>=2.32.3",
   "ruff (>=0.9.2)",
 ]
 

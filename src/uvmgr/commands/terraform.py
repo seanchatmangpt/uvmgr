@@ -547,6 +547,12 @@ def weaver_forge_optimization(
         console.print(f"💰 Cost Optimization: {'✅' if cost_optimize else '❌'}")
         
         try:
+            # Initialize result variables
+            forge_result = None
+            otel_result = None
+            security_result = None
+            cost_result = None
+            
             with Progress(
                 SpinnerColumn(),
                 TextColumn("[progress.description]{task.description}"),
@@ -590,10 +596,10 @@ def weaver_forge_optimization(
             
             add_span_event("terraform.weaver_forge.optimized", {
                 "workspace_path": str(workspace_path),
-                "optimization_success": forge_result.success if optimize else False,
-                "otel_validation_success": otel_result.success if otel_validate else False,
-                "security_scan_success": security_result.success if security_scan else False,
-                "cost_optimization_success": cost_result.success if cost_optimize else False,
+                "optimization_success": forge_result.success if forge_result else False,
+                "otel_validation_success": otel_result.success if otel_result else False,
+                "security_scan_success": security_result.success if security_result else False,
+                "cost_optimization_success": cost_result.success if cost_result else False,
             })
             
         except Exception as e:
@@ -690,9 +696,9 @@ def _display_weaver_forge_results(forge_result: Any, otel_result: Any, security_
     table.add_column("Status", style="green")
     table.add_column("Details", style="yellow")
     
-    table.add_row("Optimization", "✅" if forge_result.success else "❌", forge_result.message or "N/A")
-    table.add_row("OTEL Validation", "✅" if otel_result.success else "❌", otel_result.message or "N/A")
-    table.add_row("Security Scan", "✅" if security_result.success else "❌", security_result.message or "N/A")
-    table.add_row("Cost Optimization", "✅" if cost_result.success else "❌", cost_result.message or "N/A")
+    table.add_row("Optimization", "✅" if forge_result and forge_result.success else "❌", forge_result.message if forge_result else "N/A")
+    table.add_row("OTEL Validation", "✅" if otel_result and otel_result.success else "❌", otel_result.message if otel_result else "N/A")
+    table.add_row("Security Scan", "✅" if security_result and security_result.success else "❌", security_result.message if security_result else "N/A")
+    table.add_row("Cost Optimization", "✅" if cost_result and cost_result.success else "❌", cost_result.message if cost_result else "N/A")
     
     console.print(table)

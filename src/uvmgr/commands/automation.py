@@ -74,7 +74,7 @@ def start_engine(
     try:
         engine = asyncio.run(start_async())
         
-        add_span_attributes({
+        add_span_attributes(**{
             CliAttributes.COMMAND: "automation_start",
             WorkflowAttributes.ENGINE: "uvmgr_automation_engine",
             "workspace": str(workspace or Path.cwd()),
@@ -115,7 +115,7 @@ def stop_engine():
     try:
         asyncio.run(stop_async())
         
-        add_span_attributes({
+        add_span_attributes(**{
             CliAttributes.COMMAND: "automation_stop"
         })
         
@@ -137,7 +137,7 @@ def show_status(
     engine = get_automation_engine()
     stats = engine.get_statistics()
     
-    add_span_attributes({
+    add_span_attributes(**{
         CliAttributes.COMMAND: "automation_status",
         "rules_active": str(stats["active_rules"]),
         "total_executions": str(stats["total_executions"])
@@ -204,7 +204,7 @@ def list_rules(
     if enabled_only:
         rules = [r for r in rules if r.enabled]
     
-    add_span_attributes({
+    add_span_attributes(**{
         CliAttributes.COMMAND: "automation_rules_list",
         "rules_count": str(len(rules)),
         "enabled_only": str(enabled_only)
@@ -301,7 +301,7 @@ def create_rule(
     engine = get_automation_engine()
     engine.add_rule(rule)
     
-    add_span_attributes({
+    add_span_attributes(**{
         CliAttributes.COMMAND: "automation_rules_create",
         "rule_id": rule.id,
         "event_types": str(event_types),
@@ -335,7 +335,7 @@ def enable_rule(
     
     rule.enabled = True
     
-    add_span_attributes({
+    add_span_attributes(**{
         CliAttributes.COMMAND: "automation_rules_enable",
         "rule_id": rule_id
     })
@@ -359,7 +359,7 @@ def disable_rule(
     
     rule.enabled = False
     
-    add_span_attributes({
+    add_span_attributes(**{
         CliAttributes.COMMAND: "automation_rules_disable",
         "rule_id": rule_id
     })
@@ -390,7 +390,7 @@ def show_events(
     
     events = events[-limit:]  # Take latest after filtering
     
-    add_span_attributes({
+    add_span_attributes(**{
         CliAttributes.COMMAND: "automation_events",
         "events_count": str(len(events)),
         "event_type_filter": event_type or "all"
@@ -447,7 +447,7 @@ def show_executions(
     
     executions = executions[:limit]
     
-    add_span_attributes({
+    add_span_attributes(**{
         CliAttributes.COMMAND: "automation_executions",
         "executions_count": str(len(executions)),
         "rule_filter": rule_id or "all",
@@ -537,7 +537,7 @@ def trigger_event(
     engine = get_automation_engine()
     engine.emit_event(parsed_event_type, source, event_metadata)
     
-    add_span_attributes({
+    add_span_attributes(**{
         CliAttributes.COMMAND: "automation_trigger",
         "event_type": event_type,
         "source": source,

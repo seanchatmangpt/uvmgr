@@ -81,7 +81,7 @@ def list_plugins(
     
     plugins = asyncio.run(_list())
     
-    add_span_attributes({
+    add_span_attributes(**{
         CliAttributes.COMMAND: "plugins_list",
         PluginAttributes.PLUGIN_SYSTEM: "uvmgr_plugins",
         "plugins_found": str(len(plugins)),
@@ -216,7 +216,7 @@ def search(
     if verified_only:
         plugins = [p for p in plugins if p.verified]
     
-    add_span_attributes({
+    add_span_attributes(**{
         CliAttributes.COMMAND: "plugins_search",
         PluginAttributes.PLUGIN_SYSTEM: "uvmgr_marketplace",
         "search_query": query,
@@ -315,7 +315,7 @@ def install(
     
     success = asyncio.run(_install())
     
-    add_span_attributes({
+    add_span_attributes(**{
         CliAttributes.COMMAND: "plugins_install",
         PluginAttributes.PLUGIN_NAME: plugin_name,
         PluginAttributes.PLUGIN_VERSION: version or "latest",
@@ -367,7 +367,7 @@ def uninstall(
     
     success = asyncio.run(_uninstall())
     
-    add_span_attributes({
+    add_span_attributes(**{
         CliAttributes.COMMAND: "plugins_uninstall",
         PluginAttributes.PLUGIN_NAME: plugin_name,
         "success": str(success),
@@ -399,7 +399,7 @@ def load(
     
     success = asyncio.run(_load())
     
-    add_span_attributes({
+    add_span_attributes(**{
         CliAttributes.COMMAND: "plugins_load",
         PluginAttributes.PLUGIN_NAME: plugin_name,
         "success": str(success)
@@ -441,7 +441,7 @@ def unload(
     
     asyncio.run(_unload())
     
-    add_span_attributes({
+    add_span_attributes(**{
         CliAttributes.COMMAND: "plugins_unload",
         PluginAttributes.PLUGIN_NAME: plugin_name
     })
@@ -482,7 +482,7 @@ def hooks(
     
     hooks_data = asyncio.run(_get_hooks())
     
-    add_span_attributes({
+    add_span_attributes(**{
         CliAttributes.COMMAND: "plugins_hooks",
         "hooks_found": str(len(hooks_data)),
         "hook_type_filter": hook_type or "none"
@@ -558,7 +558,7 @@ def status(
     
     stats = asyncio.run(_get_status())
     
-    add_span_attributes({
+    add_span_attributes(**{
         CliAttributes.COMMAND: "plugins_status",
         PluginAttributes.PLUGIN_SYSTEM: "uvmgr_plugins"
     })

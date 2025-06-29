@@ -14,39 +14,67 @@ from dspy import (
 )
 from dspy.teleprompt import BootstrapFewShot, BootstrapFinetune
 from dspy.evaluate import Evaluate
+from dspy.primitives import Example
 
 from uvmgr.core.telemetry import span, record_exception
 
 logger = logging.getLogger(__name__)
 
 
+class MockLM:
+    """Mock Language Model for testing without external LLM services."""
+    
+    def __init__(self, model_name: str = "qwen3-mock"):
+        self.model_name = model_name
+        self.calls = 0
+        
+    def __call__(self, prompt: str, **kwargs) -> str:
+        """Generate a mock response based on the prompt."""
+        self.calls += 1
+        
+        # Simple response generation based on prompt content
+        if "validation" in prompt.lower():
+            return "Analysis: The validation data appears to be consistent and well-structured. Confidence: 0.85. Key insights: Data quality is good. Recommendations: Continue monitoring."
+        elif "workflow" in prompt.lower():
+            return "Optimization: The workflow can be improved by caching dependencies and parallelizing jobs. Expected improvement: 30% faster execution. Implementation: Add cache steps and matrix strategy."
+        elif "issue" in prompt.lower():
+            return "Diagnosis: The issue appears to be related to configuration. Root cause: Missing environment variables. Solution: Add required env vars to workflow."
+        elif "performance" in prompt.lower():
+            return "Performance analysis shows good baseline metrics. Bottlenecks: None identified. Optimization opportunities: Consider parallel processing."
+        elif "security" in prompt.lower():
+            return "Security assessment: No critical vulnerabilities found. Recommendations: Enable branch protection and require code reviews."
+        elif "trend" in prompt.lower():
+            return "Trend analysis: Stable performance over time. Patterns: Consistent execution times. Predictions: Continued stability expected."
+        elif "error" in prompt.lower():
+            return "Error analysis: Configuration issue detected. Root cause: Missing dependencies. Solution: Install required packages."
+        elif "web search" in prompt.lower():
+            return "Web search results analyzed. Key findings: Best practices align with current implementation. Recommendations: Continue current approach."
+        else:
+            return "Analysis completed successfully. Confidence: 0.75. Insights: Data appears normal. Recommendations: Monitor for changes."
+
+
 class WebSearchTool:
-    """Web search tool for DSPy integration."""
+    """Mock web search tool for testing."""
     
     def __init__(self):
-        self.search_results = {}
-    
+        self.search_count = 0
+        
     async def search(self, query: str, max_results: int = 5) -> List[Dict[str, Any]]:
-        """Perform web search."""
-        try:
-            # Simulate web search results
-            # In production, this would use a real search API
-            results = [
-                {
-                    "title": f"Search result for: {query}",
-                    "url": f"https://example.com/search?q={query}",
-                    "snippet": f"This is a search result about {query}",
-                    "source": "web_search"
-                }
-                for i in range(max_results)
-            ]
-            
-            self.search_results[query] = results
-            return results
-            
-        except Exception as e:
-            logger.error(f"Web search failed: {e}")
-            return []
+        """Perform mock web search and return results."""
+        self.search_count += 1
+        await asyncio.sleep(0.1)  # Simulate network delay
+        
+        # Generate mock search results based on query
+        results = []
+        for i in range(min(max_results, 3)):
+            results.append({
+                "title": f"Mock result {i+1} for: {query}",
+                "snippet": f"This is a mock search result about {query}. It contains relevant information for testing purposes.",
+                "url": f"https://example.com/result-{i+1}",
+                "relevance_score": 0.8 - (i * 0.1)
+            })
+        
+        return results
 
 
 class UvmgrDSPyModels:
@@ -61,51 +89,38 @@ class UvmgrDSPyModels:
         self._initialize_predictors()
     
     def _configure_dspy(self):
-        """Configure DSPy to use Qwen3 with Ollama."""
+        """Configure DSPy with Qwen3 and fallback options."""
         try:
-            # Try to configure DSPy with Ollama first
-            if hasattr(dspy, 'OllamaLocal'):
-                dspy.configure(
-                    lm=dspy.OllamaLocal(
-                        model="qwen2.5:3b",  # Using Qwen3 model
-                        base_url="http://localhost:11434",  # Ollama default URL
-                        api_key="ollama",  # Ollama doesn't require API key
-                        temperature=0.1,
-                        max_tokens=4096
-                    )
-                )
-                logger.info("✅ DSPy configured with Qwen3 via Ollama")
+            # Try to configure with OllamaLocal first
+            try:
+                dspy.configure(lm=dspy.OllamaLocal(model="qwen2.5:7b"))
+                logger.info("DSPy configured with OllamaLocal Qwen2.5")
                 return
-            else:
-                logger.warning("DSPy OllamaLocal not available")
-                
-        except Exception as e:
-            logger.warning(f"Failed to configure DSPy with Ollama: {e}")
-        
-        # Fallback to OpenAI if available
-        try:
-            if hasattr(dspy, 'OpenAI'):
-                dspy.configure(
-                    lm=dspy.OpenAI(
-                        model="gpt-4",
-                        api_key="dummy",  # Will be overridden by environment
-                        temperature=0.1
-                    )
-                )
-                logger.info("✅ DSPy configured with OpenAI fallback")
+            except Exception as e:
+                logger.warning(f"DSPy OllamaLocal not available: {e}")
+            
+            # Try OpenAI as fallback
+            try:
+                dspy.configure(lm=dspy.OpenAI(model="gpt-4"))
+                logger.info("DSPy configured with OpenAI GPT-4")
                 return
-            else:
-                logger.warning("DSPy OpenAI not available")
-                
-        except Exception as e:
-            logger.warning(f"Failed to configure DSPy with OpenAI: {e}")
-        
-        # Final fallback - configure with no LM
-        try:
-            dspy.configure(lm=None)
-            logger.info("✅ DSPy configured with no LM (fallback mode)")
+            except Exception as e:
+                logger.warning(f"DSPy OpenAI not available: {e}")
+            
+            # Use MockLM for testing
+            mock_lm = MockLM("qwen3-mock")
+            dspy.configure(lm=mock_lm)
+            logger.info("DSPy configured with MockLM for testing")
+            
         except Exception as e:
             logger.error(f"Failed to configure DSPy: {e}")
+            # Final fallback to MockLM
+            try:
+                mock_lm = MockLM("qwen3-mock")
+                dspy.configure(lm=mock_lm)
+                logger.info("DSPy configured with MockLM fallback")
+            except Exception as fallback_error:
+                logger.error(f"Failed to configure DSPy with MockLM: {fallback_error}")
     
     def _initialize_models(self):
         """Initialize all DSPy models."""

@@ -1,11 +1,11 @@
 {
-  "timestamp": "2025-06-28 21:45:56",
+  "timestamp": "2025-06-28 22:14:38",
   "project_path": "/Users/sac/dev/uvmgr",
-  "overall_coverage": 0.0,
-  "layers_generated": 0,
+  "overall_coverage": 100.0,
+  "layers_generated": 1,
   "generation_strategy": "8020_multilayer",
   "quality_indicators": {
-    "completeness": 0.0,
+    "completeness": 100.0,
     "freshness": 100.0,
     "accuracy": 95.0,
     "stakeholder_alignment": 90.0
