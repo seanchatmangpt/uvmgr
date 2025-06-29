@@ -1,7 +1,7 @@
 # DoD Exoskeleton Configuration
-template: AI-first automation with cutting-edge capabilities
+template: Standard DoD automation for typical projects
 automation:
   enabled: true
-  features: ['intelligent_ci', 'ai_testing', 'autonomous_security', 'self_healing']
+  features: ['basic_ci', 'testing', 'security_scan', 'docs']
 ai:
-  features: ['autonomous_development', 'predictive_analysis', 'self_optimization']
+  features: ['code_review', 'test_generation']
