@@ -7,9 +7,7 @@ receivers:
   otlp:
     protocols:
       grpc:
-        endpoint: 0.0.0.0:4317
       http:
-        endpoint: 0.0.0.0:4318
 
 processors:
   # Batch processor to optimize data export
@@ -37,7 +35,7 @@ processors:
 exporters:
   # Export traces to Jaeger
   otlp/jaeger:
-    endpoint: jaeger:4317
+    endpoint: "jaeger:14250"
     tls:
       insecure: true
 
@@ -103,4 +101,3 @@ service:
       level: info
     metrics:
       level: detailed
-      address: 0.0.0.0:8888

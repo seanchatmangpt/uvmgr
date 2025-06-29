@@ -6,24 +6,24 @@
 [![Python Version](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![OpenTelemetry](https://img.shields.io/badge/OpenTelemetry-Enabled-green.svg)](https://opentelemetry.io/)
 
-**`uvmgr`** is a next-generation unified Python workflow engine powered by `uv` with advanced AGI capabilities, comprehensive observability, and intelligent automation. It provides a single, consistent command-line interface that streamlines the entire development lifecycle—from project creation to production deployment—with built-in artificial intelligence and autonomous learning.
+**`uvmgr`** is a unified Python workflow engine powered by `uv` with advanced AI capabilities, comprehensive OpenTelemetry observability, Weaver Forge integration, and intelligent automation. It provides a single, consistent command-line interface that streamlines the entire development lifecycle with built-in artificial intelligence and autonomous learning.
 
 ## 🚀 Key Features
 
 ### Core Development
-* **Project Scaffolding**: Create modern Python projects from templates with AI-assisted customization
 * **Dependency Management**: Intelligent dependency resolution and management with `uv`
-* **Testing & Coverage**: Comprehensive test suite execution with intelligent test optimization
-* **Builds & Releases**: Automated package building and semantic versioning with Commitizen
+* **Testing & Coverage**: Comprehensive test suite execution with intelligent optimization
+* **Builds & Distribution**: Automated package building with wheel and sdist support
 * **Code Quality**: Advanced linting, formatting, and security scanning with Ruff integration
+* **Cache Management**: Intelligent caching for dependencies and build artifacts
 
 ### 🤖 AI & AGI Capabilities
-* **Intent Inference Engine**: Understands the "why" behind commands, not just the "what"
-* **Causal Reasoning**: Discovers cause-effect relationships from temporal patterns
+* **Intent Inference Engine**: Understands the "why" behind commands through AGI reasoning
+* **Causal Discovery**: Discovers cause-effect relationships from temporal patterns
 * **Autonomous Learning**: Self-improving agents that learn from experience
 * **Cross-Domain Intelligence**: Pattern recognition that transfers across different project types
 * **Meta-Cognition**: Agents that think about thinking and optimize their own learning processes
-* **AI-Assisted Development**: Leverage language models for code review, planning, and test generation
+* **DSPy Integration**: Intelligent information design and optimization
 
 ### 📊 Observability & Telemetry
 * **100% OpenTelemetry Coverage**: Complete instrumentation across all layers
@@ -31,19 +31,20 @@
 * **Real-time Metrics**: Performance monitoring and optimization insights
 * **Distributed Tracing**: End-to-end request tracking across the development workflow
 * **Intelligent Alerting**: AI-powered anomaly detection and performance insights
+* **SpiffWorkflow Integration**: BPMN workflow execution with full OTEL instrumentation
 
 ### 🔧 Advanced Automation
+* **Definition of Done (DoD)**: Automated DoD criteria validation with Weaver Forge exoskeleton
 * **Workflow Orchestration**: BPMN workflow execution with SpiffWorkflow integration
-* **Task Scheduling**: Advanced process scheduling with APScheduler
-* **MCP Server**: Model Context Protocol server for AI assistant integration
-* **Plugin System**: Extensible architecture with custom command plugins
-* **Remote Execution**: Distributed command execution across multiple environments
+* **Git Worktree Management**: Multi-project development with isolated environments
+* **Information Design**: Intelligent documentation and architecture generation
+* **Mermaid Integration**: Advanced diagram generation with Weaver Forge + DSPy
 
 ### 🛡️ Security & Compliance
-* **Vulnerability Scanning**: Automated security analysis with Safety integration
-* **Code Security**: Bandit integration for security linting
-* **Dependency Auditing**: Comprehensive dependency vulnerability assessment
+* **Vulnerability Scanning**: Automated security analysis and dependency auditing
+* **Code Security**: Comprehensive security linting and validation
 * **Compliance Monitoring**: Automated compliance checking and reporting
+* **Terraform Integration**: Enterprise Terraform support with 8020 Weaver Forge integration
 
 ## 🎯 Quick Start
 
@@ -53,39 +54,36 @@
 pip install uvmgr
 ```
 
-### Create Your First Project
+### Basic Usage
 
 ```bash
-# Create a new FastAPI project with AI-assisted setup
-uvmgr new my-awesome-api --fastapi --ai-guided
-
-# Navigate to your project
-cd my-awesome-api
-
 # Add dependencies with intelligent suggestions
 uvmgr deps add "fastapi[all]" "sqlalchemy" "alembic"
 
 # Run tests with intelligent optimization
 uvmgr tests run --optimize
 
-# Build and release with automated versioning
-uvmgr build dist --upload
+# Build packages
+uvmgr build dist
+
+# Check code quality
+uvmgr lint check --fix
 ```
 
 ### AI-Powered Development
 
 ```bash
-# Ask AI for development guidance
-uvmgr ai ask "How can I optimize this FastAPI endpoint for high concurrency?"
+# Generate intelligent documentation
+uvmgr docs generate --executive
 
-# Generate intelligent test plans
-uvmgr ai plan "Implement Redis caching layer" --out CACHING_PLAN.md
+# Create Mermaid diagrams with Weaver Forge
+uvmgr mermaid generate --weaver
 
-# Auto-fix failing tests with AI assistance
-uvmgr ai fix-tests --auto-patch
+# Execute Definition of Done automation
+uvmgr dod complete
 
-# Get intelligent code reviews
-uvmgr ai review src/my_awesome_api/api.py
+# Validate OTEL integration
+uvmgr otel validate --comprehensive
 ```
 
 ### Observability & Monitoring
@@ -103,53 +101,144 @@ uvmgr tests run --metrics
 # View logs in Grafana (http://localhost:3000)
 ```
 
-## 📚 Command Reference
+## 📚 Complete Command Reference
 
 ### Core Development Commands
+
+#### Dependency Management (`uvmgr deps`)
 ```bash
-uvmgr new <name> [--template] [--fastapi] [--cli] [--ai-guided]  # Create new project
-uvmgr deps add <package> [--dev] [--optional]                    # Add dependencies
-uvmgr deps remove <package>                                      # Remove dependencies
-uvmgr deps upgrade [--all] [--major]                             # Upgrade dependencies
-uvmgr tests run [--optimize] [--parallel] [--coverage]           # Run test suite
-uvmgr build dist [--upload] [--sign]                             # Build packages
-uvmgr release bump [--major|--minor|--patch]                     # Version management
+uvmgr deps add <package> [--dev] [--optional]                    # Add packages
+uvmgr deps remove <package>                                      # Remove packages
+uvmgr deps upgrade [--all] [--major]                             # Upgrade packages
+uvmgr deps list                                                  # List installed packages
+uvmgr deps lock                                                  # Generate/update lock file
+```
+
+#### Build System (`uvmgr build`)
+```bash
+uvmgr build dist                                                 # Build wheel + sdist
+uvmgr build wheel                                                # Build Python wheel
+uvmgr build sdist                                                # Build source distribution
+uvmgr build exe                                                  # Build standalone executable
+uvmgr build spec                                                 # Generate PyInstaller spec
+uvmgr build dogfood                                              # Build uvmgr executable
+```
+
+#### Testing (`uvmgr tests`)
+```bash
+uvmgr tests run                                                  # Run comprehensive test suite
+uvmgr tests discover                                             # Discover and analyze test structure
+uvmgr tests generate                                             # Generate test templates (8020)
+uvmgr tests coverage                                             # Generate coverage reports
+uvmgr tests ci                                                   # Run CI tests locally
+```
+
+#### Code Quality (`uvmgr lint`)
+```bash
+uvmgr lint check                                                 # Run Ruff linter
+uvmgr lint format                                                # Format code with Ruff
+uvmgr lint fix                                                   # Fix auto-fixable issues
+```
+
+#### Cache Management (`uvmgr cache`)
+```bash
+uvmgr cache dir                                                  # Show cache directory
+uvmgr cache prune                                                # Clean up cache
 ```
 
 ### AI & Intelligence Commands
+
+#### Information Design (`uvmgr infodesign`)
 ```bash
-uvmgr ai ask <question> [--model] [--context]                    # AI assistance
-uvmgr ai plan <task> [--out] [--detailed]                        # Generate plans
-uvmgr ai review <file> [--suggestions]                           # Code review
-uvmgr ai fix-tests [--auto-patch] [--explain]                    # Test fixing
-uvmgr agent run <workflow> [--autonomous]                        # Run AI agents
-uvmgr knowledge search <query> [--semantic]                      # Knowledge search
+uvmgr infodesign analyze                                         # Analyze information structure
+uvmgr infodesign generate                                        # Generate intelligent documentation
+uvmgr infodesign optimize                                        # Optimize information architecture
+uvmgr infodesign extract                                         # Extract knowledge entities
+uvmgr infodesign graph                                           # Create knowledge graphs
+uvmgr infodesign template                                        # Manage information templates
+```
+
+#### Mermaid Integration (`uvmgr mermaid`)
+```bash
+uvmgr mermaid generate                                           # Generate diagrams with DSPy
+uvmgr mermaid weaver                                             # Generate from Weaver Forge data
+uvmgr mermaid export                                             # Export to various formats
+uvmgr mermaid validate                                           # Validate diagram syntax
+uvmgr mermaid preview                                            # Preview diagrams
+uvmgr mermaid templates                                          # Manage diagram templates
+uvmgr mermaid analyze                                            # Analyze and improve diagrams
+```
+
+#### Agent Guides (`uvmgr guides`)
+```bash
+uvmgr guides catalog                                             # Browse guide catalog
+uvmgr guides fetch                                               # Fetch guides from repository
+uvmgr guides list                                                # List cached guides
+uvmgr guides update                                              # Update guides
+uvmgr guides validate                                            # Validate guide structure
+uvmgr guides pin                                                 # Pin guide versions
+uvmgr guides cache                                               # Manage guide cache
 ```
 
 ### Observability Commands
+
+#### OpenTelemetry (`uvmgr otel`)
 ```bash
-uvmgr otel validate [--comprehensive]                            # Validate OTEL setup
-uvmgr otel metrics [--export] [--dashboard]                      # View metrics
-uvmgr otel traces [--filter] [--analyze]                         # Analyze traces
-uvmgr weaver install [--semantic-conventions]                    # Install Weaver
-uvmgr weaver validate [--strict] [--fix]                         # Validate conventions
-uvmgr forge generate [--template] [--customize]                  # Generate code
+uvmgr otel coverage                                              # Validate OTEL instrumentation
+uvmgr otel validate                                              # Run 8020 OTEL validation
+uvmgr otel test                                                  # Generate test telemetry
+uvmgr otel semconv                                               # Manage semantic conventions
+uvmgr otel status                                                # Show OTEL status
+uvmgr otel demo                                                  # Demonstrate OTEL features
+uvmgr otel workflow-validate                                     # OTEL validation with SpiffWorkflow
+uvmgr otel export                                                # Export telemetry configuration
+uvmgr otel dashboard                                             # Manage OTEL dashboard stack
+uvmgr otel config                                                # Manage OTLP exporter
 ```
 
 ### Automation Commands
+
+#### Definition of Done (`uvmgr dod`)
 ```bash
-uvmgr workflow run <bpmn-file> [--variables]                     # Run BPMN workflows
-uvmgr ap-scheduler add <task> [--cron] [--interval]              # Schedule tasks
-uvmgr automation create <name> [--template]                      # Create automation
-uvmgr remote execute <command> [--hosts] [--parallel]            # Remote execution
+uvmgr dod complete                                               # Execute complete DoD automation
+uvmgr dod exoskeleton                                            # Initialize Weaver Forge exoskeleton
+uvmgr dod validate                                               # Validate DoD criteria
+uvmgr dod pipeline                                               # Create DevOps pipeline automation
+uvmgr dod testing                                                # Execute comprehensive testing
+uvmgr dod status                                                 # Show project DoD status
 ```
 
-### Quality & Security Commands
+#### Documentation (`uvmgr docs`)
 ```bash
-uvmgr lint check [--fix] [--strict]                              # Code linting
-uvmgr lint format [--check] [--diff]                             # Code formatting
-uvmgr security scan [--vulnerabilities] [--compliance]           # Security scanning
-uvmgr performance profile [--memory] [--cpu] [--io]              # Performance analysis
+uvmgr docs generate                                              # Generate complete documentation
+uvmgr docs executive                                             # Generate executive documentation
+uvmgr docs architecture                                          # Generate solution architecture
+uvmgr docs implementation                                        # Generate implementation docs
+uvmgr docs developer                                             # Generate developer docs
+uvmgr docs coverage                                              # Analyze documentation coverage
+uvmgr docs publish                                               # Publish documentation
+```
+
+#### Git Worktree (`uvmgr worktree`)
+```bash
+uvmgr worktree create                                            # Create new Git worktree
+uvmgr worktree list                                              # List all worktrees
+uvmgr worktree remove                                            # Remove worktree
+uvmgr worktree switch                                            # Switch worktree
+uvmgr worktree isolate                                           # Create isolated environment
+uvmgr worktree cleanup                                           # Clean up unused worktrees
+uvmgr worktree status                                            # Show worktree status
+```
+
+### Infrastructure Commands
+
+#### Terraform (`uvmgr terraform`)
+```bash
+uvmgr terraform init                                             # Initialize workspace with 8020 patterns
+uvmgr terraform plan                                             # Generate plan with 8020 analysis
+uvmgr terraform apply                                            # Apply infrastructure with validation
+uvmgr terraform 8020-plan                                        # Generate 8020 infrastructure plan
+uvmgr terraform weaver-forge                                     # Run Weaver Forge optimization
 ```
 
 ## 🏗️ Architecture
@@ -179,34 +268,13 @@ uvmgr follows a clean, three-layer architecture designed for extensibility and o
 
 The AGI capabilities are built into every layer:
 
-- **Intent Inference**: Commands understand context and purpose
+- **Intent Inference**: Commands understand context and purpose through AGI reasoning
 - **Causal Discovery**: Automatic pattern recognition across workflows
 - **Autonomous Learning**: Self-improving performance over time
 - **Cross-Domain Transfer**: Knowledge sharing between project types
 - **Meta-Cognition**: Self-optimizing learning processes
 
 ## 🔧 Advanced Configuration
-
-### Dependency Groups
-
-uvmgr supports comprehensive dependency management with specialized groups:
-
-```bash
-# Core development
-uvmgr deps add pytest --group dev
-
-# Web development
-uvmgr deps add fastapi uvicorn --group web
-
-# Data science
-uvmgr deps add pandas numpy --group data
-
-# Cloud deployment
-uvmgr deps add boto3 azure-identity --group cloud
-
-# Full stack (all groups)
-uvmgr deps add --group full
-```
 
 ### OpenTelemetry Configuration
 
@@ -245,20 +313,30 @@ service:
       exporters: [prometheus]
 ```
 
-### AI Model Configuration
+### Weaver Forge Integration
 
 ```bash
-# Use local Ollama models
-export OLLAMA_BASE_URL=http://localhost:11434
-uvmgr ai ask "Explain async programming" --model ollama/phi3:medium-128k
+# Initialize Weaver Forge exoskeleton
+uvmgr dod exoskeleton
 
-# Use cloud models
-export OPENAI_API_KEY=your-key
-uvmgr ai ask "Review this code" --model gpt-4
+# Run Weaver Forge optimization
+uvmgr terraform weaver-forge --optimize --otel-validate
 
-# Use Claude models
-export ANTHROPIC_API_KEY=your-key
-uvmgr ai ask "Generate tests" --model claude-3-sonnet
+# Generate Mermaid diagrams from Weaver data
+uvmgr mermaid weaver --export png
+```
+
+### Definition of Done Automation
+
+```bash
+# Execute complete DoD automation
+uvmgr dod complete
+
+# Validate DoD criteria
+uvmgr dod validate --detailed
+
+# Show project DoD status
+uvmgr dod status
 ```
 
 ## 📊 Performance & Scalability
@@ -315,14 +393,13 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 - **[OpenTelemetry](https://opentelemetry.io/)**: Observability framework
 - **[Weaver](https://github.com/open-telemetry/semantic-conventions)**: Semantic conventions
 - **[SpiffWorkflow](https://github.com/sartography/SpiffWorkflow)**: BPMN workflow engine
-- **[FastMCP](https://github.com/jlowin/fastmcp)**: Model Context Protocol server
+- **[DSPy](https://github.com/stanfordnlp/dspy)**: Declarative self-improving language programs
 
 ## 📞 Support
 
-- **Documentation**: [Comprehensive User Guide](HOWTO.md)
+- **Documentation**: [Comprehensive User Guide](CLAUDE.md)
 - **Issues**: [GitHub Issues](https://github.com/seanchatmangpt/uvmgr/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/seanchatmangpt/uvmgr/discussions)
-- **AI Assistant**: Use `uvmgr ai ask` for instant help
 
 ---
 

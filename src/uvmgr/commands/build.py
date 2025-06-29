@@ -115,6 +115,32 @@ def wheel(
         colour("✔ wheel build completed", "green")
 
 
+@app.command("sdist")
+@instrument_command("build_sdist", track_args=True)
+def sdist(
+    ctx: typer.Context,
+    outdir: pathlib.Path = typer.Option(None, "--outdir", "-o", file_okay=False),
+    upload: bool = typer.Option(False, "--upload", help="Twine upload after build"),
+):
+    """Build Python source distribution."""
+    # Track build operation with sdist
+    add_span_attributes(
+        **{
+            BuildAttributes.OPERATION: "sdist",
+            BuildAttributes.TYPE: "sdist",
+            "build.upload": upload,
+        }
+    )
+    add_span_event("build.sdist.started", {"upload": upload})
+    payload = build_ops.dist(outdir)
+    if upload:
+        build_ops.upload(outdir or pathlib.Path("dist"))
+    if ctx.meta.get("json"):
+        dump_json(payload)
+    else:
+        colour("✔ sdist build completed", "green")
+
+
 @app.command()
 @instrument_command("build_exe", track_args=True)
 def exe(

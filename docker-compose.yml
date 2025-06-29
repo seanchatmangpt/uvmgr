@@ -1,17 +1,62 @@
+version: "3.8"
 services:
-
-  devcontainer:
-    build:
-      target: dev
+  weaver-forge:
+    build: .
+    command: ["uvmgr", "--help"]
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
     volumes:
-      - ..:/workspaces
-      - command-history-volume:/home/user/.history/
+      - .:/app
+    depends_on:
+      - otel-collector
+      - jaeger
+      - prometheus
+      - db
 
-  app:
-    build:
-      target: app
-    profiles:
-      - app
+  otel-collector:
+    image: otel/opentelemetry-collector:latest
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    depends_on:
+      - jaeger
+      - prometheus
 
-volumes:
-  command-history-volume:
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"
+      - "14268:14268"
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+      - jaeger
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_PASSWORD: example
+    ports:
+      - "5432:5432"
+
+  telemetry-validation:
+    build: .
+    command: ["python3", "tests/run_telemetry_validation.py"]
+    depends_on:
+      - weaver-forge
+      - otel-collector
+      - jaeger
+      - prometheus

@@ -314,10 +314,13 @@ class TerraformWeaverForgeE2E:
         print(f"   Validations passed: {final_forge_result.resources_optimized}")
         
         # Infrastructure health check
+        apply_result = self.results.get("apply_result")
+        resources_healthy = len(apply_result.resources_created) if apply_result and apply_result.success else 0
+        
         health_check = {
             "success": True,
             "infrastructure_status": "healthy",
-            "resources_healthy": len(self.results.get("apply_result", {}).get("resources_created", [])),
+            "resources_healthy": resources_healthy,
             "security_score": 85.0,
             "performance_score": 90.0,
             "cost_efficiency": 95.0
@@ -337,38 +340,38 @@ class TerraformWeaverForgeE2E:
         print("=" * 40)
         
         # Infrastructure summary
-        plan_result = self.results.get("plan_result", {})
-        apply_result = self.results.get("apply_result", {})
+        plan_result = self.results.get("plan_result")
+        apply_result = self.results.get("apply_result")
         
         print(f"Infrastructure:")
-        print(f"  • Resources planned: {len(plan_result.get('resources_to_add', []))}")
-        print(f"  • Resources deployed: {len(apply_result.get('resources_created', []))}")
-        print(f"  • Estimated cost: ${plan_result.get('estimated_cost', 0):.2f}/month")
+        print(f"  • Resources planned: {len(plan_result.resources_to_add) if plan_result else 0}")
+        print(f"  • Resources deployed: {len(apply_result.resources_created) if apply_result else 0}")
+        print(f"  • Estimated cost: ${plan_result.estimated_cost if plan_result else 0:.2f}/month")
         
         # Weaver Forge summary
-        forge_result = self.results.get("forge_result", {})
+        forge_result = self.results.get("forge_result")
         print(f"\nWeaver Forge:")
-        print(f"  • Optimization savings: ${forge_result.get('optimization_savings', 0):.2f}")
-        print(f"  • Resources optimized: {forge_result.get('resources_optimized', 0)}")
+        print(f"  • Optimization savings: ${forge_result.optimization_savings if forge_result else 0:.2f}")
+        print(f"  • Resources optimized: {forge_result.resources_optimized if forge_result else 0}")
         
         # OTEL summary
-        otel_validation = self.results.get("otel_validation", {})
+        otel_validation = self.results.get("otel_validation")
         print(f"\nObservability:")
-        print(f"  • Spans generated: {otel_validation.get('spans_generated', 0)}")
-        print(f"  • Metrics collected: {otel_validation.get('metrics_collected', 0)}")
-        print(f"  • Traces validated: {otel_validation.get('traces_validated', 0)}")
+        print(f"  • Spans generated: {otel_validation.spans_generated if otel_validation else 0}")
+        print(f"  • Metrics collected: {otel_validation.metrics_collected if otel_validation else 0}")
+        print(f"  • Traces validated: {otel_validation.traces_validated if otel_validation else 0}")
         
         # Security summary
-        security_result = self.results.get("security_result", {})
+        security_result = self.results.get("security_result")
         print(f"\nSecurity:")
-        print(f"  • Issues found: {len(security_result.get('issues', []))}")
-        print(f"  • Severity: {security_result.get('severity', 'unknown')}")
+        print(f"  • Issues found: {len(security_result.issues) if security_result else 0}")
+        print(f"  • Severity: {security_result.severity if security_result else 'unknown'}")
         
         # Cost summary
-        cost_optimization = self.results.get("cost_optimization", {})
+        cost_optimization = self.results.get("cost_optimization")
         print(f"\nCost Optimization:")
-        print(f"  • Monthly cost: ${cost_optimization.get('monthly_estimate', 0):.2f}")
-        print(f"  • Total savings: ${cost_optimization.get('optimization_savings', 0):.2f}")
+        print(f"  • Monthly cost: ${cost_optimization.monthly_estimate if cost_optimization else 0:.2f}")
+        print(f"  • Total savings: ${cost_optimization.optimization_savings if cost_optimization else 0:.2f}")
         
         # Health summary
         health_check = self.results.get("health_check", {})

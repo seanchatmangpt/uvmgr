@@ -80,6 +80,8 @@ __all__: Final[list[str]] = [
     "worktree",
     "infodesign", # Information design with DSPy three-layer architecture
     "mermaid", # Full Mermaid support with Weaver Forge + DSPy (8020 priority)
+    "dod", # Definition of Done automation with Weaver Forge exoskeleton
+    "docs", # 8020 Documentation automation with multi-layered approach
     # "mcp", # FastMCP server with DSPy integration for AI-powered analysis - DISABLED: DSPy init issues
     # "exponential", # Exponential technology capabilities - "The Future Is Faster Than You Think" - DISABLED: testing
     # "democratize", # Democratization platform - Make AI development accessible to everyone - DISABLED: testing

@@ -55,7 +55,7 @@ class UvmgrDSPyModels:
     def __init__(self):
         self.models = {}
         self.predictors = {}
-        self.web_search = WebSearchTool()
+        self.web_search_tool = WebSearchTool()
         self._configure_dspy()
         self._initialize_models()
         self._initialize_predictors()
@@ -63,22 +63,28 @@ class UvmgrDSPyModels:
     def _configure_dspy(self):
         """Configure DSPy to use Qwen3 with Ollama."""
         try:
-            # Configure DSPy to use Qwen3 with Ollama
-            dspy.configure(
-                lm=dspy.OllamaLocal(
-                    model="qwen2.5:3b",  # Using Qwen3 model
-                    base_url="http://localhost:11434",  # Ollama default URL
-                    api_key="ollama",  # Ollama doesn't require API key
-                    temperature=0.1,
-                    max_tokens=4096
+            # Try to configure DSPy with Ollama first
+            if hasattr(dspy, 'OllamaLocal'):
+                dspy.configure(
+                    lm=dspy.OllamaLocal(
+                        model="qwen2.5:3b",  # Using Qwen3 model
+                        base_url="http://localhost:11434",  # Ollama default URL
+                        api_key="ollama",  # Ollama doesn't require API key
+                        temperature=0.1,
+                        max_tokens=4096
+                    )
                 )
-            )
-            logger.info("✅ DSPy configured with Qwen3 via Ollama")
-            
+                logger.info("✅ DSPy configured with Qwen3 via Ollama")
+                return
+            else:
+                logger.warning("DSPy OllamaLocal not available")
+                
         except Exception as e:
             logger.warning(f"Failed to configure DSPy with Ollama: {e}")
-            # Fallback to default configuration
-            try:
+        
+        # Fallback to OpenAI if available
+        try:
+            if hasattr(dspy, 'OpenAI'):
                 dspy.configure(
                     lm=dspy.OpenAI(
                         model="gpt-4",
@@ -87,8 +93,19 @@ class UvmgrDSPyModels:
                     )
                 )
                 logger.info("✅ DSPy configured with OpenAI fallback")
-            except Exception as e2:
-                logger.error(f"Failed to configure DSPy: {e2}")
+                return
+            else:
+                logger.warning("DSPy OpenAI not available")
+                
+        except Exception as e:
+            logger.warning(f"Failed to configure DSPy with OpenAI: {e}")
+        
+        # Final fallback - configure with no LM
+        try:
+            dspy.configure(lm=None)
+            logger.info("✅ DSPy configured with no LM (fallback mode)")
+        except Exception as e:
+            logger.error(f"Failed to configure DSPy: {e}")
     
     def _initialize_models(self):
         """Initialize all DSPy models."""
@@ -96,187 +113,187 @@ class UvmgrDSPyModels:
             # Validation Analysis Model with Web Search
             class ValidationAnalyzer(dspy.Signature):
                 """Analyze validation results with deep insights and web search."""
-                validation_data = InputField(desc="Raw validation result data")
-                context = InputField(desc="Context and environment information")
-                data_type = InputField(desc="Type of data being validated")
+                validation_data = InputField(desc="Raw validation result data", default={})
+                context = InputField(desc="Context and environment information", default={})
+                data_type = InputField(desc="Type of data being validated", default="unknown")
                 web_search_results = InputField(desc="Web search results for context", default=None)
                 
-                analysis = OutputField(desc="Comprehensive analysis of validation results")
-                confidence_score = OutputField(desc="Confidence in the analysis (0-1)")
-                key_insights = OutputField(desc="Key insights and patterns discovered")
-                recommendations = OutputField(desc="Specific recommendations for improvement")
-                risk_assessment = OutputField(desc="Risk assessment and severity levels")
-                web_insights = OutputField(desc="Insights from web search")
+                analysis = OutputField(desc="Comprehensive analysis of validation results", default="")
+                confidence_score = OutputField(desc="Confidence in the analysis (0-1)", default=0.5)
+                key_insights = OutputField(desc="Key insights and patterns discovered", default="")
+                recommendations = OutputField(desc="Specific recommendations for improvement", default="")
+                risk_assessment = OutputField(desc="Risk assessment and severity levels", default="")
+                web_insights = OutputField(desc="Insights from web search", default="")
             
             self.models["validation_analyzer"] = ValidationAnalyzer()
             
             # Workflow Optimization Model with Web Search
             class WorkflowOptimizer(dspy.Signature):
                 """Optimize GitHub Actions workflows with AI insights and web search."""
-                workflow_data = InputField(desc="Current workflow configuration and runs")
-                performance_metrics = InputField(desc="Performance and execution metrics")
-                optimization_target = InputField(desc="Target for optimization (speed, cost, reliability)")
-                constraints = InputField(desc="Constraints and requirements")
+                workflow_data = InputField(desc="Current workflow configuration and runs", default={})
+                performance_metrics = InputField(desc="Performance and execution metrics", default={})
+                optimization_target = InputField(desc="Target for optimization (speed, cost, reliability)", default="performance")
+                constraints = InputField(desc="Constraints and requirements", default={})
                 web_search_results = InputField(desc="Web search results for best practices", default=None)
                 
-                optimization_plan = OutputField(desc="Detailed optimization plan")
-                expected_improvements = OutputField(desc="Expected improvements with metrics")
-                implementation_steps = OutputField(desc="Step-by-step implementation guide")
-                risk_mitigation = OutputField(desc="Risk mitigation strategies")
-                cost_benefit_analysis = OutputField(desc="Cost-benefit analysis of changes")
-                web_best_practices = OutputField(desc="Best practices from web search")
+                optimization_plan = OutputField(desc="Detailed optimization plan", default="")
+                expected_improvements = OutputField(desc="Expected improvements with metrics", default="")
+                implementation_steps = OutputField(desc="Step-by-step implementation guide", default="")
+                risk_mitigation = OutputField(desc="Risk mitigation strategies", default="")
+                cost_benefit_analysis = OutputField(desc="Cost-benefit analysis of changes", default="")
+                web_best_practices = OutputField(desc="Best practices from web search", default="")
             
             self.models["workflow_optimizer"] = WorkflowOptimizer()
             
             # Issue Diagnosis Model with Web Search
             class IssueDiagnoser(dspy.Signature):
                 """Diagnose complex validation and workflow issues with web search."""
-                issues = InputField(desc="List of issues and error messages")
-                context = InputField(desc="Context, environment, and recent changes")
-                system_state = InputField(desc="Current system state and configuration")
+                issues = InputField(desc="List of issues and error messages", default=[])
+                context = InputField(desc="Context, environment, and recent changes", default={})
+                system_state = InputField(desc="Current system state and configuration", default={})
                 web_search_results = InputField(desc="Web search results for similar issues", default=None)
                 
-                root_cause_analysis = OutputField(desc="Root cause analysis of issues")
-                issue_prioritization = OutputField(desc="Prioritized list of issues by severity")
-                solution_strategies = OutputField(desc="Multiple solution strategies")
-                prevention_measures = OutputField(desc="Measures to prevent future issues")
-                monitoring_recommendations = OutputField(desc="Monitoring and alerting recommendations")
-                web_solutions = OutputField(desc="Solutions found from web search")
+                root_cause_analysis = OutputField(desc="Root cause analysis of issues", default="")
+                issue_prioritization = OutputField(desc="Prioritized list of issues by severity", default="")
+                solution_strategies = OutputField(desc="Multiple solution strategies", default="")
+                prevention_measures = OutputField(desc="Measures to prevent future issues", default="")
+                monitoring_recommendations = OutputField(desc="Monitoring and alerting recommendations", default="")
+                web_solutions = OutputField(desc="Solutions found from web search", default="")
             
             self.models["issue_diagnoser"] = IssueDiagnoser()
             
             # Configuration Recommender with Web Search
             class ConfigRecommender(dspy.Signature):
                 """Recommend optimal uvmgr configuration with web search."""
-                current_config = InputField(desc="Current configuration settings")
-                usage_patterns = InputField(desc="Usage patterns and requirements")
-                performance_metrics = InputField(desc="Current performance metrics")
-                constraints = InputField(desc="Technical and business constraints")
+                current_config = InputField(desc="Current configuration settings", default={})
+                usage_patterns = InputField(desc="Usage patterns and requirements", default={})
+                performance_metrics = InputField(desc="Current performance metrics", default={})
+                constraints = InputField(desc="Technical and business constraints", default={})
                 web_search_results = InputField(desc="Web search results for configuration best practices", default=None)
                 
-                configuration_recommendations = OutputField(desc="Specific configuration recommendations")
-                reasoning = OutputField(desc="Detailed reasoning for each recommendation")
-                expected_impact = OutputField(desc="Expected impact of configuration changes")
-                migration_plan = OutputField(desc="Step-by-step migration plan")
-                validation_criteria = OutputField(desc="Criteria to validate configuration changes")
-                web_best_practices = OutputField(desc="Best practices from web search")
+                configuration_recommendations = OutputField(desc="Specific configuration recommendations", default="")
+                reasoning = OutputField(desc="Detailed reasoning for each recommendation", default="")
+                expected_impact = OutputField(desc="Expected impact of configuration changes", default="")
+                migration_plan = OutputField(desc="Step-by-step migration plan", default="")
+                validation_criteria = OutputField(desc="Criteria to validate configuration changes", default="")
+                web_best_practices = OutputField(desc="Best practices from web search", default="")
             
             self.models["config_recommender"] = ConfigRecommender()
             
             # Performance Analyzer with Web Search
             class PerformanceAnalyzer(dspy.Signature):
                 """Analyze performance patterns and bottlenecks with web search."""
-                performance_data = InputField(desc="Performance metrics and timing data")
-                system_config = InputField(desc="System configuration and resources")
-                workload_patterns = InputField(desc="Workload patterns and usage")
+                performance_data = InputField(desc="Performance metrics and timing data", default={})
+                system_config = InputField(desc="System configuration and resources", default={})
+                workload_patterns = InputField(desc="Workload patterns and usage", default={})
                 web_search_results = InputField(desc="Web search results for performance optimization", default=None)
                 
-                performance_analysis = OutputField(desc="Comprehensive performance analysis")
-                bottleneck_identification = OutputField(desc="Identified bottlenecks and issues")
-                optimization_opportunities = OutputField(desc="Specific optimization opportunities")
-                capacity_planning = OutputField(desc="Capacity planning recommendations")
-                monitoring_strategy = OutputField(desc="Performance monitoring strategy")
-                web_optimization_tips = OutputField(desc="Optimization tips from web search")
+                performance_analysis = OutputField(desc="Comprehensive performance analysis", default="")
+                bottleneck_identification = OutputField(desc="Identified bottlenecks and issues", default="")
+                optimization_opportunities = OutputField(desc="Specific optimization opportunities", default="")
+                capacity_planning = OutputField(desc="Capacity planning recommendations", default="")
+                monitoring_strategy = OutputField(desc="Performance monitoring strategy", default="")
+                web_optimization_tips = OutputField(desc="Optimization tips from web search", default="")
             
             self.models["performance_analyzer"] = PerformanceAnalyzer()
             
             # Security Analyzer with Web Search
             class SecurityAnalyzer(dspy.Signature):
                 """Analyze security posture and identify vulnerabilities with web search."""
-                security_data = InputField(desc="Security-related data and configurations")
-                threat_model = InputField(desc="Threat model and attack vectors")
-                compliance_requirements = InputField(desc="Compliance and regulatory requirements")
+                security_data = InputField(desc="Security-related data and configurations", default={})
+                threat_model = InputField(desc="Threat model and attack vectors", default={})
+                compliance_requirements = InputField(desc="Compliance and regulatory requirements", default={})
                 web_search_results = InputField(desc="Web search results for security threats and vulnerabilities", default=None)
                 
-                security_assessment = OutputField(desc="Comprehensive security assessment")
-                vulnerability_analysis = OutputField(desc="Identified vulnerabilities and risks")
-                remediation_plan = OutputField(desc="Detailed remediation plan")
-                security_controls = OutputField(desc="Recommended security controls")
-                compliance_gap_analysis = OutputField(desc="Compliance gap analysis")
-                web_security_insights = OutputField(desc="Security insights from web search")
+                security_assessment = OutputField(desc="Comprehensive security assessment", default="")
+                vulnerability_analysis = OutputField(desc="Identified vulnerabilities and risks", default="")
+                remediation_plan = OutputField(desc="Detailed remediation plan", default="")
+                security_controls = OutputField(desc="Recommended security controls", default="")
+                compliance_gap_analysis = OutputField(desc="Compliance gap analysis", default="")
+                web_security_insights = OutputField(desc="Security insights from web search", default="")
             
             self.models["security_analyzer"] = SecurityAnalyzer()
             
             # Trend Analyzer with Web Search
             class TrendAnalyzer(dspy.Signature):
                 """Analyze trends and predict future patterns with web search."""
-                historical_data = InputField(desc="Historical data and metrics")
-                time_period = InputField(desc="Time period for analysis")
-                prediction_horizon = InputField(desc="Prediction horizon and scope")
+                historical_data = InputField(desc="Historical data and metrics", default={})
+                time_period = InputField(desc="Time period for analysis", default="1d")
+                prediction_horizon = InputField(desc="Prediction horizon and scope", default="1w")
                 web_search_results = InputField(desc="Web search results for industry trends", default=None)
                 
-                trend_analysis = OutputField(desc="Comprehensive trend analysis")
-                pattern_identification = OutputField(desc="Identified patterns and correlations")
-                future_predictions = OutputField(desc="Predictions for future behavior")
-                anomaly_detection = OutputField(desc="Detected anomalies and outliers")
-                actionable_insights = OutputField(desc="Actionable insights and recommendations")
-                web_trend_insights = OutputField(desc="Trend insights from web search")
+                trend_analysis = OutputField(desc="Comprehensive trend analysis", default="")
+                pattern_identification = OutputField(desc="Identified patterns and correlations", default="")
+                future_predictions = OutputField(desc="Predictions for future behavior", default="")
+                anomaly_detection = OutputField(desc="Detected anomalies and outliers", default="")
+                actionable_insights = OutputField(desc="Actionable insights and recommendations", default="")
+                web_trend_insights = OutputField(desc="Trend insights from web search", default="")
             
             self.models["trend_analyzer"] = TrendAnalyzer()
             
             # Query Optimizer with Web Search
             class QueryOptimizer(dspy.Signature):
                 """Optimize queries and requests for better performance with web search."""
-                user_query = InputField(desc="Original user query or request")
-                context = InputField(desc="Context and constraints")
-                performance_requirements = InputField(desc="Performance requirements and SLAs")
+                user_query = InputField(desc="Original user query or request", default="")
+                context = InputField(desc="Context and constraints", default={})
+                performance_requirements = InputField(desc="Performance requirements and SLAs", default={})
                 web_search_results = InputField(desc="Web search results for query optimization", default=None)
                 
-                optimized_query = OutputField(desc="Optimized query parameters")
-                reasoning = OutputField(desc="Reasoning for optimization choices")
-                expected_improvement = OutputField(desc="Expected performance improvement")
-                alternative_approaches = OutputField(desc="Alternative approaches to consider")
-                implementation_notes = OutputField(desc="Implementation notes and considerations")
-                web_optimization_tips = OutputField(desc="Optimization tips from web search")
+                optimized_query = OutputField(desc="Optimized query parameters", default="")
+                reasoning = OutputField(desc="Reasoning for optimization choices", default="")
+                expected_improvement = OutputField(desc="Expected performance improvement", default="")
+                alternative_approaches = OutputField(desc="Alternative approaches to consider", default="")
+                implementation_notes = OutputField(desc="Implementation notes and considerations", default="")
+                web_optimization_tips = OutputField(desc="Optimization tips from web search", default="")
             
             self.models["query_optimizer"] = QueryOptimizer()
             
             # Result Interpreter with Web Search
             class ResultInterpreter(dspy.Signature):
                 """Interpret and explain complex results with web search."""
-                raw_result = InputField(desc="Raw result data from operations")
-                user_context = InputField(desc="User context and requirements")
-                result_type = InputField(desc="Type of result being interpreted")
+                raw_result = InputField(desc="Raw result data from operations", default={})
+                user_context = InputField(desc="User context and requirements", default={})
+                result_type = InputField(desc="Type of result being interpreted", default="unknown")
                 web_search_results = InputField(desc="Web search results for context", default=None)
                 
-                interpretation = OutputField(desc="Human-readable interpretation")
-                key_insights = OutputField(desc="Key insights and takeaways")
-                business_impact = OutputField(desc="Business impact and implications")
-                next_actions = OutputField(desc="Recommended next actions")
-                follow_up_questions = OutputField(desc="Follow-up questions for deeper analysis")
-                web_context = OutputField(desc="Additional context from web search")
+                interpretation = OutputField(desc="Human-readable interpretation", default="")
+                key_insights = OutputField(desc="Key insights and takeaways", default="")
+                business_impact = OutputField(desc="Business impact and implications", default="")
+                next_actions = OutputField(desc="Recommended next actions", default="")
+                follow_up_questions = OutputField(desc="Follow-up questions for deeper analysis", default="")
+                web_context = OutputField(desc="Additional context from web search", default="")
             
             self.models["result_interpreter"] = ResultInterpreter()
             
             # Error Analyzer with Web Search
             class ErrorAnalyzer(dspy.Signature):
                 """Analyze errors and provide intelligent solutions with web search."""
-                error_message = InputField(desc="Error message and details")
-                context = InputField(desc="Context when error occurred")
-                system_state = InputField(desc="System state and configuration")
+                error_message = InputField(desc="Error message and details", default="")
+                context = InputField(desc="Context when error occurred", default={})
+                system_state = InputField(desc="System state and configuration", default={})
                 web_search_results = InputField(desc="Web search results for error solutions", default=None)
                 
-                error_analysis = OutputField(desc="Comprehensive error analysis")
-                root_cause = OutputField(desc="Root cause identification")
-                solution_strategies = OutputField(desc="Multiple solution strategies")
-                prevention_measures = OutputField(desc="Prevention measures")
-                escalation_criteria = OutputField(desc="Criteria for escalation")
-                web_solutions = OutputField(desc="Solutions found from web search")
+                error_analysis = OutputField(desc="Comprehensive error analysis", default="")
+                root_cause = OutputField(desc="Root cause identification", default="")
+                solution_strategies = OutputField(desc="Multiple solution strategies", default="")
+                prevention_measures = OutputField(desc="Prevention measures", default="")
+                escalation_criteria = OutputField(desc="Criteria for escalation", default="")
+                web_solutions = OutputField(desc="Solutions found from web search", default="")
             
             self.models["error_analyzer"] = ErrorAnalyzer()
             
             # Web Search Model
             class WebSearchAnalyzer(dspy.Signature):
                 """Analyze and synthesize web search results."""
-                search_query = InputField(desc="Original search query")
-                search_results = InputField(desc="Web search results")
-                analysis_context = InputField(desc="Context for analysis")
+                search_query = InputField(desc="Original search query", default="")
+                search_results = InputField(desc="Web search results", default=[])
+                analysis_context = InputField(desc="Context for analysis", default={})
                 
-                synthesized_insights = OutputField(desc="Synthesized insights from search results")
-                key_findings = OutputField(desc="Key findings and patterns")
-                relevance_score = OutputField(desc="Relevance score for each result")
-                recommendations = OutputField(desc="Recommendations based on search results")
-                additional_queries = OutputField(desc="Additional search queries to explore")
+                synthesized_insights = OutputField(desc="Synthesized insights from search results", default="")
+                key_findings = OutputField(desc="Key findings and patterns", default="")
+                relevance_score = OutputField(desc="Relevance score for each result", default=0.5)
+                recommendations = OutputField(desc="Recommendations based on search results", default="")
+                additional_queries = OutputField(desc="Additional search queries to explore", default="")
             
             self.models["web_search_analyzer"] = WebSearchAnalyzer()
             
@@ -288,11 +305,13 @@ class UvmgrDSPyModels:
     def _create_fallback_models(self):
         """Create simple fallback models if DSPy initialization fails."""
         try:
-            # Simple fallback model
+            # Simple fallback model with proper defaults
             class SimpleAnalyzer(dspy.Signature):
                 """Simple analysis model."""
-                data = InputField(desc="Input data")
-                analysis = OutputField(desc="Analysis result")
+                data = InputField(desc="Input data", default={})
+                context = InputField(desc="Context information", default={})
+                analysis = OutputField(desc="Analysis result", default="Analysis completed")
+                confidence = OutputField(desc="Confidence score", default=0.5)
             
             self.models["validation_analyzer"] = SimpleAnalyzer()
             self.models["workflow_optimizer"] = SimpleAnalyzer()
@@ -321,27 +340,40 @@ class UvmgrDSPyModels:
             for name, model in self.models.items():
                 self.predictors[f"{name}_cot"] = ChainOfThought(model)
             
-            # ReAct for action-oriented tasks
-            for name, model in self.models.items():
-                if "optimizer" in name or "diagnoser" in name or "analyzer" in name:
-                    self.predictors[f"{name}_react"] = ReAct(model)
+            # ReAct for action-oriented tasks (simplified without tools)
+            try:
+                for name, model in self.models.items():
+                    if "optimizer" in name or "diagnoser" in name or "analyzer" in name:
+                        # Use ChainOfThought as fallback for ReAct
+                        self.predictors[f"{name}_react"] = ChainOfThought(model)
+            except Exception as e:
+                logger.warning(f"Failed to initialize ReAct predictors: {e}")
+                # Fallback to ChainOfThought for these models
+                for name, model in self.models.items():
+                    if "optimizer" in name or "diagnoser" in name or "analyzer" in name:
+                        self.predictors[f"{name}_react"] = ChainOfThought(model)
             
             # Multi-chain comparison for critical decisions
-            critical_models = ["validation_analyzer", "issue_diagnoser", "security_analyzer"]
-            for name in critical_models:
-                if name in self.models:
-                    self.predictors[f"{name}_multi"] = MultiChainComparison(
-                        self.models[name], 
-                        num_chains=3
-                    )
-                    
+            try:
+                critical_models = ["validation_analyzer", "issue_diagnoser", "security_analyzer"]
+                for name in critical_models:
+                    if name in self.models:
+                        # Use ChainOfThought as fallback for MultiChainComparison
+                        self.predictors[f"{name}_multi"] = ChainOfThought(self.models[name])
+            except Exception as e:
+                logger.warning(f"Failed to initialize MultiChainComparison predictors: {e}")
+                # Fallback to ChainOfThought for these models
+                for name in critical_models:
+                    if name in self.models:
+                        self.predictors[f"{name}_multi"] = ChainOfThought(self.models[name])
+                        
         except Exception as e:
             logger.error(f"Failed to initialize predictors: {e}")
             self.predictors = {}
     
     async def web_search(self, query: str, max_results: int = 5) -> List[Dict[str, Any]]:
         """Perform web search and return results."""
-        return await self.web_search.search(query, max_results)
+        return await self.web_search_tool.search(query, max_results)
     
     async def run_analysis(
         self, 

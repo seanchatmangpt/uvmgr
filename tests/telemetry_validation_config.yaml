@@ -1,0 +1,340 @@
+# Weaver Forge Telemetry Validation Configuration
+# This file configures telemetry validation tests to ensure Weaver compatibility
+
+# Test Configuration
+test_config:
+  # Test execution settings
+  execution:
+    parallel: false  # Run tests sequentially for better telemetry isolation
+    timeout: 300     # Maximum test execution time in seconds
+    retries: 2       # Number of retries for flaky tests
+    
+  # Telemetry validation settings
+  telemetry:
+    # Span validation
+    spans:
+      required_names:
+        - "weaver_forge.bulk_generate"
+        - "weaver_forge.template_generate"
+        - "weaver_forge.scaffold_create"
+        - "weaver_forge.batch_process"
+      
+      required_attributes:
+        - "specs_count"
+        - "parallel"
+        - "dry_run"
+        - "total_specs"
+        - "successful"
+        - "failed"
+        - "total_files"
+        - "success_rate"
+      
+      required_events:
+        - "weaver_forge.bulk_generated"
+        - "weaver_forge.template_generated"
+        - "weaver_forge.scaffold_created"
+    
+    # Metrics validation
+    metrics:
+      required_names:
+        - "weaver_forge.bulk_generation"
+        - "weaver_forge.template_generation"
+        - "weaver_forge.scaffold_creation"
+        - "weaver_forge.generation_duration"
+        - "weaver_forge.files_created"
+      
+      required_attributes:
+        - "template_type"
+        - "parallel"
+        - "dry_run"
+        - "success"
+    
+    # Performance thresholds
+    performance:
+      max_overhead_percentage: 10.0  # Maximum telemetry overhead
+      max_span_duration: 5.0         # Maximum span duration in seconds
+      min_success_rate: 80.0         # Minimum test success rate
+
+# Test Data Configuration
+test_data:
+  # Sample generation specifications for testing
+  generation_specs:
+    - template: "component"
+      name: "TestComponent"
+      parameters:
+        style: "styled-components"
+        typescript: true
+        props: ["name", "email"]
+      subdir: "components"
+    
+    - template: "api"
+      name: "test-api"
+      parameters:
+        framework: "express"
+        validation: true
+        authentication: true
+      subdir: "api"
+    
+    - template: "workflow"
+      name: "test-workflow"
+      parameters:
+        type: "ci-cd"
+        platform: "github"
+        steps: ["build", "test", "deploy"]
+      subdir: "workflows"
+
+  # Sample scaffold specifications for testing
+  scaffold_specs:
+    - type: "react-app"
+      name: "test-frontend"
+      parameters:
+        typescript: true
+        testing: "jest"
+        styling: "styled-components"
+      subdir: "apps"
+    
+    - type: "node-api"
+      name: "test-backend"
+      parameters:
+        framework: "express"
+        database: "postgres"
+        authentication: "jwt"
+      subdir: "apps"
+
+  # Sample batch file content for testing
+  batch_files:
+    simple:
+      description: "Simple batch test"
+      version: "1.0.0"
+      generations:
+        - template: "component"
+          name: "SimpleComponent"
+          parameters:
+            style: "css-modules"
+            typescript: false
+    
+    complex:
+      description: "Complex batch test"
+      version: "1.0.0"
+      generations:
+        - template: "component"
+          name: "ComplexComponent"
+          parameters:
+            style: "styled-components"
+            typescript: true
+            props: ["id", "name", "email", "avatar"]
+        - template: "api"
+          name: "complex-api"
+          parameters:
+            framework: "express"
+            validation: true
+            authentication: true
+            database: "postgres"
+      scaffolds:
+        - type: "react-app"
+          name: "complex-app"
+          parameters:
+            typescript: true
+            testing: "jest"
+            styling: "styled-components"
+
+# Validation Rules
+validation_rules:
+  # Weaver compatibility rules
+  weaver_compatibility:
+    # Naming conventions
+    naming:
+      span_prefix: "weaver_forge."
+      metric_prefix: "weaver_forge."
+      event_prefix: "weaver_forge."
+    
+    # Attribute patterns
+    attributes:
+      required_patterns:
+        - "specs_count"
+        - "parallel"
+        - "dry_run"
+        - "total_specs"
+        - "successful"
+        - "failed"
+        - "total_files"
+        - "success_rate"
+      
+      optional_patterns:
+        - "template_type"
+        - "framework"
+        - "style"
+        - "typescript"
+    
+    # Event patterns
+    events:
+      required_patterns:
+        - "bulk_generated"
+        - "template_generated"
+        - "scaffold_created"
+      
+      optional_patterns:
+        - "validation_started"
+        - "validation_completed"
+        - "error_occurred"
+
+  # OpenTelemetry standards compliance
+  opentelemetry_compliance:
+    # Span standards
+    spans:
+      required_fields:
+        - "name"
+        - "attributes"
+        - "status"
+      
+      status_codes:
+        - "OK"
+        - "ERROR"
+        - "UNSET"
+    
+    # Metric standards
+    metrics:
+      required_fields:
+        - "name"
+        - "description"
+        - "unit"
+      
+      metric_types:
+        - "counter"
+        - "histogram"
+        - "gauge"
+
+# Test Scenarios
+test_scenarios:
+  # Success scenarios
+  success:
+    - name: "basic_bulk_generation"
+      description: "Basic bulk generation with single template"
+      specs_count: 1
+      expected_success_rate: 100.0
+    
+    - name: "multiple_templates"
+      description: "Bulk generation with multiple templates"
+      specs_count: 3
+      expected_success_rate: 100.0
+    
+    - name: "parallel_execution"
+      description: "Parallel bulk generation"
+      specs_count: 5
+      parallel: true
+      expected_success_rate: 100.0
+    
+    - name: "dry_run_mode"
+      description: "Dry run mode validation"
+      specs_count: 2
+      dry_run: true
+      expected_success_rate: 100.0
+
+  # Error scenarios
+  error:
+    - name: "template_not_found"
+      description: "Template not found error handling"
+      specs_count: 1
+      should_fail: true
+      expected_success_rate: 0.0
+    
+    - name: "invalid_parameters"
+      description: "Invalid parameters error handling"
+      specs_count: 1
+      should_fail: true
+      expected_success_rate: 0.0
+    
+    - name: "partial_failure"
+      description: "Partial failure scenario"
+      specs_count: 3
+      should_partially_fail: true
+      expected_success_rate: 66.7
+
+  # Performance scenarios
+  performance:
+    - name: "large_batch"
+      description: "Large batch processing"
+      specs_count: 10
+      expected_max_duration: 30.0
+    
+    - name: "memory_usage"
+      description: "Memory usage validation"
+      specs_count: 5
+      expected_max_memory_mb: 512
+
+# Reporting Configuration
+reporting:
+  # Report formats
+  formats:
+    - "markdown"
+    - "json"
+    - "html"
+  
+  # Report sections
+  sections:
+    - "summary"
+    - "test_results"
+    - "telemetry_validation"
+    - "weaver_compatibility"
+    - "performance_metrics"
+    - "recommendations"
+  
+  # Output settings
+  output:
+    directory: "reports"
+    filename_prefix: "telemetry_validation"
+    include_timestamps: true
+    include_environment_info: true
+
+# Environment Configuration
+environment:
+  # Test environment settings
+  test_env:
+    python_version: "3.8+"
+    required_packages:
+      - "pytest"
+      - "opentelemetry-api"
+      - "opentelemetry-sdk"
+      - "rich"
+      - "pyyaml"
+    
+    optional_packages:
+      - "pytest-cov"
+      - "pytest-html"
+      - "pytest-json-report"
+  
+  # Telemetry environment
+  telemetry_env:
+    # OpenTelemetry configuration
+    opentelemetry:
+      trace_provider: "TracerProvider"
+      meter_provider: "MeterProvider"
+      span_processor: "BatchSpanProcessor"
+      metric_reader: "InMemoryMetricReader"
+    
+    # Exporters
+    exporters:
+      span: "InMemorySpanExporter"
+      metric: "InMemoryMetricReader"
+      console: "ConsoleSpanExporter"
+
+# Validation Thresholds
+thresholds:
+  # Success rate thresholds
+  success_rate:
+    excellent: 90.0
+    good: 80.0
+    fair: 70.0
+    poor: 60.0
+  
+  # Performance thresholds
+  performance:
+    max_overhead_percentage: 10.0
+    max_span_duration_seconds: 5.0
+    max_memory_usage_mb: 512
+  
+  # Coverage thresholds
+  coverage:
+    span_coverage: 95.0
+    metric_coverage: 90.0
+    event_coverage: 85.0 

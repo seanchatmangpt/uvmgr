@@ -1,0 +1,164 @@
+{
+  "status": "completed",
+  "start_time": "2025-06-28T21:14:58.102785",
+  "end_time": "2025-06-28T21:15:00.819241",
+  "duration": 2.716456,
+  "tests": {
+    "mcp_models": {
+      "status": "success",
+      "tests": [
+        {
+          "name": "model_initialization",
+          "status": "passed",
+          "details": "Initialized 0 models"
+        },
+        {
+          "name": "web_search",
+          "status": "failed",
+          "error": "'WebSearchTool' object is not callable"
+        },
+        {
+          "name": "analysis_with_web_search",
+          "status": "passed",
+          "details": "Analysis completed successfully"
+        }
+      ],
+      "total_tests": 3,
+      "passed_tests": 2,
+      "failed_tests": 1
+    },
+    "weaver_telemetry": {
+      "status": "success",
+      "tests": [
+        {
+          "name": "basic_telemetry",
+          "status": "failed",
+          "error": "'NoneType' object has no attribute 'get_spans'"
+        },
+        {
+          "name": "github_actions_telemetry",
+          "status": "failed",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ],
+      "total_tests": 2,
+      "passed_tests": 0,
+      "failed_tests": 2
+    },
+    "performance": {
+      "status": "success",
+      "tests": [
+        {
+          "name": "response_time_consistency",
+          "status": "passed",
+          "details": "Average: 0.101s, Variance: 0.000001"
+        },
+        {
+          "name": "memory_usage",
+          "status": "passed",
+          "details": "Memory increase: 0.00MB"
+        }
+      ],
+      "total_tests": 2,
+      "passed_tests": 2,
+      "failed_tests": 0,
+      "performance_metrics": {
+        "response_time": {
+          "times": [
+            0.10210609436035156,
+            0.10209107398986816,
+            0.10207295417785645,
+            0.10086989402770996,
+            0.10008025169372559
+          ],
+          "average": 0.10144405364990235,
+          "variance": 6.884128288220381e-07,
+          "consistent": true
+        },
+        "memory_usage": {
+          "before": 293.734375,
+          "after": 293.734375,
+          "increase": 0.0,
+          "acceptable": true
+        }
+      }
+    },
+    "integration": {
+      "status": "success",
+      "tests": [
+        {
+          "name": "mcp_weaver_integration",
+          "status": "passed",
+          "details": "Integration test completed successfully"
+        },
+        {
+          "name": "telemetry_integration",
+          "status": "failed",
+          "error": "'NoneType' object has no attribute 'get_spans'"
+        }
+      ],
+      "total_tests": 2,
+      "passed_tests": 1,
+      "failed_tests": 1
+    },
+    "reliability": {
+      "status": "success",
+      "tests": [
+        {
+          "name": "repeated_operations",
+          "status": "failed",
+          "details": "Success rate: 0.0%"
+        },
+        {
+          "name": "concurrent_operations",
+          "status": "passed",
+          "details": "Concurrent success rate: 100.0%"
+        }
+      ],
+      "total_tests": 2,
+      "passed_tests": 1,
+      "failed_tests": 1,
+      "reliability_metrics": {
+        "repeated_operations": {
+          "total_operations": 10,
+          "successful_operations": 0,
+          "success_rate": 0.0,
+          "reliable": false
+        },
+        "concurrent_operations": {
+          "total_operations": 5,
+          "successful_operations": 5,
+          "success_rate": 1.0,
+          "reliable": true
+        }
+      }
+    },
+    "live_data": {
+      "status": "success",
+      "tests": [
+        {
+          "name": "live_workflow_validation",
+          "status": "failed",
+          "error": "HTTP Error 404: Not Found"
+        },
+        {
+          "name": "live_runs_validation",
+          "status": "failed",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ],
+      "total_tests": 2,
+      "passed_tests": 0,
+      "failed_tests": 2,
+      "live_data_metrics": {}
+    }
+  },
+  "summary": {
+    "total_tests": 13,
+    "passed_tests": 6,
+    "failed_tests": 7,
+    "skipped_tests": 0,
+    "success_rate": 0.46153846153846156,
+    "overall_status": "failed"
+  }
+}

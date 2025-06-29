@@ -20,11 +20,11 @@ Example
     # Basic span usage
     with span("my_operation", operation_type="custom"):
         result = perform_operation()
-    
+
     # Metrics collection
     counter = metric_counter("my.operation.calls")
     counter(1, {"operation": "add"})
-    
+
     # Exception recording
     try:
         risky_operation()
@@ -60,18 +60,18 @@ from typing import Any
 def setup_logging(level: str = "INFO") -> None:
     """
     Initialize root logging configuration once, idempotently.
-    
+
     This function sets up the basic logging configuration for the uvmgr application.
     It's called by `uvmgr.cli` on startup and ensures consistent logging across
     all modules. The function is idempotent - calling it multiple times has no
     additional effect.
-    
+
     Parameters
     ----------
     level : str, optional
         Logging level to use. Must be a valid logging level name
         (DEBUG, INFO, WARNING, ERROR, CRITICAL). Default is "INFO".
-    
+
     Notes
     -----
     The logging configuration includes:
@@ -79,7 +79,7 @@ def setup_logging(level: str = "INFO") -> None:
     - Level name with 8-character padding
     - Logger name
     - Message content
-    
+
     Example
     -------
     >>> setup_logging("DEBUG")
@@ -124,14 +124,16 @@ try:
 
     # Setup Traces
     _TRACE_PROVIDER = TracerProvider(resource=_RESOURCE)
-    _TRACE_PROVIDER.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=_OTEL_ENDPOINT)))
+    _TRACE_PROVIDER.add_span_processor(
+        BatchSpanProcessor(OTLPSpanExporter(endpoint=_OTEL_ENDPOINT))
+    )
     trace.set_tracer_provider(_TRACE_PROVIDER)
     _TRACER = trace.get_tracer("uvmgr")
 
     # Setup Metrics
     _METRIC_READER = PeriodicExportingMetricReader(
         OTLPMetricExporter(endpoint=_OTEL_ENDPOINT),
-        export_interval_millis=5000  # Export every 5 seconds
+        export_interval_millis=5000,  # Export every 5 seconds
     )
     _METRIC_PROVIDER = MeterProvider(resource=_RESOURCE, metric_readers=[_METRIC_READER])
     metrics.set_meter_provider(_METRIC_PROVIDER)
@@ -145,16 +147,16 @@ try:
         with _TRACER.start_as_current_span(name, **kwargs) as current_span:
             yield current_span
 
-    def metric_counter(name: str) -> "Callable[[int], None]":
+    def metric_counter(name: str) -> Callable[[int], None]:
         return _METER.create_counter(name).add
 
-    def metric_histogram(name: str, unit: str = "s") -> "Callable[[float], None]":
+    def metric_histogram(name: str, unit: str = "s") -> Callable[[float], None]:
         """
         Create a histogram metric for recording distributions.
-        
+
         Histograms are used to track the distribution of values, such as
         operation durations, request sizes, or other measurable quantities.
-        
+
         Parameters
         ----------
         name : str
@@ -164,13 +166,13 @@ try:
             The unit of measurement for the histogram values. Common units
             include "s" (seconds), "ms" (milliseconds), "bytes", "count".
             Default is "s".
-        
+
         Returns
         -------
         "Callable[[float], None]"
             A function that records values in the histogram. The function
             accepts a float value and optional attributes as keyword arguments.
-        
+
         Example
         -------
         >>> duration_histogram = metric_histogram("api.request.duration", unit="ms")
@@ -178,33 +180,33 @@ try:
         """
         return _METER.create_histogram(name, unit=unit).record
 
-    def metric_gauge(name: str) -> "Callable[[float], None]":
+    def metric_gauge(name: str) -> Callable[[float], None]:
         """
         Create a gauge metric for recording current values.
-        
+
         Gauges represent a single numerical value that can arbitrarily go up
         and down. They are typically used for measured values like temperatures
         or current memory usage, or "counts" that can go up and down, like
         the number of concurrent requests.
-        
+
         Parameters
         ----------
         name : str
             The name of the gauge metric. Should follow OpenTelemetry
             naming conventions (e.g., "system.memory.usage").
-        
+
         Returns
         -------
         "Callable[[float], None]"
             A function that updates the gauge value. The function accepts
             a float value and optional attributes as keyword arguments.
             Positive values increase the gauge, negative values decrease it.
-        
+
         Notes
         -----
         OpenTelemetry uses UpDownCounter for gauge-like behavior, which
         allows both positive and negative increments.
-        
+
         Example
         -------
         >>> memory_gauge = metric_gauge("system.memory.usage")
@@ -214,15 +216,17 @@ try:
         # Note: OTEL uses UpDownCounter for gauge-like behavior
         return _METER.create_up_down_counter(name).add
 
-    def record_exception(e: Exception, escaped: bool = True, attributes: dict[str, Any] | None = None):
+    def record_exception(
+        e: Exception, escaped: bool = True, attributes: dict[str, Any] | None = None
+    ):
         """
         Record an exception in the current span with semantic conventions.
-        
+
         This function records exception information in the current OpenTelemetry span,
         including the exception type, message, and stack trace. It also sets the
         span status to ERROR and adds semantic convention attributes for common
         exception types.
-        
+
         Parameters
         ----------
         e : Exception
@@ -234,7 +238,7 @@ try:
         attributes : dict[str, Any], optional
             Additional attributes to record with the exception. These will be
             merged with the standard semantic convention attributes.
-        
+
         Notes
         -----
         The function automatically adds the following semantic convention attributes:
@@ -242,11 +246,11 @@ try:
         - exception.message: The exception message
         - exception.escaped: Whether the exception escaped
         - exception.stacktrace: The exception stack trace
-        
+
         For specific exception types, additional attributes are added:
         - subprocess.CalledProcessError: process.exit_code, process.command
         - FileNotFoundError/IOError: file.path
-        
+
         Example
         -------
         >>> try:
@@ -275,7 +279,9 @@ try:
             if hasattr(e, "returncode"):  # subprocess.CalledProcessError
                 exc_attrs["process.exit_code"] = e.returncode
                 if hasattr(e, "cmd"):
-                    exc_attrs["process.command"] = " ".join(e.cmd) if isinstance(e.cmd, list) else str(e.cmd)
+                    exc_attrs["process.command"] = (
+                        " ".join(e.cmd) if isinstance(e.cmd, list) else str(e.cmd)
+                    )
             elif hasattr(e, "filename"):  # FileNotFoundError, IOError
                 exc_attrs["file.path"] = str(e.filename)
 
@@ -284,30 +290,21 @@ try:
 
             # Set error status
             from opentelemetry.trace import Status, StatusCode
+
             current_span.set_status(Status(StatusCode.ERROR, str(e)))
 
     def get_current_span():
-        """
-        Get the current active span from the OpenTelemetry context.
-        
-        Returns
-        -------
-        opentelemetry.trace.Span
-            The current active span. If no span is active, returns a no-op span
-            that can be safely used for all span operations.
-        
-        Example
-        -------
-        >>> current_span = get_current_span()
-        >>> if current_span.is_recording():
-        ...     current_span.set_attribute("custom.attr", "value")
-        """
+        """Get the current active span."""
         return trace.get_current_span()
+
+    def get_tracer():
+        """Get the tracer instance."""
+        return _TRACER
 
     def set_span_status(status_code, description: str = ""):
         """
         Set the status of the current span.
-        
+
         Parameters
         ----------
         status_code : str
@@ -318,13 +315,14 @@ try:
         description : str, optional
             A description of the status, particularly useful for ERROR status.
             Default is an empty string.
-        
+
         Example
         -------
         >>> set_span_status("OK")
         >>> set_span_status("ERROR", "Failed to connect to database")
         """
         from opentelemetry.trace import Status, StatusCode
+
         current_span = trace.get_current_span()
         if current_span.is_recording():
             if status_code == "OK":
@@ -339,35 +337,61 @@ except ImportError:  # SDK not installed – degrade gracefully
     @contextmanager
     def span(name: str, span_kind=None, **attrs: Any):  # type: ignore[arg-type]
         class _NoopSpan:
-            def is_recording(self): return False
-            def set_status(self, *args, **kwargs): pass
-            def set_attribute(self, *args, **kwargs): pass
-            def set_attributes(self, *args, **kwargs): pass
-            def add_event(self, *args, **kwargs): pass
+            def is_recording(self):
+                return False
+
+            def set_status(self, *args, **kwargs):
+                pass
+
+            def set_attribute(self, *args, **kwargs):
+                pass
+
+            def set_attributes(self, *args, **kwargs):
+                pass
+
+            def add_event(self, *args, **kwargs):
+                pass
+
         yield _NoopSpan()
 
     def metric_counter(name: str):  # type: ignore[return-value]
         def _noop(_=1, **__): ...
+
         return _noop
 
     def metric_histogram(name: str, unit: str = "s"):  # type: ignore[return-value]
         def _noop(_: float, **__): ...
+
         return _noop
 
     def metric_gauge(name: str):  # type: ignore[return-value]
         def _noop(_: float, **__): ...
+
         return _noop
 
-    def record_exception(e: Exception, escaped: bool = True, attributes: dict[str, Any] | None = None):
+    def record_exception(
+        e: Exception, escaped: bool = True, attributes: dict[str, Any] | None = None
+    ):
         pass
 
     def get_current_span():  # type: ignore[return-value]
         class _NoopSpan:
-            def is_recording(self): return False
-            def set_status(self, *args, **kwargs): pass
-            def set_attributes(self, *args, **kwargs): pass
-            def add_event(self, *args, **kwargs): pass
+            def is_recording(self):
+                return False
+
+            def set_status(self, *args, **kwargs):
+                pass
+
+            def set_attributes(self, *args, **kwargs):
+                pass
+
+            def add_event(self, *args, **kwargs):
+                pass
+
         return _NoopSpan()
+
+    def get_tracer():  # type: ignore[return-value]
+        return None
 
     def set_span_status(status_code, description: str = ""):
         pass

@@ -1,11 +1,11 @@
 {
-  "timestamp": "2025-06-28T20:39:02.776912",
+  "timestamp": "2025-06-28T21:36:33.308267",
   "uvmgr_path": "/Users/sac/dev/uvmgr",
   "python_version": "3.13.0 (main, Oct 16 2024, 08:05:40) [Clang 18.1.8 ]",
   "test_results": [
     {
       "project_type": "minimal",
-      "project_path": "/Users/sac/.cache/tmp/tmpdrn1_wd6/test-minimal",
+      "project_path": "/Users/sac/.cache/tmp/tmpyjswjlyy/test-minimal",
       "steps": [
         {
           "name": "Create virtual environment",
@@ -14,7 +14,7 @@
             "venv"
           ],
           "success": true,
-          "duration": 0.012224912643432617,
+          "duration": 0.06401395797729492,
           "error": null
         },
         {
@@ -27,7 +27,7 @@
             "."
           ],
           "success": true,
-          "duration": 0.2862539291381836,
+          "duration": 0.5422871112823486,
           "error": null
         },
         {
@@ -38,7 +38,7 @@
             "httpx"
           ],
           "success": true,
-          "duration": 0.6350100040435791,
+          "duration": 0.927736759185791,
           "error": null
         },
         {
@@ -48,7 +48,7 @@
             "list"
           ],
           "success": true,
-          "duration": 0.30513882637023926,
+          "duration": 0.2898440361022949,
           "error": null
         },
         {
@@ -58,7 +58,7 @@
             "run"
           ],
           "success": true,
-          "duration": 0.4532582759857178,
+          "duration": 0.44881296157836914,
           "error": null
         },
         {
@@ -69,7 +69,7 @@
             "--help"
           ],
           "success": true,
-          "duration": 0.26278090476989746,
+          "duration": 0.2616260051727295,
           "error": null
         },
         {
@@ -79,7 +79,7 @@
             "wheel"
           ],
           "success": true,
-          "duration": 3.5209991931915283,
+          "duration": 3.6072781085968018,
           "error": null
         },
         {
@@ -89,7 +89,7 @@
             "sdist"
           ],
           "success": true,
-          "duration": 3.4815380573272705,
+          "duration": 3.567976951599121,
           "error": null
         }
       ],
@@ -98,7 +98,7 @@
     },
     {
       "project_type": "library",
-      "project_path": "/Users/sac/.cache/tmp/tmpa31yfpow/test-library",
+      "project_path": "/Users/sac/.cache/tmp/tmpspabc77s/test-library",
       "steps": [
         {
           "name": "Create virtual environment",
@@ -107,7 +107,7 @@
             "venv"
           ],
           "success": true,
-          "duration": 0.010491132736206055,
+          "duration": 0.010174036026000977,
           "error": null
         },
         {
@@ -120,7 +120,7 @@
             "."
           ],
           "success": true,
-          "duration": 0.26265597343444824,
+          "duration": 0.49370384216308594,
           "error": null
         },
         {
@@ -131,7 +131,7 @@
             "httpx"
           ],
           "success": true,
-          "duration": 0.5722670555114746,
+          "duration": 0.835191011428833,
           "error": null
         },
         {
@@ -141,7 +141,7 @@
             "list"
           ],
           "success": true,
-          "duration": 0.3189990520477295,
+          "duration": 0.2929260730743408,
           "error": null
         },
         {
@@ -151,7 +151,7 @@
             "run"
           ],
           "success": true,
-          "duration": 0.47919178009033203,
+          "duration": 0.4447770118713379,
           "error": null
         },
         {
@@ -162,7 +162,7 @@
             "--help"
           ],
           "success": true,
-          "duration": 0.2755448818206787,
+          "duration": 0.2642199993133545,
           "error": null
         },
         {
@@ -172,7 +172,7 @@
             "wheel"
           ],
           "success": true,
-          "duration": 3.3840959072113037,
+          "duration": 3.491253137588501,
           "error": null
         },
         {
@@ -182,7 +182,7 @@
             "sdist"
           ],
           "success": true,
-          "duration": 3.8052940368652344,
+          "duration": 3.4368791580200195,
           "error": null
         }
       ],
@@ -191,7 +191,7 @@
     },
     {
       "project_type": "application",
-      "project_path": "/Users/sac/.cache/tmp/tmpyh5cccqy/test-application",
+      "project_path": "/Users/sac/.cache/tmp/tmp8izlj_id/test-application",
       "steps": [
         {
           "name": "Create virtual environment",
@@ -200,7 +200,7 @@
             "venv"
           ],
           "success": true,
-          "duration": 0.011779069900512695,
+          "duration": 0.010610818862915039,
           "error": null
         },
         {
@@ -213,7 +213,7 @@
             "."
           ],
           "success": true,
-          "duration": 0.26131510734558105,
+          "duration": 0.2647061347961426,
           "error": null
         },
         {
@@ -224,7 +224,7 @@
             "httpx"
           ],
           "success": true,
-          "duration": 0.7174468040466309,
+          "duration": 0.7050004005432129,
           "error": null
         },
         {
@@ -234,7 +234,7 @@
             "list"
           ],
           "success": true,
-          "duration": 0.305034875869751,
+          "duration": 0.29503893852233887,
           "error": null
         },
         {
@@ -244,7 +244,7 @@
             "run"
           ],
           "success": true,
-          "duration": 0.48053598403930664,
+          "duration": 0.45989084243774414,
           "error": null
         },
         {
@@ -255,7 +255,7 @@
             "--help"
           ],
           "success": true,
-          "duration": 0.2793920040130615,
+          "duration": 0.2594456672668457,
           "error": null
         },
         {
@@ -265,7 +265,7 @@
             "wheel"
           ],
           "success": true,
-          "duration": 3.3131210803985596,
+          "duration": 3.42718505859375,
           "error": null
         },
         {
@@ -275,7 +275,7 @@
             "sdist"
           ],
           "success": true,
-          "duration": 3.487311840057373,
+          "duration": 3.4394030570983887,
           "error": null
         },
         {
@@ -286,7 +286,7 @@
             "--help"
           ],
           "success": true,
-          "duration": 0.33724379539489746,
+          "duration": 0.27690792083740234,
           "error": null
         }
       ],

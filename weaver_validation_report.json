@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-06-28 20:56:58",
+  "timestamp": "2025-06-28 21:25:07",
   "total_tests": 9,
   "passed_tests": 9,
   "failed_tests": 0,
@@ -14,7 +14,7 @@
         "issues": [],
         "classes_checked": 6
       },
-      "duration": 6.198883056640625e-05
+      "duration": 5.888938903808594e-05
     },
     {
       "test_name": "Attribute Naming Conventions",
@@ -25,7 +25,7 @@
         "valid_attributes": 47,
         "naming_violations": []
       },
-      "duration": 4.1961669921875e-05
+      "duration": 3.981590270996094e-05
     },
     {
       "test_name": "Semantic Convention Completeness",
@@ -36,7 +36,7 @@
         "missing_operations": [],
         "coverage_percentage": 100.0
       },
-      "duration": 0.0018281936645507812
+      "duration": 0.0018329620361328125
     },
     {
       "test_name": "Telemetry Functionality",
@@ -68,7 +68,7 @@
         "passed": 5,
         "total": 5
       },
-      "duration": 4.291534423828125e-05
+      "duration": 4.220008850097656e-05
     },
     {
       "test_name": "Metrics Instrumentation",
@@ -92,7 +92,7 @@
         "passed": 3,
         "total": 3
       },
-      "duration": 0.0012791156768798828
+      "duration": 0.0012810230255126953
     },
     {
       "test_name": "Span Attributes and Events",
@@ -116,7 +116,7 @@
         "passed": 3,
         "total": 3
       },
-      "duration": 7.152557373046875e-06
+      "duration": 5.9604644775390625e-06
     },
     {
       "test_name": "Operation Instrumentation",
@@ -140,7 +140,7 @@
         "passed": 3,
         "total": 3
       },
-      "duration": 3.790855407714844e-05
+      "duration": 3.62396240234375e-05
     },
     {
       "test_name": "Error Handling",
@@ -164,21 +164,21 @@
         "passed": 3,
         "total": 3
       },
-      "duration": 5.412101745605469e-05
+      "duration": 6.413459777832031e-05
     },
     {
       "test_name": "Performance Characteristics",
       "success": true,
       "message": "Performance within limits",
       "details": {
-        "avg_span_creation_time": 3.919601440429688e-06,
-        "avg_metrics_recording_time": 2.384185791015625e-08
+        "avg_span_creation_time": 4.079341888427734e-06,
+        "avg_metrics_recording_time": 3.0994415283203126e-08
       },
-      "duration": 0.0003998279571533203
+      "duration": 0.00041604042053222656
     }
   ],
   "summary": {
-    "validation_duration": 0.003793001174926758,
+    "validation_duration": 0.003818035125732422,
     "meets_weaver_standards": true,
     "critical_failures": [],
     "performance_ok": true

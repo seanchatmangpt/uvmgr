@@ -1,0 +1,334 @@
+name: "Enterprise Definition of Done"
+version: "1.0.0"
+enforcement: "strict"
+
+categories:
+  code_quality:
+    - name: "lint_score"
+      condition: "lint_score >= 9.5"
+      auto_fix: true
+      fix_command: "ruff check --fix . && ruff format ."
+      severity: "standard"
+      telemetry:
+        metric: "dod.code_quality.lint_score"
+        threshold: 9.5
+    
+    - name: "type_coverage"
+      condition: "type_coverage >= 95"
+      auto_fix: false
+      severity: "standard"
+      telemetry:
+        metric: "dod.code_quality.type_coverage"
+        threshold: 95
+    
+    - name: "complexity"
+      condition: "cyclomatic_complexity < 8"
+      auto_fix: false
+      severity: "standard"
+      telemetry:
+        metric: "dod.code_quality.complexity"
+        threshold: 8
+    
+    - name: "test_coverage"
+      condition: "test_coverage >= 90"
+      auto_fix: false
+      severity: "strict"
+      telemetry:
+        metric: "dod.testing.coverage"
+        threshold: 90
+
+  security:
+    - name: "vulnerability_scan"
+      condition: "critical_vulnerabilities == 0 && high_vulnerabilities == 0"
+      auto_fix: false
+      severity: "strict"
+      telemetry:
+        metric: "dod.security.vulnerabilities"
+        critical_threshold: 0
+        high_threshold: 0
+    
+    - name: "dependency_audit"
+      condition: "insecure_dependencies == 0"
+      auto_fix: true
+      fix_command: "uv update --secure"
+      severity: "standard"
+    
+    - name: "secrets_scan"
+      condition: "secrets_found == 0"
+      auto_fix: false
+      severity: "strict"
+    
+    - name: "security_headers"
+      condition: "security_headers_configured == true"
+      auto_fix: false
+      severity: "standard"
+
+  testing:
+    - name: "unit_test_coverage"
+      condition: "unit_coverage >= 95"
+      auto_fix: false
+      severity: "strict"
+    
+    - name: "integration_test_coverage"
+      condition: "integration_coverage >= 80"
+      auto_fix: false
+      severity: "standard"
+    
+    - name: "e2e_test_coverage"
+      condition: "e2e_critical_paths == 100"
+      auto_fix: false
+      severity: "standard"
+    
+    - name: "performance_tests"
+      condition: "performance_tests_passing == true"
+      auto_fix: false
+      severity: "standard"
+    
+    - name: "mutation_testing"
+      condition: "mutation_score >= 80"
+      auto_fix: false
+      severity: "advisory"
+
+  documentation:
+    - name: "api_documentation"
+      condition: "api_doc_coverage == 100"
+      auto_fix: false
+      severity: "standard"
+    
+    - name: "user_documentation"
+      condition: "user_docs_complete == true"
+      auto_fix: false
+      severity: "standard"
+    
+    - name: "architecture_documentation"
+      condition: "architecture_doc_age < 30"
+      auto_fix: false
+      severity: "advisory"
+    
+    - name: "deployment_documentation"
+      condition: "deployment_docs_complete == true"
+      auto_fix: false
+      severity: "standard"
+
+  performance:
+    - name: "load_testing"
+      condition: "load_test_passed == true"
+      auto_fix: false
+      severity: "standard"
+    
+    - name: "response_time"
+      condition: "p95_response_time < 500"
+      auto_fix: false
+      severity: "standard"
+      telemetry:
+        metric: "dod.performance.response_time_p95"
+        threshold: 500
+    
+    - name: "memory_usage"
+      condition: "memory_usage < 512"
+      auto_fix: false
+      severity: "advisory"
+    
+    - name: "startup_time"
+      condition: "startup_time < 10"
+      auto_fix: false
+      severity: "advisory"
+
+  operations:
+    - name: "monitoring_configured"
+      condition: "monitoring_ready == true"
+      auto_fix: false
+      severity: "strict"
+    
+    - name: "alerts_configured"
+      condition: "alerts_ready == true"
+      auto_fix: false
+      severity: "strict"
+    
+    - name: "logging_configured"
+      condition: "structured_logging == true"
+      auto_fix: false
+      severity: "standard"
+    
+    - name: "backup_strategy"
+      condition: "backup_strategy_defined == true"
+      auto_fix: false
+      severity: "standard"
+    
+    - name: "disaster_recovery"
+      condition: "disaster_recovery_tested == true"
+      auto_fix: false
+      severity: "advisory"
+
+  compliance:
+    - name: "accessibility"
+      condition: "accessibility_score >= 95"
+      auto_fix: false
+      severity: "standard"
+    
+    - name: "data_protection"
+      condition: "gdpr_compliant == true"
+      auto_fix: false
+      severity: "strict"
+    
+    - name: "audit_logging"
+      condition: "audit_logging_enabled == true"
+      auto_fix: false
+      severity: "standard"
+    
+    - name: "license_compliance"
+      condition: "license_violations == 0"
+      auto_fix: false
+      severity: "standard"
+
+workflows:
+  complete_validation: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL">
+      <bpmn:process id="complete_dod_validation" isExecutable="true">
+        <bpmn:startEvent id="start"/>
+        <bpmn:parallelGateway id="parallel_validation"/>
+        <bpmn:task id="validate_code_quality" name="Code Quality"/>
+        <bpmn:task id="validate_security" name="Security"/>
+        <bpmn:task id="validate_testing" name="Testing"/>
+        <bpmn:task id="validate_documentation" name="Documentation"/>
+        <bpmn:task id="validate_performance" name="Performance"/>
+        <bpmn:task id="validate_operations" name="Operations"/>
+        <bpmn:task id="validate_compliance" name="Compliance"/>
+        <bpmn:parallelGateway id="convergence"/>
+        <bpmn:task id="generate_report" name="Generate Report"/>
+        <bpmn:endEvent id="end"/>
+      </bpmn:process>
+    </bpmn:definitions>
+
+evolution:
+  enabled: true
+  learning_mode: "balanced"
+  auto_tune: true
+  history_window_days: 30
+  evolution_rules:
+    - rule: "tighten_threshold"
+      condition: "pass_rate > 0.98 && runs > 100"
+      action: "increase_threshold_by_5_percent"
+    - rule: "relax_threshold"
+      condition: "pass_rate < 0.10 && runs > 50"
+      action: "decrease_threshold_by_10_percent"
+    - rule: "optimize_slow_rules"
+      condition: "avg_duration > 5000"
+      action: "suggest_optimization"
+
+exoskeleton:
+  semantic_conventions:
+    - prefix: "dod"
+      attributes:
+        - "dod.category"
+        - "dod.rule_name"
+        - "dod.enforcement_level"
+        - "dod.auto_fix_enabled"
+        - "dod.validation_duration"
+        - "dod.validation_result"
+  
+  telemetry:
+    metrics:
+      - name: "dod_validations_total"
+        type: "counter"
+        description: "Total DoD validations performed"
+      - name: "dod_validation_duration"
+        type: "histogram"
+        description: "Time taken for DoD validations"
+      - name: "dod_fixes_applied"
+        type: "counter"
+        description: "Number of automatic fixes applied"
+    
+    traces:
+      - name: "dod_complete_validation"
+        description: "Complete DoD validation span"
+      - name: "dod_category_validation"
+        description: "Individual category validation"
+  
+  ai_integration:
+    enabled: true
+    providers:
+      - name: "claude"
+        models: ["claude-3-opus", "claude-3-sonnet"]
+        use_cases: ["test_generation", "code_review", "documentation"]
+      - name: "dspy"
+        models: ["gpt-4", "claude-3-opus"]
+        use_cases: ["optimization", "pattern_recognition"]
+  
+  automation:
+    triggers:
+      - event: "git_commit"
+        actions: ["validate_code_quality", "validate_security"]
+      - event: "pull_request"
+        actions: ["complete_validation", "generate_report"]
+      - event: "deployment"
+        actions: ["validate_operations", "validate_performance"]
+    
+    integrations:
+      - name: "github_actions"
+        config:
+          workflow_file: ".github/workflows/dod-validation.yml"
+          on: ["push", "pull_request"]
+      - name: "docker"
+        config:
+          base_image: "python:3.11-slim"
+          requirements: ["uvmgr[all]"]
+      - name: "kubernetes"
+        config:
+          namespace: "dod-validation"
+          resources:
+            cpu: "1000m"
+            memory: "2Gi"
+
+templates:
+  devops_pipeline: |
+    # Enterprise DevOps Pipeline Template
+    # Automatically generated by uvmgr DoD system
+    
+    name: Enterprise DoD Pipeline
+    
+    on:
+      push:
+        branches: [main, develop]
+      pull_request:
+        branches: [main]
+    
+    jobs:
+      dod-validation:
+        runs-on: ubuntu-latest
+        steps:
+          - uses: actions/checkout@v4
+          - name: Setup uvmgr
+            run: |
+              curl -LsSf https://astral.sh/uv/install.sh | sh
+              uv tool install uvmgr[all]
+          - name: Run DoD Validation
+            run: uvmgr dod complete --environment production --auto-fix
+          - name: Upload Results
+            uses: actions/upload-artifact@v4
+            with:
+              name: dod-report
+              path: dod-report.json
+
+reporting:
+  formats: ["json", "markdown", "html", "pdf"]
+  dashboards:
+    - name: "DoD Compliance Dashboard"
+      metrics:
+        - "dod_completion_rate"
+        - "dod_validation_duration"
+        - "dod_failure_trends"
+    - name: "Quality Trends"
+      metrics:
+        - "code_quality_score"
+        - "test_coverage_trend"
+        - "security_score_trend"
+  
+  notifications:
+    - channel: "slack"
+      webhook: "${SLACK_WEBHOOK_URL}"
+      events: ["validation_failed", "threshold_breached"]
+    - channel: "email"
+      recipients: ["dev-team@company.com"]
+      events: ["weekly_report", "critical_failure"]

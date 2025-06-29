@@ -5,6 +5,7 @@ Unit tests for end-to-end external project validation functionality.
 import pytest
 import tempfile
 import json
+import subprocess
 from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
 from typing import Dict, Any
@@ -264,7 +265,8 @@ class TestExternalProjectValidator:
             mock_lifecycle.return_value = {
                 "project_type": "test",
                 "success_rate": 1.0,
-                "steps": [{"success": True}] * 8
+                "steps": [{"success": True}] * 8,
+                "summary": "8/8 steps passed"
             }
             
             with patch.object(validator, 'validate_advanced_features') as mock_advanced:

@@ -1,0 +1,7 @@
+# DoD Exoskeleton Configuration
+template: Standard DoD automation for typical projects
+automation:
+  enabled: true
+  features: ['basic_ci', 'testing', 'security_scan', 'docs']
+ai:
+  features: ['code_review', 'test_generation']

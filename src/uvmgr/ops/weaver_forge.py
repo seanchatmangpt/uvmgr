@@ -66,8 +66,6 @@ from rich.console import Console
 
 from uvmgr.core.instrumentation import add_span_attributes, add_span_event
 from uvmgr.core.telemetry import span, metric_counter, metric_histogram, record_exception
-from uvmgr.core.agi_reasoning import dspy_reasoning_chain
-from uvmgr.core.lean_six_sigma import validate_template_quality
 
 console = Console()
 
@@ -994,33 +992,41 @@ def _interactive_parameter_input(parameters: Dict[str, Any], template_info: Temp
 
 
 def _enhance_parameters_with_dspy(template_name: str, name: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
-    """Enhance parameters using DSPy."""
+    """Enhance parameters with intelligent suggestions."""
     try:
-        prompt = f"""
-        Analyze the template '{template_name}' for generating '{name}' with current parameters: {parameters}
+        # Basic parameter enhancement without DSPy
+        enhanced_params = parameters.copy()
         
-        Suggest additional intelligent parameters that would improve the generated code.
-        Consider:
-        - Best practices for the template type
-        - Common patterns and conventions
-        - Code quality improvements
-        - Maintainability enhancements
+        # Add common enhancements based on template type
+        if "component" in template_name.lower():
+            enhanced_params.update({
+                "has_tests": True,
+                "has_stories": True,
+                "has_docs": True,
+                "accessibility": True,
+                "responsive": True
+            })
+        elif "api" in template_name.lower():
+            enhanced_params.update({
+                "has_validation": True,
+                "has_documentation": True,
+                "has_tests": True,
+                "rate_limiting": True,
+                "caching": True
+            })
+        elif "workflow" in template_name.lower():
+            enhanced_params.update({
+                "has_monitoring": True,
+                "has_logging": True,
+                "has_metrics": True,
+                "error_handling": True
+            })
         
-        Return only a JSON object with additional parameters.
-        """
-        
-        result = dspy_reasoning_chain(prompt)
-        
-        # Parse result as JSON
-        try:
-            enhanced_params = json.loads(result)
-            return enhanced_params
-        except json.JSONDecodeError:
-            return {}
+        return enhanced_params
             
     except Exception as e:
         record_exception(e)
-        return {}
+        return parameters
 
 
 def _get_template_files(template_path: Path) -> List[Path]:
@@ -1167,33 +1173,74 @@ def _interactive_template_creation(template_name: str, template_structure: Dict[
 
 
 def _enhance_template_with_dspy(template_name: str, template_type: str, template_structure: Dict[str, str]) -> Dict[str, str]:
-    """Enhance template with DSPy."""
+    """Enhance template with intelligent suggestions."""
     try:
-        prompt = f"""
-        Analyze the template '{template_name}' of type '{template_type}' with current structure: {list(template_structure.keys())}
+        # Basic template enhancement without DSPy
+        enhanced_structure = template_structure.copy()
         
-        Suggest additional template files that would improve the template.
-        Consider:
-        - Best practices for the template type
-        - Common patterns and conventions
-        - Code quality improvements
-        - Maintainability enhancements
+        # Add common enhancements based on template type
+        if template_type == "component":
+            enhanced_structure.update({
+                "component.stories.tsx.ejs.t": """import type { Meta, StoryObj } from '@storybook/react';
+import { <%= Name %> } from './<%= Name %>';
+
+const meta: Meta<typeof <%= Name %>> = {
+  title: 'Components/<%= Name %>',
+  component: <%= Name %>,
+  parameters: {
+    layout: 'centered',
+  },
+  tags: ['autodocs'],
+};
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Default: Story = {
+  args: {},
+};
+""",
+                "component.module.css.ejs.t": """/* <%= Name %> Component Styles */
+
+.<%= name_kebab %> {
+  /* Add your styles here */
+}
+""",
+                "index.ts.ejs.t": """export { <%= Name %> } from './<%= Name %>';
+export type { <%= Name %>Props } from './<%= Name %>';
+"""
+            })
+        elif template_type == "api":
+            enhanced_structure.update({
+                "middleware.ts.ejs.t": """import { Request, Response, NextFunction } from 'express';
+
+export const <%= name_kebab %>Middleware = (req: Request, res: Response, next: NextFunction) => {
+  // Add middleware logic here
+  next();
+};
+""",
+                "validation.ts.ejs.t": """import { body, validationResult } from 'express-validator';
+
+export const <%= name_kebab %>Validation = [
+  body('field').isString().notEmpty(),
+  // Add more validation rules as needed
+];
+
+export const handleValidationErrors = (req: Request, res: Response, next: NextFunction) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  next();
+};
+"""
+            })
         
-        Return only a JSON object with additional template files and their content.
-        """
-        
-        result = dspy_reasoning_chain(prompt)
-        
-        # Parse result as JSON
-        try:
-            enhanced_structure = json.loads(result)
-            return enhanced_structure
-        except json.JSONDecodeError:
-            return {}
+        return enhanced_structure
             
     except Exception as e:
         record_exception(e)
-        return {}
+        return template_structure
 
 
 def _create_template_index(template_name: str, template_type: str, description: Optional[str]) -> str:
@@ -1322,33 +1369,44 @@ def _interactive_scaffold_parameters(parameters: Dict[str, Any], scaffold_templa
 
 
 def _enhance_scaffold_with_dspy(scaffold_type: str, project_name: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
-    """Enhance scaffold with DSPy."""
+    """Enhance scaffold with intelligent suggestions."""
     try:
-        prompt = f"""
-        Analyze the scaffold '{scaffold_type}' for project '{project_name}' with current parameters: {parameters}
+        # Basic scaffold enhancement without DSPy
+        enhanced_params = parameters.copy()
         
-        Suggest additional intelligent parameters that would improve the scaffold.
-        Consider:
-        - Best practices for the scaffold type
-        - Common patterns and conventions
-        - Project structure improvements
-        - Development workflow enhancements
+        # Add common enhancements based on scaffold type
+        if "react" in scaffold_type.lower():
+            enhanced_params.update({
+                "typescript": True,
+                "testing": "jest",
+                "styling": "styled-components",
+                "storybook": True,
+                "eslint": True,
+                "prettier": True
+            })
+        elif "node" in scaffold_type.lower():
+            enhanced_params.update({
+                "typescript": True,
+                "testing": "jest",
+                "eslint": True,
+                "prettier": True,
+                "nodemon": True,
+                "docker": True
+            })
+        elif "api" in scaffold_type.lower():
+            enhanced_params.update({
+                "validation": True,
+                "authentication": True,
+                "documentation": True,
+                "rate_limiting": True,
+                "caching": True
+            })
         
-        Return only a JSON object with additional parameters.
-        """
-        
-        result = dspy_reasoning_chain(prompt)
-        
-        # Parse result as JSON
-        try:
-            enhanced_params = json.loads(result)
-            return enhanced_params
-        except json.JSONDecodeError:
-            return {}
+        return enhanced_params
             
     except Exception as e:
         record_exception(e)
-        return {}
+        return parameters
 
 
 def _create_scaffold_file(file_info: Dict[str, Any], parameters: Dict[str, Any], output_path: Path) -> Optional[Dict[str, Any]]:
@@ -1372,35 +1430,30 @@ def _create_scaffold_file(file_info: Dict[str, Any], parameters: Dict[str, Any],
 
 
 def _analyze_generation_request_with_dspy(description: str, template_hint: Optional[str]) -> Dict[str, Any]:
-    """Analyze generation request with DSPy."""
+    """Analyze generation request with intelligent suggestions."""
     try:
-        prompt = f"""
-        Analyze the generation request: "{description}"
-        Template hint: {template_hint or "None"}
+        # Basic analysis without DSPy
+        template_name = _basic_template_selection(description, template_hint)
+        parameters = _basic_parameter_extraction(description)
         
-        Determine:
-        1. The most appropriate template to use
-        2. Parameters that should be extracted from the description
-        3. Additional insights for improving the generation
+        # Add insights based on description
+        insights = []
+        description_lower = description.lower()
         
-        Return a JSON object with:
-        - template_name: the template to use
-        - parameters: extracted parameters
-        - insights: list of insights for improvement
-        """
+        if "test" in description_lower:
+            insights.append("Consider adding comprehensive test coverage")
+        if "api" in description_lower:
+            insights.append("Include proper error handling and validation")
+        if "component" in description_lower:
+            insights.append("Add accessibility features and responsive design")
+        if "workflow" in description_lower:
+            insights.append("Include monitoring and logging capabilities")
         
-        result = dspy_reasoning_chain(prompt)
-        
-        # Parse result as JSON
-        try:
-            analysis = json.loads(result)
-            return analysis
-        except json.JSONDecodeError:
-            return {
-                "template_name": "component",
-                "parameters": {"name": "Generated"},
-                "insights": []
-            }
+        return {
+            "template_name": template_name,
+            "parameters": parameters,
+            "insights": insights
+        }
             
     except Exception as e:
         record_exception(e)

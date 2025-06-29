@@ -1,0 +1,150 @@
+{
+  "workspace_info": {
+    "path": "terraform-weaver-forge-demo",
+    "provider": "aws",
+    "enable_8020": true,
+    "weaver_forge": true,
+    "otel_validation": true,
+    "created_at": 1751168713.906379
+  },
+  "plan_result": {
+    "success": true,
+    "resources_to_add": [
+      "aws_instance.web",
+      "aws_security_group.web"
+    ],
+    "resources_to_change": [],
+    "resources_to_destroy": [],
+    "estimated_cost": 150.0,
+    "error": null,
+    "cost_analysis": {
+      "compute": 80.0,
+      "storage": 20.0,
+      "networking": 30.0,
+      "security": 20.0
+    },
+    "security_issues": [
+      "Enable VPC flow logs",
+      "Use least privilege IAM policies"
+    ],
+    "coverage_percentage": null,
+    "high_value_resources": null,
+    "low_value_resources": null
+  },
+  "forge_result": {
+    "success": true,
+    "message": "Optimization completed successfully",
+    "optimization_savings": 25.0,
+    "resources_optimized": 3,
+    "validation_passed": true,
+    "error": null
+  },
+  "validation_result": {
+    "success": true,
+    "message": "Validation completed: 1 checks passed",
+    "optimization_savings": 0.0,
+    "resources_optimized": 1,
+    "validation_passed": false,
+    "error": null
+  },
+  "plan_8020": {
+    "success": true,
+    "resources_to_add": [
+      "aws_instance.web_8020",
+      "aws_security_group.web_8020"
+    ],
+    "resources_to_change": [],
+    "resources_to_destroy": [],
+    "estimated_cost": 120.0,
+    "error": null,
+    "cost_analysis": null,
+    "security_issues": null,
+    "coverage_percentage": 85.0,
+    "high_value_resources": [
+      "aws_instance.web_8020"
+    ],
+    "low_value_resources": []
+  },
+  "apply_result": {
+    "success": true,
+    "resources_created": [
+      "aws_instance.web",
+      "aws_security_group.web"
+    ],
+    "resources_updated": [],
+    "resources_destroyed": [],
+    "duration": 0.0,
+    "error": null
+  },
+  "otel_setup": {
+    "success": true,
+    "spans_generated": 5,
+    "metrics_collected": 3,
+    "traces_validated": 2,
+    "error": null
+  },
+  "otel_validation": {
+    "success": true,
+    "spans_generated": 10,
+    "metrics_collected": 5,
+    "traces_validated": 3,
+    "error": null
+  },
+  "security_result": {
+    "success": true,
+    "issues": [
+      "Enable VPC flow logs",
+      "Use least privilege IAM policies"
+    ],
+    "severity": "medium",
+    "error": null
+  },
+  "compliance_result": {
+    "success": true,
+    "standards": [
+      "SOC2",
+      "ISO27001",
+      "PCI-DSS"
+    ],
+    "compliance_score": 95.0,
+    "recommendations": [
+      "Enable encryption at rest",
+      "Implement least privilege access"
+    ]
+  },
+  "cost_analysis": {
+    "success": true,
+    "costs": {
+      "compute": 80.0,
+      "storage": 20.0,
+      "networking": 30.0,
+      "security": 20.0
+    },
+    "monthly_estimate": 150.0,
+    "optimization_savings": 25.0,
+    "error": null
+  },
+  "cost_optimization": {
+    "success": true,
+    "costs": {},
+    "monthly_estimate": 120.0,
+    "optimization_savings": 30.0,
+    "error": null
+  },
+  "final_forge_result": {
+    "success": true,
+    "message": "Validation completed: 1 checks passed",
+    "optimization_savings": 0.0,
+    "resources_optimized": 1,
+    "validation_passed": false,
+    "error": null
+  },
+  "health_check": {
+    "success": true,
+    "infrastructure_status": "healthy",
+    "resources_healthy": 2,
+    "security_score": 85.0,
+    "performance_score": 90.0,
+    "cost_efficiency": 95.0
+  }
+}
