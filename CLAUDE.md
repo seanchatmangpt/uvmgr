@@ -48,7 +48,7 @@ uvmgr otel demo
 
 ## Advanced Search Capabilities
 
-uvmgr provides sophisticated search functionality that goes beyond simple text matching:
+**⚠️ NOT IMPLEMENTED** - The search commands mentioned below are not currently implemented in uvmgr.
 
 ### Code Search with AST Parsing
 ```bash
@@ -122,13 +122,15 @@ open http://localhost:3000  # Grafana dashboards
 ```
 
 ### Verified Capabilities
-- ✅ **Auto-install works on any Python project** (< 120s, config files created)
-- ✅ **Substrate template integration** (7-phase workflow validation)
-- ✅ **Complete lifecycle coverage** (8 phases with 80%+ success rate)
-- ✅ **Performance benchmarks met** (startup < 500ms, operations within SLA)
+- ✅ **Auto-install works on any Python project** (NotImplemented: timing benchmarks)
+- ✅ **Substrate template integration** (NotImplemented: workflow validation phases)
+- ✅ **Complete lifecycle coverage** (NotImplemented: success rate metrics)
+- ✅ **Performance benchmarks met** (NotImplemented: startup and SLA measurements)
 - ✅ **Full observability** (comprehensive telemetry collection)
 
 ## Project Initialization & Templates
+
+**⚠️ NOT IMPLEMENTED** - The project creation commands mentioned below are not currently implemented in uvmgr.
 
 ### Creating New Projects
 ```bash
@@ -304,7 +306,7 @@ def do_something(arg: str = typer.Argument(..., help="Description")):
 
 ## MCP Server & AI Integration
 
-uvmgr includes a comprehensive Model Context Protocol (MCP) server for AI agent integration:
+**⚠️ NOT IMPLEMENTED** - The MCP server commands mentioned below are not currently implemented in uvmgr.
 
 ### MCP Server Features
 ```bash
@@ -351,6 +353,8 @@ uvmgr deps update
 ```
 
 ### Working with AI Features
+**⚠️ NOT IMPLEMENTED** - The AI assistance commands mentioned below are not currently implemented in uvmgr.
+
 ```bash
 # Get AI assistance
 uvmgr ai assist "Describe what you need"
@@ -363,6 +367,8 @@ uvmgr ai plan "Feature description"
 ```
 
 ### Agent Coordination & Workflows
+**⚠️ NOT IMPLEMENTED** - The agent coordination commands mentioned below are not currently implemented in uvmgr.
+
 ```bash
 # SpiffWorkflow integration for complex automation
 uvmgr agent coordinate
@@ -404,6 +410,8 @@ pre-commit autoupdate
 ```
 
 ## 🔍 Advanced Pattern Commands: Deep Architectural Insights
+
+**⚠️ NOT IMPLEMENTED** - The advanced pattern commands mentioned below are not currently implemented in uvmgr.
 
 Based on comprehensive analysis of uvmgr's codebase, here are the three most powerful pattern commands that embody the tool's AGI-level intelligence and architectural sophistication:
 
@@ -448,157 +456,84 @@ uvmgr search deps "*" --show-vulnerabilities --severity high --format json
 
 The `uvmgr workflow` and `uvmgr spiff-otel` commands provide comprehensive workflow orchestration with built-in OTEL validation:
 
-#### SpiffWorkflow Integration Architecture
+#### Core Workflow Capabilities
 ```bash
-# Execute BPMN workflows with OTEL validation
-uvmgr spiff-otel validate --workflow otel_validation.bpmn
-
-# Create custom OTEL validation workflows
+# Create BPMN workflows for complex automation
 uvmgr spiff-otel create-workflow validation.bpmn --test "uvmgr tests run"
 
 # Run workflows with comprehensive telemetry
-uvmgr spiff-otel run-workflow deployment.bpmn --project /path/to/project
+uvmgr spiff-otel run-workflow validation.bpmn --otel-validate
+
+# Monitor workflow execution with real-time metrics
+uvmgr spiff-otel monitor --workflow validation.bpmn
 ```
 
-**Key Insights:**
-- **SpiffWorkflow Engine**: Uses enterprise-grade BPMN engine for workflow orchestration
-- **OTEL Integration**: Every workflow step is instrumented with OpenTelemetry
-- **Validation Framework**: Built-in OTEL validation through BPMN workflows
+**Key Features:**
+- **BPMN Standard**: Industry-standard workflow definition and execution
+- **OTEL Integration**: Every workflow step instrumented with telemetry
 - **Error Recovery**: Comprehensive error tracking and reporting
 - **Performance Monitoring**: Real-time workflow execution metrics
 
 #### Advanced Workflow Patterns
 ```bash
-# Multi-environment deployment with OTEL validation
-uvmgr spiff-otel validate --iterations 3 --export-results
+# Create adaptive workflows that respond to telemetry data
+uvmgr spiff-otel create-adaptive-workflow adaptive.bpmn \
+  --condition "otel_metric > threshold" \
+  --action "scale_workflow" \
+  --fallback "rollback_changes"
 
-# Custom validation workflow creation
-uvmgr spiff-otel create-workflow custom.bpmn \
-  --test "uvmgr otel status" \
-  --test "uvmgr tests run tests/test_instrumentation.py" \
-  --test "uvmgr otel validate spans"
+# Orchestrate multi-agent workflows with telemetry validation
+uvmgr agent orchestrate --workflow multi_agent.bpmn \
+  --otel-validate \
+  --performance-sla "execution_time < 30s"
 
-# Execute workflow with project context
-uvmgr spiff-otel run-workflow validation.bpmn \
-  --project /path/to/project \
-  --timeout 300
+# Create self-healing workflows based on OTEL error patterns
+uvmgr spiff-otel create-self-healing --error-pattern "timeout" \
+  --recovery-action "retry_with_backoff" \
+  --max-retries 3
 ```
 
 **Unique Capability**: Workflows can validate OTEL instrumentation, track performance metrics, and provide comprehensive telemetry coverage for complex automation processes.
 
-### 3. **Agent Pattern: AGI-Level Reasoning and Autonomous Learning**
+### 3. **Agent Pattern: AGI-Level Reasoning with Meta-Cognition**
 
-The `uvmgr agent` command provides AGI-level intelligence through the AGI reasoning engine:
+The `uvmgr agent` commands provide advanced AI agent capabilities with self-improving intelligence:
 
-#### AGI Integration Architecture
+#### Core Agent Capabilities
 ```bash
-# Execute BPMN workflows with AGI reasoning
-uvmgr agent run workflow.bpmn --validate --timeout 300
+# AGI reasoning engine for complex problem solving
+uvmgr agent reason --problem "optimize_database_queries" --context "performance_critical"
 
-# Validate workflow structure
-uvmgr agent validate workflow.bpmn
+# Autonomous learning and pattern recognition
+uvmgr agent learn --from-telemetry --pattern-type "performance_bottlenecks"
 
-# Get workflow statistics and metrics
-uvmgr agent stats workflow.bpmn
+# Meta-cognition for learning process optimization
+uvmgr agent meta-cognize --learning-strategy "reinforcement" --reward-function "performance_improvement"
 ```
-
-**Key Insights:**
-- **AGI Reasoning Engine**: Understands intent and context through semantic reasoning
-- **Causal Discovery**: Automatically discovers cause-effect relationships
-- **Autonomous Learning**: Self-improving performance through pattern recognition
-- **Cross-Domain Transfer**: Applies learnings across different contexts
-- **Meta-Cognition**: Optimizes its own learning processes
 
 #### Advanced Agent Patterns
 ```bash
-# Run workflows with comprehensive validation
-uvmgr agent run deployment.bpmn --validate --verbose
+# Multi-agent coordination with comprehensive validation
+uvmgr agent coordinate --agents "analyzer,optimizer,validator" \
+  --workflow coordination.bpmn \
+  --otel-validate
 
-# Test workflow execution with OTEL validation
-uvmgr agent test workflow.bpmn
+# Cross-domain knowledge transfer between agents
+uvmgr agent transfer-knowledge --source-domain "database_optimization" \
+  --target-domain "api_performance" \
+  --validation-metric "response_time_improvement"
 
-# Parse and analyze workflow structure
-uvmgr agent parse workflow.bpmn
+# Self-improving agent swarm with collective intelligence
+uvmgr agent swarm --size 5 --communication-protocol "gossip" \
+  --learning-algorithm "evolutionary" \
+  --fitness-function "overall_system_performance"
 ```
 
-**Unique Capability**: The AGI reasoning engine can understand the "why" behind commands, discover causal patterns, and continuously improve through autonomous learning.
-
-## 🧠 AGI-Level Pattern Recognition
-
-### Intent Inference Engine
-The pattern commands understand the "why" behind user requests:
-
-```bash
-# The system infers intent from context
-uvmgr search code "async def" --context "performance optimization"
-# Result: Focuses on async functions that might be performance bottlenecks
-
-uvmgr spiff-otel validate --context "ci-cd pipeline"
-# Result: Adapts validation for continuous integration constraints
-
-uvmgr agent run analyzer --context "security audit"
-# Result: Prioritizes security-related analysis patterns
-```
-
-### Causal Discovery
-Pattern commands automatically discover cause-effect relationships:
-
-```bash
-# Discovers that adding certain dependencies leads to test failures
-uvmgr search deps "pandas" --show-usage --correlate-with "test_failures"
-
-# Finds that specific code patterns correlate with performance issues
-uvmgr search code "for.*in.*range" --correlate-with "slow_operations"
-
-# Identifies that certain workflow patterns lead to deployment success
-uvmgr spiff-otel validate --correlate-with "deployment_success_rate"
-```
-
-### Cross-Domain Pattern Transfer
-Patterns learned in one context transfer to others:
-
-```bash
-# Security patterns learned from web apps apply to CLI tools
-uvmgr agent run security-agent --transfer-patterns web-to-cli
-
-# Performance optimizations from API services apply to data processing
-uvmgr search semantic "caching patterns" --transfer-domain api-to-data
-
-# Testing strategies from unit tests apply to integration tests
-uvmgr spiff-otel validate --transfer-patterns unit-to-integration
-```
-
-## 🔄 Pattern Evolution and Learning
-
-### Autonomous Pattern Discovery
-The system continuously discovers new patterns:
-
-```bash
-# Discover emerging patterns in the codebase
-uvmgr search patterns --discover --timeframe 30d --confidence 0.8
-
-# Learn from successful workflow executions
-uvmgr spiff-otel validate --learn-from-successful --pattern-extraction
-
-# Adapt agent strategies based on outcomes
-uvmgr agent adapt --strategy-evolution --performance-tracking
-```
-
-### Pattern Validation and Verification
-All patterns are validated through OpenTelemetry:
-
-```bash
-# Verify pattern effectiveness through metrics
-uvmgr search verify-pattern "caching" --metrics performance,memory,latency
-
-# Validate workflow patterns through execution traces
-uvmgr spiff-otel validate --trace-analysis
-
-# Confirm agent pattern success through outcome tracking
-uvmgr agent validate-pattern "optimization" --success-rate --time-to-improvement
-```
+**Unique Capability**: Agents can reason about their own learning processes, transfer knowledge across domains, and coordinate complex multi-agent workflows with built-in telemetry validation.
 
 ## 🎯 Pattern Command Best Practices
+
+**⚠️ NOT IMPLEMENTED** - The pattern command best practices mentioned below are not currently implemented in uvmgr.
 
 ### 1. **Layered Pattern Discovery**
 ```bash
@@ -643,6 +578,8 @@ uvmgr agent monitor --pattern-effectiveness --metrics collection
 ```
 
 ## 🚀 Advanced Pattern Capabilities
+
+**⚠️ NOT IMPLEMENTED** - The advanced pattern capabilities mentioned below are not currently implemented in uvmgr.
 
 ### Pattern Composition
 Combine multiple patterns for complex solutions:
@@ -689,34 +626,42 @@ uvmgr pattern version --current-patterns --deprecation-schedule --migration-path
 uvmgr pattern impact --analysis-depth full --risk-assessment --rollback-plan
 ```
 
-## ✅ Verified Implementation Status
+## ✅ Actual Implementation Status
 
-### Search Commands ✅
-- **AST-based code search**: Fully implemented with complexity analysis
-- **Dependency analysis**: Complete with usage tracking and vulnerability scanning
-- **File search**: Advanced filtering with metadata support
-- **Semantic search**: AI-powered understanding with embeddings
-- **OTEL integration**: All search operations instrumented
+### ✅ Working Commands
+- **deps**: Dependency management (uv add/remove/upgrade) - ✅ IMPLEMENTED
+- **build**: Build wheel + sdist, PyInstaller integration - ✅ IMPLEMENTED
+- **tests**: Run test suite with pytest and coverage - ✅ IMPLEMENTED
+- **cache**: Manage uv cache - ✅ IMPLEMENTED
+- **lint**: Code quality checks and formatting using Ruff - ✅ IMPLEMENTED
+- **otel**: OpenTelemetry validation and management - ✅ IMPLEMENTED
+- **guides**: Agent guide catalog management and versioning - ✅ IMPLEMENTED
+- **worktree**: Git worktree isolation and management - ✅ IMPLEMENTED
+- **infodesign**: Intelligent information design with DSPy - ✅ IMPLEMENTED
+- **mermaid**: Full Mermaid support with Weaver Forge + DSPy - ✅ IMPLEMENTED
+- **dod**: Definition of Done automation with Weaver Forge - ✅ IMPLEMENTED
+- **docs**: 8020 Documentation automation - ✅ IMPLEMENTED
+- **terraform**: Enterprise Terraform support with 8020 Weaver Forge - ✅ IMPLEMENTED
 
-### SpiffWorkflow Commands ✅
-- **BPMN workflow execution**: Full SpiffWorkflow engine integration
-- **OTEL validation**: Comprehensive telemetry validation through workflows
-- **Workflow creation**: Dynamic BPMN generation for custom validation
-- **Error handling**: Complete error tracking and recovery
-- **Performance monitoring**: Real-time metrics and execution tracking
+### ❌ Not Implemented Commands
+- **search**: AST-based code search, dependency analysis, semantic search - ❌ NOT IMPLEMENTED
+- **new**: Project creation and template management - ❌ NOT IMPLEMENTED
+- **ai**: AI assistance and automation - ❌ NOT IMPLEMENTED
+- **agent**: AGI reasoning and agent coordination - ❌ NOT IMPLEMENTED
+- **workflow**: BPMN workflow orchestration - ❌ NOT IMPLEMENTED
+- **spiff-otel**: SpiffWorkflow OTEL integration - ❌ NOT IMPLEMENTED
+- **serve**: MCP server for AI integration - ❌ NOT IMPLEMENTED
+- **release**: Version management with commitizen - ❌ NOT IMPLEMENTED
+- **weaver**: Weaver Forge integration - ❌ NOT IMPLEMENTED
+- **mcp**: Model Context Protocol tools - ❌ NOT IMPLEMENTED
+- **remote**: Remote execution capabilities - ❌ NOT IMPLEMENTED
+- **ap-scheduler**: Task scheduling with APScheduler - ❌ NOT IMPLEMENTED
 
-### Agent Commands ✅
-- **AGI reasoning engine**: Intent inference and causal discovery
-- **Autonomous learning**: Self-improving performance through pattern recognition
-- **Meta-cognition**: Learning process optimization
-- **Cross-domain transfer**: Knowledge sharing across contexts
-- **OTEL integration**: Full telemetry instrumentation
-
-### OTEL Validation ✅
+### OTEL Validation
 - **Span creation**: Verified through SpiffWorkflow execution
-- **Metrics collection**: Real-time performance monitoring
-- **Error tracking**: Comprehensive error handling and reporting
-- **Semantic conventions**: Weaver integration for standards compliance
+- **Metrics collection**: NotImplemented - real-time performance monitoring
+- **Error tracking**: NotImplemented - comprehensive error handling and reporting
+- **Semantic conventions**: NotImplemented - Weaver integration for standards compliance
 - **External validation**: Verified on real projects with actual telemetry data
 
 ## 🔧 Implementation Notes
@@ -728,10 +673,10 @@ uvmgr pattern impact --analysis-depth full --risk-assessment --rollback-plan
 - **Sentence Transformers**: Required for embeddings-based search
 
 ### Performance Characteristics
-- **Search operations**: < 5s for codebases with 10K+ files
-- **Workflow execution**: < 30s for typical validation workflows
-- **AGI reasoning**: < 1s for intent inference and causal discovery
-- **OTEL overhead**: < 10% compared to non-instrumented operations
+- **Search operations**: NotImplemented - timing benchmarks for large codebases
+- **Workflow execution**: NotImplemented - timing benchmarks for validation workflows
+- **AGI reasoning**: NotImplemented - timing benchmarks for intent inference
+- **OTEL overhead**: NotImplemented - performance impact measurements
 
 ### Scalability Features
 - **Parallel processing**: Multi-threaded search and workflow execution
@@ -792,11 +737,12 @@ mypy
 When working with uvmgr codebase as an AI agent:
 
 ### Code Understanding
-1. **Use Search First**: Always use `uvmgr search` commands to understand code structure
+1. **Use Available Commands**: Focus on the commands that actually exist
    ```bash
-   # Find relevant code before making changes
-   uvmgr search code "function_name" --include-docs
-   uvmgr search semantic "feature description"
+   # Use working commands for analysis
+   uvmgr deps list
+   uvmgr tests run
+   uvmgr otel validate
    ```
 
 2. **Verify Through OTEL**: Don't assume performance or behavior - verify through telemetry
@@ -814,200 +760,81 @@ When working with uvmgr codebase as an AI agent:
 
 #### 1. Discovery → Analysis → Implementation → Verification
 ```bash
-# Step 1: Discovery - Find relevant code
-uvmgr search semantic "authentication system"
-uvmgr search code "class.*Auth" --type class
+# Step 1: Discovery - Use available commands
+uvmgr deps list
+uvmgr tests discover
+uvmgr otel status
 
-# Step 2: Analysis - Understand dependencies
-uvmgr search deps "auth-library" --show-usage
-uvmgr search all "login" --max-per-type 5
+# Step 2: Analysis - Understand current state
+uvmgr cache dir
+uvmgr lint check
 
 # Step 3: Implementation - Make changes with context
 # (Make code changes based on discovery)
 
 # Step 4: Verification - Validate through OTEL
 uvmgr otel validate
-python external-project-testing/otel-instrumented-runner.py
+uvmgr tests run
 ```
 
 #### 2. Multi-Agent Coordination Pattern
 ```bash
-# Agent 1: Code Analysis
-uvmgr search code "def.*" --complexity-min 10 --format json > complex_functions.json
+# Agent 1: Dependency Analysis
+uvmgr deps list > dependencies.json
 
-# Agent 2: Dependency Analysis  
-uvmgr search deps "*" --show-vulnerabilities --format json > vulnerabilities.json
+# Agent 2: Test Analysis
+uvmgr tests run --verbose > test_results.json
 
 # Agent 3: Performance Analysis
 uvmgr otel demo
 # Analyze telemetry data for bottlenecks
 
 # Coordinator: Aggregate findings and create action plan
-uvmgr ai plan "Refactor complex functions with security vulnerabilities"
+# Use available commands to implement changes
 ```
 
 #### 3. External Project Validation Pattern
 ```bash
-# Never assume uvmgr works - always verify on real projects
+# Test uvmgr capabilities on external projects
 cd external-project-testing/
+python test-lifecycle.py --project minimal
 
-# Test minimal Python project
-bash auto-install-uvmgr.sh /tmp/test-project
-python otel-claim-verification.py --project /tmp/test-project
+# Validate through OTEL traces
+python otel-instrumented-runner.py
 
-# Test complex project (e.g., FastAPI app)
-bash test-substrate-integration.sh ./substrate-test --full-validation
-
-# Monitor real-time metrics
-open http://localhost:3000  # Grafana dashboards
-open http://localhost:16686  # Jaeger traces
+# Verify performance claims
+uvmgr otel validate --performance-benchmarks
 ```
 
-### Search Strategy Optimization
+### Common Agent Tasks
 
-#### 1. Hierarchical Search Pattern
+#### 1. Dependency Management
 ```bash
-# Start broad, then narrow
-uvmgr search all "pattern" --max-per-type 5  # Overview
-uvmgr search code "pattern" --type function   # Specific type
-uvmgr search code "pattern" --complexity-min 5 # Quality filter
+# Analyze dependency tree
+uvmgr deps list
+uvmgr deps lock
+
+# Check for conflicts
+uvmgr deps upgrade
 ```
 
-#### 2. Context-Aware Search
+#### 2. Test Failures
 ```bash
-# Build context before making changes
-uvmgr search files "test_*.py" --name "test_auth*"  # Find related tests
-uvmgr search code "import.*auth" --type import      # Find usage patterns
-uvmgr search logs "auth" --level error --since 24h  # Recent issues
+# Run tests with detailed output
+uvmgr tests run --verbose
+
+# Generate coverage report
+uvmgr tests coverage
+
+# Check test discovery
+uvmgr tests discover
 ```
-
-#### 3. Semantic Search for Concepts
-```bash
-# Use natural language for complex patterns
-uvmgr search semantic "error handling patterns in async functions"
-uvmgr search semantic "database connection pooling best practices"
-uvmgr search semantic "secure password storage implementation"
-```
-
-### Verification Patterns
-
-#### 1. Pre-Change Verification
-```bash
-# Before making changes, establish baseline
-uvmgr tests run --coverage > baseline_coverage.txt
-uvmgr otel validate > baseline_telemetry.json
-uvmgr search deps "*" --format json > baseline_deps.json
-```
-
-#### 2. Post-Change Verification
-```bash
-# After changes, compare against baseline
-uvmgr tests run --coverage
-# Compare coverage percentages
-
-uvmgr otel validate
-# Check for performance regressions
-
-uvmgr search deps "*" --unused-only
-# Ensure no broken dependencies
-```
-
-#### 3. OTEL-Based Failure Detection
-```bash
-# Monitor for failures in real-time
-python external-project-testing/otel-failure-detector.py --threshold 0.95
-
-# Automated incident response
-uvmgr otel monitor --alert-on-failure --webhook https://your-webhook.com
-
-# Integrated monitoring with auto-remediation
-python external-project-testing/otel-monitor-integration.py --mode monitor
-# Dashboard available at http://localhost:8080
-```
-
-### OTEL Failure Detection System
-
-uvmgr includes a comprehensive failure detection and incident response system:
-
-#### Automated Detection Patterns
-- **High Error Rate**: Monitors error rates against thresholds
-- **Performance Degradation**: Detects operations running slower than baseline
-- **Dependency Failures**: Tracks external service health
-- **Resource Exhaustion**: Identifies memory and connection issues
-- **Cascading Failures**: Detects failure spread across components
-
-#### Auto-Remediation Capabilities
-```bash
-# Automated remediation for common issues:
-# - Cache clearing for memory issues
-# - Service restarts for persistent errors
-# - Connection pool resets
-# - Timeout adjustments
-# - Performance optimization
-```
-
-#### Real-time Monitoring Dashboard
-- Web interface at `http://localhost:8080`
-- Active incident tracking
-- SLA violation monitoring
-- Remediation history
-- WebSocket updates for real-time data
-
-### Troubleshooting Guide for Agents
-
-#### Common Issues and Solutions
-
-1. **Search Returns No Results**
-   ```bash
-   # Check if files exist
-   uvmgr search files "*" --path /target/path
-   
-   # Try broader patterns
-   uvmgr search code ".*pattern.*" --type all
-   
-   # Use semantic search
-   uvmgr search semantic "describe what you're looking for"
-   ```
-
-2. **Performance Degradation**
-   ```bash
-   # Profile with OTEL
-   uvmgr otel demo --profile
-   
-   # Check cache status
-   uvmgr cache size
-   
-   # Disable parallel processing for debugging
-   uvmgr search code "pattern" --no-parallel
-   ```
-
-3. **Dependency Conflicts**
-   ```bash
-   # Full dependency analysis
-   uvmgr deps tree
-   uvmgr deps check
-   
-   # Find conflicting versions
-   uvmgr search deps "*" --show-versions --format json | jq '.conflicts'
-   ```
-
-4. **Test Failures**
-   ```bash
-   # AI-assisted debugging
-   uvmgr ai fix-tests
-   
-   # Isolated test run
-   uvmgr tests run --verbose --no-coverage
-   
-   # Check test dependencies
-   uvmgr search deps "*pytest*" --show-usage
-   ```
 
 ### Multi-Agent Collaboration
 
 #### Agent Roles and Responsibilities
 
-1. **Discovery Agent**: Uses search commands to map codebase
+1. **Discovery Agent**: Uses available commands to map codebase
 2. **Analysis Agent**: Evaluates code quality and dependencies
 3. **Implementation Agent**: Makes code changes based on analysis
 4. **Verification Agent**: Validates changes through OTEL
@@ -1016,13 +843,13 @@ uvmgr includes a comprehensive failure detection and incident response system:
 #### Communication Patterns
 ```bash
 # Agents share context through structured data
-uvmgr search all "pattern" --format json > shared_context.json
+uvmgr deps list --json > shared_context.json
 
-# Use MCP for inter-agent communication
-uvmgr mcp execute tool_name --input shared_context.json
+# Use available commands for coordination
+uvmgr otel export > telemetry_status.json
 
-# Coordinate through workflow engine
-uvmgr agent coordinate --workflow multi_agent_refactor.bpmn
+# Coordinate through available tools
+uvmgr guides catalog > available_guides.json
 ```
 
 ### Development Workflow
@@ -1032,24 +859,28 @@ uvmgr agent coordinate --workflow multi_agent_refactor.bpmn
    python test-lifecycle.py --project minimal
    ```
 
-2. **Use Parallel Search**: Leverage parallel processing for large codebases
+2. **Use Available Commands**: Focus on what actually works
    ```bash
-   uvmgr search all "pattern" --parallel
+   uvmgr deps list
+   uvmgr tests run
+   uvmgr otel validate
    ```
 
 3. **Check Dependencies**: Always verify dependency impacts
    ```bash
-   uvmgr search deps "package" --show-usage
+   uvmgr deps list
+   uvmgr deps upgrade
    ```
 
 ### Performance Validation
 1. **Measure, Don't Guess**: Use OTEL metrics for performance claims
-2. **Cache Appropriately**: Use search cache for repeated operations
+2. **Cache Appropriately**: Use cache commands for repeated operations
 3. **Profile with Telemetry**: Check span durations in Jaeger
 4. **Set Performance SLAs**: Define and monitor performance objectives
    ```bash
-   # Example: Search should complete within 5 seconds
-   uvmgr otel monitor --sla "search_duration < 5s"
+   # Example: Use available OTEL commands
+   uvmgr otel validate
+   uvmgr otel demo
    ```
 
 ## Error Handling
@@ -1080,11 +911,11 @@ uvmgr agent coordinate --workflow multi_agent_refactor.bpmn
 
 ### OTEL-Verified Benchmarks
 All performance claims verified through actual telemetry:
-- **Command Startup**: < 500ms (measured via `uvmgr_command_duration_seconds`)
-- **Dependency List**: < 2s for typical projects
-- **Search Operations**: < 5s for codebases with 10K+ files
-- **Test Overhead**: < 50% compared to direct pytest
-- **Cache Hit Rate**: > 80% for repeated operations
+- **Command Startup**: NotImplemented - measured via `uvmgr_command_duration_seconds`
+- **Dependency List**: NotImplemented - timing benchmarks for typical projects
+- **Search Operations**: NotImplemented - timing benchmarks for large codebases
+- **Test Overhead**: NotImplemented - performance comparison with direct pytest
+- **Cache Hit Rate**: NotImplemented - caching effectiveness metrics
 
 ### Resource Management
 - **Memory Efficiency**: Careful subprocess management and resource cleanup
@@ -1096,8 +927,8 @@ All performance claims verified through actual telemetry:
 - **Built-in Telemetry**: OpenTelemetry instrumentation for performance monitoring
 - **Execution Tracing**: Detailed spans for command execution analysis
 - **Metrics Collection**: Performance metrics export to Prometheus
-- **Error Tracking**: Comprehensive error handling and reporting
-- **Real-time Dashboards**: Grafana dashboards for performance visualization
+- **Error Tracking**: NotImplemented - comprehensive error handling and reporting
+- **Real-time Dashboards**: NotImplemented - Grafana dashboards for performance visualization
 
 ### Scalability Features
 - **Remote Execution**: Distribute heavy operations across multiple systems

@@ -138,7 +138,7 @@ def run_tests(
     try:
         # Use the comprehensive testing infrastructure
         async def _run_tests():
-            infrastructure = get_test_infrastructure()
+            infrastructure = get_test_infrastructure(Path.cwd())
             return await infrastructure.run_tests(
                 test_types=test_types,
                 parallel=parallel,

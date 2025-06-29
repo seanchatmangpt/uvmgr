@@ -1,0 +1,263 @@
+[1m============================= test session starts ==============================[0m
+platform darwin -- Python 3.13.0, pytest-8.3.5, pluggy-1.6.0 -- /Users/sac/dev/uvmgr/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/sac/dev/uvmgr
+configfile: pyproject.toml
+plugins: anyio-4.9.0, mock-3.14.0, asyncio-1.0.0, xdist-3.6.1
+asyncio: mode=Mode.STRICT, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+[1mcollecting ... [0mcollected 138 items
+run-last-failure: rerun previous 1 failure first
+
+tests/unit/test_e2e_external_validation.py::TestExternalProjectValidator::test_run_validation_success [32mPASSED[0m[33m [  0%][0m
+tests/unit/test_basic.py::test_import_uvmgr [32mPASSED[0m[33m                       [  1%][0m
+tests/unit/test_basic.py::test_cli_import [32mPASSED[0m[33m                         [  2%][0m
+tests/unit/test_basic.py::test_telemetry_import [32mPASSED[0m[33m                   [  2%][0m
+tests/unit/test_basic.py::test_project_structure [32mPASSED[0m[33m                  [  3%][0m
+tests/unit/test_basic.py::test_basic_math [32mPASSED[0m[33m                         [  4%][0m
+tests/unit/test_basic.py::test_async_basic [32mPASSED[0m[33m                        [  5%][0m
+tests/unit/test_e2e_external_validation.py::TestExternalProjectValidator::test_validator_initialization [32mPASSED[0m[33m [  5%][0m
+tests/unit/test_e2e_external_validation.py::TestExternalProjectValidator::test_run_command_success [32mPASSED[0m[33m [  6%][0m
+tests/unit/test_e2e_external_validation.py::TestExternalProjectValidator::test_run_command_failure [32mPASSED[0m[33m [  7%][0m
+tests/unit/test_e2e_external_validation.py::TestExternalProjectValidator::test_run_command_timeout [32mPASSED[0m[33m [  7%][0m
+tests/unit/test_e2e_external_validation.py::TestExternalProjectValidator::test_create_test_project_minimal [32mPASSED[0m[33m [  8%][0m
+tests/unit/test_e2e_external_validation.py::TestExternalProjectValidator::test_create_test_project_library [32mPASSED[0m[33m [  9%][0m
+tests/unit/test_e2e_external_validation.py::TestExternalProjectValidator::test_create_test_project_application [32mPASSED[0m[33m [ 10%][0m
+tests/unit/test_e2e_external_validation.py::TestExternalProjectValidator::test_validate_project_lifecycle_success [32mPASSED[0m[33m [ 10%][0m
+tests/unit/test_e2e_external_validation.py::TestExternalProjectValidator::test_validate_project_lifecycle_partial_failure [32mPASSED[0m[33m [ 11%][0m
+tests/unit/test_e2e_external_validation.py::TestExternalProjectValidator::test_validate_advanced_features_success [32mPASSED[0m[33m [ 12%][0m
+tests/unit/test_e2e_external_validation.py::TestExternalProjectValidator::test_validate_advanced_features_otel_failure [32mPASSED[0m[33m [ 13%][0m
+tests/unit/test_e2e_external_validation.py::TestExternalProjectValidator::test_run_validation_failure [31mFAILED[0m[31m [ 13%][0m
+tests/unit/test_e2e_external_validation.py::TestExternalProjectValidator::test_results_json_serializable [32mPASSED[0m[31m [ 14%][0m
+tests/unit/test_e2e_external_validation.py::TestExternalProjectValidator::test_project_types_coverage [31mFAILED[0m[31m [ 15%][0m
+tests/unit/test_e2e_external_validation.py::TestExternalProjectValidatorIntegration::test_real_project_creation [32mPASSED[0m[31m [ 15%][0m
+tests/unit/test_e2e_external_validation.py::TestExternalProjectValidatorIntegration::test_command_timeout_handling [32mPASSED[0m[31m [ 16%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestOpenTelemetryIntegration::test_span_creation [32mPASSED[0m[31m [ 17%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestOpenTelemetryIntegration::test_span_nesting [32mPASSED[0m[31m [ 18%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestOpenTelemetryIntegration::test_span_with_attributes [32mPASSED[0m[31m [ 18%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestOpenTelemetryIntegration::test_metric_counter [32mPASSED[0m[31m [ 19%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestOpenTelemetryIntegration::test_metric_histogram [32mPASSED[0m[31m [ 20%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestOpenTelemetryIntegration::test_metric_gauge [32mPASSED[0m[31m [ 21%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestOpenTelemetryIntegration::test_instrumentation_decorator [32mPASSED[0m[31m [ 21%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestOpenTelemetryIntegration::test_add_span_attributes [32mPASSED[0m[31m [ 22%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestOpenTelemetryIntegration::test_add_span_event [32mPASSED[0m[31m [ 23%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestOpenTelemetryIntegration::test_telemetry_graceful_degradation [32mPASSED[0m[31m [ 23%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestSemanticConventions::test_cli_attributes [32mPASSED[0m[31m [ 24%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestSemanticConventions::test_package_attributes [32mPASSED[0m[31m [ 25%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestSemanticConventions::test_package_operations [32mPASSED[0m[31m [ 26%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestSemanticConventions::test_security_attributes [32mPASSED[0m[31m [ 26%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestSemanticConventions::test_worktree_attributes [32mPASSED[0m[31m [ 27%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestSemanticConventions::test_guide_attributes [32mPASSED[0m[31m [ 28%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestSemanticConventions::test_info_design_attributes [32mPASSED[0m[31m [ 28%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestSemanticConventions::test_validate_attribute_function [32mPASSED[0m[31m [ 29%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestSemanticConventions::test_all_attribute_classes_covered [32mPASSED[0m[31m [ 30%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestSemanticConventions::test_semantic_convention_completeness [32mPASSED[0m[31m [ 31%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestWeaverIntegration::test_weaver_semantic_convention_format [32mPASSED[0m[31m [ 31%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestWeaverIntegration::test_weaver_attribute_consistency [32mPASSED[0m[31m [ 32%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestWeaverIntegration::test_weaver_validation_rules [32mPASSED[0m[31m [ 33%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestWeaverIntegration::test_weaver_semantic_convention_registry [32mPASSED[0m[31m [ 34%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestWeaverIntegration::test_weaver_generation_compatibility [32mPASSED[0m[31m [ 34%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestWeaverIntegration::test_otel_semantic_convention_compliance [32mPASSED[0m[31m [ 35%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestWeaverValidationIntegration::test_run_weaver_validation [32mPASSED[0m[31m [ 36%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestWeaverValidationIntegration::test_semantic_convention_coverage [32mPASSED[0m[31m [ 36%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestWeaverValidationIntegration::test_weaver_forge_integration [32mPASSED[0m[31m [ 37%][0m
+tests/unit/test_spiff_commands.py::TestSpiffCommands::test_validate_command_success [31mFAILED[0m[31m [ 38%][0m
+
+=================================== FAILURES ===================================
+[31m[1m___________ TestExternalProjectValidator.test_run_validation_failure ___________[0m
+
+self = <test_e2e_external_validation.TestExternalProjectValidator object at 0x105abcd70>
+mock_exit = <MagicMock name='exit' id='4914191664'>
+validator = <e2e_external_validation.ExternalProjectValidator object at 0x124ecdb70>
+
+    [0m[37m@patch[39;49;00m([33m'[39;49;00m[33msys.exit[39;49;00m[33m'[39;49;00m)[90m[39;49;00m
+    [94mdef[39;49;00m[90m [39;49;00m[92mtest_run_validation_failure[39;49;00m([96mself[39;49;00m, mock_exit, validator):[90m[39;49;00m
+    [90m    [39;49;00m[33m"""Test full validation run with failure."""[39;49;00m[90m[39;49;00m
+        [94mwith[39;49;00m patch.object(validator, [33m'[39;49;00m[33mvalidate_project_lifecycle[39;49;00m[33m'[39;49;00m) [94mas[39;49;00m mock_lifecycle:[90m[39;49;00m
+            mock_lifecycle.return_value = {[90m[39;49;00m
+                [33m"[39;49;00m[33mproject_type[39;49;00m[33m"[39;49;00m: [33m"[39;49;00m[33mtest[39;49;00m[33m"[39;49;00m,[90m[39;49;00m
+                [33m"[39;49;00m[33msuccess_rate[39;49;00m[33m"[39;49;00m: [94m0.5[39;49;00m,  [90m# Below threshold[39;49;00m[90m[39;49;00m
+                [33m"[39;49;00m[33msteps[39;49;00m[33m"[39;49;00m: [{[33m"[39;49;00m[33msuccess[39;49;00m[33m"[39;49;00m: [94mFalse[39;49;00m}] * [94m4[39;49;00m + [{[33m"[39;49;00m[33msuccess[39;49;00m[33m"[39;49;00m: [94mTrue[39;49;00m}] * [94m4[39;49;00m[90m[39;49;00m
+            }[90m[39;49;00m
+    [90m[39;49;00m
+            [94mwith[39;49;00m patch.object(validator, [33m'[39;49;00m[33mvalidate_advanced_features[39;49;00m[33m'[39;49;00m) [94mas[39;49;00m mock_advanced:[90m[39;49;00m
+                mock_advanced.return_value = {[90m[39;49;00m
+                    [33m"[39;49;00m[33mtests[39;49;00m[33m"[39;49;00m: [{[33m"[39;49;00m[33msuccess[39;49;00m[33m"[39;49;00m: [94mFalse[39;49;00m}] * [94m4[39;49;00m[90m[39;49;00m
+                }[90m[39;49;00m
+    [90m[39;49;00m
+                [94mwith[39;49;00m patch([33m'[39;49;00m[33mbuiltins.print[39;49;00m[33m'[39;49;00m):  [90m# Suppress print output[39;49;00m[90m[39;49;00m
+>                   validator.run_validation()[90m[39;49;00m
+
+[1m[31mtests/unit/test_e2e_external_validation.py[0m:302: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <e2e_external_validation.ExternalProjectValidator object at 0x124ecdb70>
+
+    [0m[94mdef[39;49;00m[90m [39;49;00m[92mrun_validation[39;49;00m([96mself[39;49;00m) -> [94mNone[39;49;00m:[90m[39;49;00m
+    [90m    [39;49;00m[33m"""Run complete validation suite."""[39;49;00m[90m[39;49;00m
+        [96mprint[39;49;00m([33m"[39;49;00m[33m=[39;49;00m[33m"[39;49;00m * [94m60[39;49;00m)[90m[39;49;00m
+        [96mprint[39;49;00m([33m"[39;49;00m[33muvmgr End-to-End External Project Validation[39;49;00m[33m"[39;49;00m)[90m[39;49;00m
+        [96mprint[39;49;00m([33m"[39;49;00m[33m=[39;49;00m[33m"[39;49;00m * [94m60[39;49;00m)[90m[39;49;00m
+    [90m[39;49;00m
+        [90m# Validate different project types[39;49;00m[90m[39;49;00m
+        project_types = [[33m"[39;49;00m[33mminimal[39;49;00m[33m"[39;49;00m, [33m"[39;49;00m[33mlibrary[39;49;00m[33m"[39;49;00m, [33m"[39;49;00m[33mapplication[39;49;00m[33m"[39;49;00m][90m[39;49;00m
+        lifecycle_results = [][90m[39;49;00m
+    [90m[39;49;00m
+        [94mfor[39;49;00m project_type [95min[39;49;00m project_types:[90m[39;49;00m
+            result = [96mself[39;49;00m.validate_project_lifecycle(project_type)[90m[39;49;00m
+            lifecycle_results.append(result)[90m[39;49;00m
+            [96mself[39;49;00m.results[[33m"[39;49;00m[33mtest_results[39;49;00m[33m"[39;49;00m].append(result)[90m[39;49;00m
+    [90m[39;49;00m
+        [90m# Validate advanced features[39;49;00m[90m[39;49;00m
+        advanced_result = [96mself[39;49;00m.validate_advanced_features()[90m[39;49;00m
+        [96mself[39;49;00m.results[[33m"[39;49;00m[33mtest_results[39;49;00m[33m"[39;49;00m].append(advanced_result)[90m[39;49;00m
+    [90m[39;49;00m
+        [90m# Calculate summary[39;49;00m[90m[39;49;00m
+        total_tests = [96msum[39;49;00m([96mlen[39;49;00m(r.get([33m"[39;49;00m[33msteps[39;49;00m[33m"[39;49;00m, r.get([33m"[39;49;00m[33mtests[39;49;00m[33m"[39;49;00m, []))) [94mfor[39;49;00m r [95min[39;49;00m [96mself[39;49;00m.results[[33m"[39;49;00m[33mtest_results[39;49;00m[33m"[39;49;00m])[90m[39;49;00m
+        passed_tests = [96msum[39;49;00m([90m[39;49;00m
+            [96msum[39;49;00m([94m1[39;49;00m [94mfor[39;49;00m s [95min[39;49;00m r.get([33m"[39;49;00m[33msteps[39;49;00m[33m"[39;49;00m, []) [94mif[39;49;00m s[[33m"[39;49;00m[33msuccess[39;49;00m[33m"[39;49;00m]) +[90m[39;49;00m
+            [96msum[39;49;00m([94m1[39;49;00m [94mfor[39;49;00m t [95min[39;49;00m r.get([33m"[39;49;00m[33mtests[39;49;00m[33m"[39;49;00m, []) [94mif[39;49;00m t[[33m"[39;49;00m[33msuccess[39;49;00m[33m"[39;49;00m])[90m[39;49;00m
+            [94mfor[39;49;00m r [95min[39;49;00m [96mself[39;49;00m.results[[33m"[39;49;00m[33mtest_results[39;49;00m[33m"[39;49;00m][90m[39;49;00m
+        )[90m[39;49;00m
+    [90m[39;49;00m
+        [96mself[39;49;00m.results[[33m"[39;49;00m[33msummary[39;49;00m[33m"[39;49;00m] = {[90m[39;49;00m
+            [33m"[39;49;00m[33mtotal_tests[39;49;00m[33m"[39;49;00m: total_tests,[90m[39;49;00m
+            [33m"[39;49;00m[33mpassed_tests[39;49;00m[33m"[39;49;00m: passed_tests,[90m[39;49;00m
+            [33m"[39;49;00m[33msuccess_rate[39;49;00m[33m"[39;49;00m: passed_tests / total_tests [94mif[39;49;00m total_tests > [94m0[39;49;00m [94melse[39;49;00m [94m0[39;49;00m,[90m[39;49;00m
+            [33m"[39;49;00m[33mproject_types_tested[39;49;00m[33m"[39;49;00m: [96mlen[39;49;00m(project_types),[90m[39;49;00m
+            [33m"[39;49;00m[33mall_lifecycles_pass[39;49;00m[33m"[39;49;00m: [96mall[39;49;00m(r[[33m"[39;49;00m[33msuccess_rate[39;49;00m[33m"[39;49;00m] > [94m0.8[39;49;00m [94mfor[39;49;00m r [95min[39;49;00m lifecycle_results),[90m[39;49;00m
+            [33m"[39;49;00m[33madvanced_features_pass[39;49;00m[33m"[39;49;00m: [96mall[39;49;00m(t[[33m"[39;49;00m[33msuccess[39;49;00m[33m"[39;49;00m] [94mfor[39;49;00m t [95min[39;49;00m advanced_result[[33m"[39;49;00m[33mtests[39;49;00m[33m"[39;49;00m])[90m[39;49;00m
+        }[90m[39;49;00m
+    [90m[39;49;00m
+        [90m# Print summary[39;49;00m[90m[39;49;00m
+        [96mprint[39;49;00m([33m"[39;49;00m[33m\n[39;49;00m[33m"[39;49;00m + [33m"[39;49;00m[33m=[39;49;00m[33m"[39;49;00m * [94m60[39;49;00m)[90m[39;49;00m
+        [96mprint[39;49;00m([33m"[39;49;00m[33mVALIDATION SUMMARY[39;49;00m[33m"[39;49;00m)[90m[39;49;00m
+        [96mprint[39;49;00m([33m"[39;49;00m[33m=[39;49;00m[33m"[39;49;00m * [94m60[39;49;00m)[90m[39;49;00m
+    [90m[39;49;00m
+        [94mfor[39;49;00m result [95min[39;49;00m lifecycle_results:[90m[39;49;00m
+            status = [33m"[39;49;00m[33m✅[39;49;00m[33m"[39;49;00m [94mif[39;49;00m result[[33m"[39;49;00m[33msuccess_rate[39;49;00m[33m"[39;49;00m] > [94m0.8[39;49;00m [94melse[39;49;00m [33m"[39;49;00m[33m❌[39;49;00m[33m"[39;49;00m[90m[39;49;00m
+>           [96mprint[39;49;00m([33mf[39;49;00m[33m"[39;49;00m[33m{[39;49;00mstatus[33m}[39;49;00m[33m [39;49;00m[33m{[39;49;00mresult[[33m'[39;49;00m[33mproject_type[39;49;00m[33m'[39;49;00m].title()[33m}[39;49;00m[33m: [39;49;00m[33m{[39;49;00mresult[[33m'[39;49;00m[33msummary[39;49;00m[33m'[39;49;00m][33m}[39;49;00m[33m"[39;49;00m)[90m[39;49;00m
+[1m[31mE           KeyError: 'summary'[0m
+
+[1m[31me2e_external_validation.py[0m:416: KeyError
+[31m[1m___________ TestExternalProjectValidator.test_project_types_coverage ___________[0m
+
+self = <test_e2e_external_validation.TestExternalProjectValidator object at 0x10588b710>
+validator = <e2e_external_validation.ExternalProjectValidator object at 0x124eecc80>
+
+    [0m[94mdef[39;49;00m[90m [39;49;00m[92mtest_project_types_coverage[39;49;00m([96mself[39;49;00m, validator):[90m[39;49;00m
+    [90m    [39;49;00m[33m"""Test that all expected project types are covered."""[39;49;00m[90m[39;49;00m
+        expected_types = [[33m"[39;49;00m[33mminimal[39;49;00m[33m"[39;49;00m, [33m"[39;49;00m[33mlibrary[39;49;00m[33m"[39;49;00m, [33m"[39;49;00m[33mapplication[39;49;00m[33m"[39;49;00m][90m[39;49;00m
+    [90m[39;49;00m
+        [94mwith[39;49;00m patch.object(validator, [33m'[39;49;00m[33mvalidate_project_lifecycle[39;49;00m[33m'[39;49;00m) [94mas[39;49;00m mock_lifecycle:[90m[39;49;00m
+            mock_lifecycle.return_value = {[90m[39;49;00m
+                [33m"[39;49;00m[33mproject_type[39;49;00m[33m"[39;49;00m: [33m"[39;49;00m[33mtest[39;49;00m[33m"[39;49;00m,[90m[39;49;00m
+                [33m"[39;49;00m[33msuccess_rate[39;49;00m[33m"[39;49;00m: [94m1.0[39;49;00m,[90m[39;49;00m
+                [33m"[39;49;00m[33msteps[39;49;00m[33m"[39;49;00m: [][90m[39;49;00m
+            }[90m[39;49;00m
+    [90m[39;49;00m
+            [94mwith[39;49;00m patch.object(validator, [33m'[39;49;00m[33mvalidate_advanced_features[39;49;00m[33m'[39;49;00m) [94mas[39;49;00m mock_advanced:[90m[39;49;00m
+                mock_advanced.return_value = {[33m"[39;49;00m[33mtests[39;49;00m[33m"[39;49;00m: []}[90m[39;49;00m
+    [90m[39;49;00m
+                [94mwith[39;49;00m patch([33m'[39;49;00m[33mbuiltins.print[39;49;00m[33m'[39;49;00m), patch([33m'[39;49;00m[33msys.exit[39;49;00m[33m'[39;49;00m):[90m[39;49;00m
+>                   validator.run_validation()[90m[39;49;00m
+
+[1m[31mtests/unit/test_e2e_external_validation.py[0m:341: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <e2e_external_validation.ExternalProjectValidator object at 0x124eecc80>
+
+    [0m[94mdef[39;49;00m[90m [39;49;00m[92mrun_validation[39;49;00m([96mself[39;49;00m) -> [94mNone[39;49;00m:[90m[39;49;00m
+    [90m    [39;49;00m[33m"""Run complete validation suite."""[39;49;00m[90m[39;49;00m
+        [96mprint[39;49;00m([33m"[39;49;00m[33m=[39;49;00m[33m"[39;49;00m * [94m60[39;49;00m)[90m[39;49;00m
+        [96mprint[39;49;00m([33m"[39;49;00m[33muvmgr End-to-End External Project Validation[39;49;00m[33m"[39;49;00m)[90m[39;49;00m
+        [96mprint[39;49;00m([33m"[39;49;00m[33m=[39;49;00m[33m"[39;49;00m * [94m60[39;49;00m)[90m[39;49;00m
+    [90m[39;49;00m
+        [90m# Validate different project types[39;49;00m[90m[39;49;00m
+        project_types = [[33m"[39;49;00m[33mminimal[39;49;00m[33m"[39;49;00m, [33m"[39;49;00m[33mlibrary[39;49;00m[33m"[39;49;00m, [33m"[39;49;00m[33mapplication[39;49;00m[33m"[39;49;00m][90m[39;49;00m
+        lifecycle_results = [][90m[39;49;00m
+    [90m[39;49;00m
+        [94mfor[39;49;00m project_type [95min[39;49;00m project_types:[90m[39;49;00m
+            result = [96mself[39;49;00m.validate_project_lifecycle(project_type)[90m[39;49;00m
+            lifecycle_results.append(result)[90m[39;49;00m
+            [96mself[39;49;00m.results[[33m"[39;49;00m[33mtest_results[39;49;00m[33m"[39;49;00m].append(result)[90m[39;49;00m
+    [90m[39;49;00m
+        [90m# Validate advanced features[39;49;00m[90m[39;49;00m
+        advanced_result = [96mself[39;49;00m.validate_advanced_features()[90m[39;49;00m
+        [96mself[39;49;00m.results[[33m"[39;49;00m[33mtest_results[39;49;00m[33m"[39;49;00m].append(advanced_result)[90m[39;49;00m
+    [90m[39;49;00m
+        [90m# Calculate summary[39;49;00m[90m[39;49;00m
+        total_tests = [96msum[39;49;00m([96mlen[39;49;00m(r.get([33m"[39;49;00m[33msteps[39;49;00m[33m"[39;49;00m, r.get([33m"[39;49;00m[33mtests[39;49;00m[33m"[39;49;00m, []))) [94mfor[39;49;00m r [95min[39;49;00m [96mself[39;49;00m.results[[33m"[39;49;00m[33mtest_results[39;49;00m[33m"[39;49;00m])[90m[39;49;00m
+        passed_tests = [96msum[39;49;00m([90m[39;49;00m
+            [96msum[39;49;00m([94m1[39;49;00m [94mfor[39;49;00m s [95min[39;49;00m r.get([33m"[39;49;00m[33msteps[39;49;00m[33m"[39;49;00m, []) [94mif[39;49;00m s[[33m"[39;49;00m[33msuccess[39;49;00m[33m"[39;49;00m]) +[90m[39;49;00m
+            [96msum[39;49;00m([94m1[39;49;00m [94mfor[39;49;00m t [95min[39;49;00m r.get([33m"[39;49;00m[33mtests[39;49;00m[33m"[39;49;00m, []) [94mif[39;49;00m t[[33m"[39;49;00m[33msuccess[39;49;00m[33m"[39;49;00m])[90m[39;49;00m
+            [94mfor[39;49;00m r [95min[39;49;00m [96mself[39;49;00m.results[[33m"[39;49;00m[33mtest_results[39;49;00m[33m"[39;49;00m][90m[39;49;00m
+        )[90m[39;49;00m
+    [90m[39;49;00m
+        [96mself[39;49;00m.results[[33m"[39;49;00m[33msummary[39;49;00m[33m"[39;49;00m] = {[90m[39;49;00m
+            [33m"[39;49;00m[33mtotal_tests[39;49;00m[33m"[39;49;00m: total_tests,[90m[39;49;00m
+            [33m"[39;49;00m[33mpassed_tests[39;49;00m[33m"[39;49;00m: passed_tests,[90m[39;49;00m
+            [33m"[39;49;00m[33msuccess_rate[39;49;00m[33m"[39;49;00m: passed_tests / total_tests [94mif[39;49;00m total_tests > [94m0[39;49;00m [94melse[39;49;00m [94m0[39;49;00m,[90m[39;49;00m
+            [33m"[39;49;00m[33mproject_types_tested[39;49;00m[33m"[39;49;00m: [96mlen[39;49;00m(project_types),[90m[39;49;00m
+            [33m"[39;49;00m[33mall_lifecycles_pass[39;49;00m[33m"[39;49;00m: [96mall[39;49;00m(r[[33m"[39;49;00m[33msuccess_rate[39;49;00m[33m"[39;49;00m] > [94m0.8[39;49;00m [94mfor[39;49;00m r [95min[39;49;00m lifecycle_results),[90m[39;49;00m
+            [33m"[39;49;00m[33madvanced_features_pass[39;49;00m[33m"[39;49;00m: [96mall[39;49;00m(t[[33m"[39;49;00m[33msuccess[39;49;00m[33m"[39;49;00m] [94mfor[39;49;00m t [95min[39;49;00m advanced_result[[33m"[39;49;00m[33mtests[39;49;00m[33m"[39;49;00m])[90m[39;49;00m
+        }[90m[39;49;00m
+    [90m[39;49;00m
+        [90m# Print summary[39;49;00m[90m[39;49;00m
+        [96mprint[39;49;00m([33m"[39;49;00m[33m\n[39;49;00m[33m"[39;49;00m + [33m"[39;49;00m[33m=[39;49;00m[33m"[39;49;00m * [94m60[39;49;00m)[90m[39;49;00m
+        [96mprint[39;49;00m([33m"[39;49;00m[33mVALIDATION SUMMARY[39;49;00m[33m"[39;49;00m)[90m[39;49;00m
+        [96mprint[39;49;00m([33m"[39;49;00m[33m=[39;49;00m[33m"[39;49;00m * [94m60[39;49;00m)[90m[39;49;00m
+    [90m[39;49;00m
+        [94mfor[39;49;00m result [95min[39;49;00m lifecycle_results:[90m[39;49;00m
+            status = [33m"[39;49;00m[33m✅[39;49;00m[33m"[39;49;00m [94mif[39;49;00m result[[33m"[39;49;00m[33msuccess_rate[39;49;00m[33m"[39;49;00m] > [94m0.8[39;49;00m [94melse[39;49;00m [33m"[39;49;00m[33m❌[39;49;00m[33m"[39;49;00m[90m[39;49;00m
+>           [96mprint[39;49;00m([33mf[39;49;00m[33m"[39;49;00m[33m{[39;49;00mstatus[33m}[39;49;00m[33m [39;49;00m[33m{[39;49;00mresult[[33m'[39;49;00m[33mproject_type[39;49;00m[33m'[39;49;00m].title()[33m}[39;49;00m[33m: [39;49;00m[33m{[39;49;00mresult[[33m'[39;49;00m[33msummary[39;49;00m[33m'[39;49;00m][33m}[39;49;00m[33m"[39;49;00m)[90m[39;49;00m
+[1m[31mE           KeyError: 'summary'[0m
+
+[1m[31me2e_external_validation.py[0m:416: KeyError
+[31m[1m_______________ TestSpiffCommands.test_validate_command_success ________________[0m
+
+self = <test_spiff_commands.TestSpiffCommands object at 0x111cc3ed0>
+runner = <typer.testing.CliRunner object at 0x124e88ec0>
+sample_workflow_path = PosixPath('/Users/sac/.cache/tmp/pytest-of-sac/pytest-94/test_validate_command_success0/test_workflow.bpmn')
+
+    [0m[94mdef[39;49;00m[90m [39;49;00m[92mtest_validate_command_success[39;49;00m([96mself[39;49;00m, runner, sample_workflow_path):[90m[39;49;00m
+    [90m    [39;49;00m[33m"""Test successful validate command."""[39;49;00m[90m[39;49;00m
+        [94mwith[39;49;00m patch([33m"[39;49;00m[33muvmgr.commands.spiff_otel.validate_bpmn_file[39;49;00m[33m"[39;49;00m) [94mas[39;49;00m mock_validate, \
+             patch([33m"[39;49;00m[33muvmgr.commands.spiff_otel.run_bpmn[39;49;00m[33m"[39;49;00m) [94mas[39;49;00m mock_run, \
+             patch([33m"[39;49;00m[33muvmgr.commands.spiff_otel.span[39;49;00m[33m"[39;49;00m) [94mas[39;49;00m mock_span, \
+             patch([33m"[39;49;00m[33muvmgr.commands.spiff_otel.add_span_event[39;49;00m[33m"[39;49;00m) [94mas[39;49;00m mock_event, \
+             patch([33m"[39;49;00m[33muvmgr.commands.spiff_otel.metric_counter[39;49;00m[33m"[39;49;00m) [94mas[39;49;00m mock_counter, \
+             patch([33m"[39;49;00m[33muvmgr.commands.spiff_otel.metric_histogram[39;49;00m[33m"[39;49;00m) [94mas[39;49;00m mock_histogram:[90m[39;49;00m
+    [90m[39;49;00m
+            mock_validate.return_value = [94mTrue[39;49;00m[90m[39;49;00m
+            mock_run.return_value = {[90m[39;49;00m
+                [33m"[39;49;00m[33mstatus[39;49;00m[33m"[39;49;00m: [33m"[39;49;00m[33mcompleted[39;49;00m[33m"[39;49;00m,[90m[39;49;00m
+                [33m"[39;49;00m[33msteps_executed[39;49;00m[33m"[39;49;00m: [94m3[39;49;00m,[90m[39;49;00m
+                [33m"[39;49;00m[33mcompleted_tasks[39;49;00m[33m"[39;49;00m: [94m3[39;49;00m,[90m[39;49;00m
+                [33m"[39;49;00m[33mfailed_tasks[39;49;00m[33m"[39;49;00m: [94m0[39;49;00m,[90m[39;49;00m
+                [33m"[39;49;00m[33mworkflow_name[39;49;00m[33m"[39;49;00m: [33m"[39;49;00m[33mtest_workflow[39;49;00m[33m"[39;49;00m,[90m[39;49;00m
+                [33m"[39;49;00m[33mduration_seconds[39;49;00m[33m"[39;49;00m: [94m1.5[39;49;00m[90m[39;49;00m
+            }[90m[39;49;00m
+    [90m[39;49;00m
+            mock_span.return_value.[92m__enter__[39;49;00m = MagicMock()[90m[39;49;00m
+            mock_span.return_value.[92m__exit__[39;49;00m = MagicMock(return_value=[94mNone[39;49;00m)[90m[39;49;00m
+            mock_counter.return_value = MagicMock()[90m[39;49;00m
+            mock_histogram.return_value = MagicMock()[90m[39;49;00m
+    [90m[39;49;00m
+            result = runner.invoke(app, [[33m"[39;49;00m[33mvalidate[39;49;00m[33m"[39;49;00m, [33m"[39;49;00m[33m--workflow[39;49;00m[33m"[39;49;00m, [96mstr[39;49;00m(sample_workflow_path)])[90m[39;49;00m
+    [90m[39;49;00m
+            [90m# Verify command executed successfully[39;49;00m[90m[39;49;00m
+            [94massert[39;49;00m result.exit_code == [94m0[39;49;00m[90m[39;49;00m
+            [94massert[39;49;00m [33m"[39;49;00m[33mSpiffWorkflow OTEL Validation[39;49;00m[33m"[39;49;00m [95min[39;49;00m result.stdout[90m[39;49;00m
+>           [94massert[39;49;00m [33m"[39;49;00m[33m✅ SpiffWorkflow OTEL Validation PASSED[39;49;00m[33m"[39;49;00m [95min[39;49;00m result.stdout[90m[39;49;00m
+[1m[31mE           AssertionError: assert '\u2705 SpiffWorkflow OTEL Validation PASSED' in '\u256d\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 OTEL Validation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256e\n\u2502 \U0001f52c SpiffWorkflow OTEL Validation \u2502\n\u2502 Workflow: test_workflow.bpmn     \u2502\n\u2502 Iterations: 1                    \u2502\n\u2570\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256f\n  Validating workflow structure...      \u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501 100% 0:00:00\n  Running OTEL validation iterations... \u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501 100% 0:00:00\n     Validation Summary      \n\u250f\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2513\n\u2503 Metric           \u2503 Value  \u2503\n\u2521\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2529\n\u2502 Total Iterations \u2502 1      \u2502\n\u2502 Passed           \u2502 1      \u2502\n\u2502 Failed           \u2502 0      \u2502\n\u2502 Success Rate     \u2502 100.0% \u2502\n\u2502 Total Duration   \u2502 0.002s \u2502\n\u2502 Avg Duration     \u2502 0.002s \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u2705 All 1 validation iterations passed\n'[0m
+[1m[31mE            +  where '\u256d\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 OTEL Validation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256e\n\u2502 \U0001f52c SpiffWorkflow OTEL Validation \u2502\n\u2502 Workflow: test_workflow.bpmn     \u2502\n\u2502 Iterations: 1                    \u2502\n\u2570\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256f\n  Validating workflow structure...      \u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501 100% 0:00:00\n  Running OTEL validation iterations... \u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501 100% 0:00:00\n     Validation Summary      \n\u250f\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2513\n\u2503 Metric           \u2503 Value  \u2503\n\u2521\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2529\n\u2502 Total Iterations \u2502 1      \u2502\n\u2502 Passed           \u2502 1      \u2502\n\u2502 Failed           \u2502 0      \u2502\n\u2502 Success Rate     \u2502 100.0% \u2502\n\u2502 Total Duration   \u2502 0.002s \u2502\n\u2502 Avg Duration     \u2502 0.002s \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u2705 All 1 validation iterations passed\n' = <Result okay>.stdout[0m
+
+[1m[31mtests/unit/test_spiff_commands.py[0m:75: AssertionError
+--------- generated xml file: /Users/sac/dev/uvmgr/reports/pytest.xml ----------
+[36m[1m=========================== short test summary info ============================[0m
+[31mFAILED[0m tests/unit/test_e2e_external_validation.py::[1mTestExternalProjectValidator::test_run_validation_failure[0m - KeyError: 'summary'
+[31mFAILED[0m tests/unit/test_e2e_external_validation.py::[1mTestExternalProjectValidator::test_project_types_coverage[0m - KeyError: 'summary'
+[31mFAILED[0m tests/unit/test_spiff_commands.py::[1mTestSpiffCommands::test_validate_command_success[0m - AssertionError: assert '\u2705 SpiffWorkflow OTEL Validation PASSED' in '\u256d\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 OTEL Validation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256e\n\u2502 \U0001f52c SpiffWorkflow OTEL Validation \u2502\n\u2502 Workflow: test_workflow.bpmn     \u2502\n\u2502 Iterations: 1                    \u2502\n\u2570\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256f\n  Validating workflow structure...      \u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501 100% 0:00:00\n  Running OTEL validation iterations... \u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501 100% 0:00:00\n     Validation Summary      \n\u250f\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2513\n\u2503 Metric           \u2503 Value  \u2503\n\u2521\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2529\n\u2502 Total Iterations \u2502 1      \u2502\n\u2502 Passed           \u2502 1      \u2502\n\u2502 Failed           \u2502 0      \u2502\n\u2502 Success Rate     \u2502 100.0% \u2502\n\u2502 Total Duration   \u2502 0.002s \u2502\n\u2502 Avg Duration     \u2502 0.002s \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u2705 All 1 validation iterations passed\n'
+ +  where '\u256d\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 OTEL Validation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256e\n\u2502 \U0001f52c SpiffWorkflow OTEL Validation \u2502\n\u2502 Workflow: test_workflow.bpmn     \u2502\n\u2502 Iterations: 1                    \u2502\n\u2570\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256f\n  Validating workflow structure...      \u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501 100% 0:00:00\n  Running OTEL validation iterations... \u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501 100% 0:00:00\n     Validation Summary      \n\u250f\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2513\n\u2503 Metric           \u2503 Value  \u2503\n\u2521\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2529\n\u2502 Total Iterations \u2502 1      \u2502\n\u2502 Passed           \u2502 1      \u2502\n\u2502 Failed           \u2502 0      \u2502\n\u2502 Success Rate     \u2502 100.0% \u2502\n\u2502 Total Duration   \u2502 0.002s \u2502\n\u2502 Avg Duration     \u2502 0.002s \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\u2705 All 1 validation iterations passed\n' = <Result okay>.stdout
+[31m!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 3 failures !!!!!!!!!!!!!!!!!!!!!!!!!!![0m
+[31m=================== [31m[1m3 failed[0m, [32m50 passed[0m, [33m3 warnings[0m[31m in 2.84s[0m[31m ===================[0m

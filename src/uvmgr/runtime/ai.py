@@ -1,13 +1,13 @@
 """
 uvmgr.runtime.ai
 ----------------
-Single source of truth for creating DSPy `LM` objects that work with:
-
-* **openai/** models  → remote OpenAI
-* **ollama/** models → local Ollama server (OpenAI-compatible API)
+Single source of truth for creating DSPy `LM` objects that work with Qwen3 via Ollama by default,
+but allows specific model overrides for flexibility.
 
 The public helpers (`ask`, `outline`, `fix_tests`) are thin wrappers that
 *actually* call the LM; higher layers must never touch DSPy directly.
+
+This module defaults to Qwen3 for consistency but allows other models when explicitly specified.
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import dspy
 
@@ -30,21 +30,19 @@ _log = logging.getLogger("uvmgr.runtime.ai")
 
 def _init_lm(model: str, **kw) -> dspy.LM:
     """
-    Creates a DSPy LM with sane defaults.  If the *model* string begins with
-    ``ollama/``, we automatically point the OpenAI-compatible base URL at the
-    local Ollama server (or whatever `OLLAMA_BASE` env var says).
+    Creates a DSPy LM with Qwen3 as default, but allows specific model overrides.
+    Supports any model format supported by LiteLLM.
     """
+    # Default to Qwen3 if not specified or if using old OpenAI format
+    if model == "qwen3" or model.startswith("openai/gpt"):
+        model = "ollama/qwen3"
+    
     cfg: dict = {
         "model": model,
         "temperature": 0.0,
         "max_tokens": 2048,
         **kw,
     }
-
-    if model.startswith("openai/"):
-        cfg["api_key"] = os.getenv("OPENAI_API_KEY")
-        if not cfg["api_key"]:
-            raise RuntimeError("OPENAI_API_KEY not set")
 
     lm = dspy.LM(**{k: v for k, v in cfg.items() if v is not None})
     dspy.settings.configure(lm=lm, experimental=True)
@@ -57,9 +55,9 @@ def _init_lm(model: str, **kw) -> dspy.LM:
 
 
 @span("ai.ask")
-def ask(prompt: str, model: str = "openai/gpt-4o-mini", **kw) -> str:
+def ask(prompt: str, model: str = "qwen3", **kw) -> str:
     """
-    General-purpose AI query.
+    General-purpose AI query using Qwen3 by default, but allows other models.
     """
     lm = _init_lm(model, **kw)
     with span("ai.query", model=model):
@@ -67,9 +65,9 @@ def ask(prompt: str, model: str = "openai/gpt-4o-mini", **kw) -> str:
 
 
 @span("ai.outline")
-def outline(topic: str, model: str = "openai/gpt-4o-mini", **kw) -> str:
+def outline(topic: str, model: str = "qwen3", **kw) -> str:
     """
-    Generate an outline for a topic.
+    Generate an outline for a topic using Qwen3 by default, but allows other models.
     """
     lm = _init_lm(model, **kw)
     prompt = f"Create a detailed outline for: {topic}"
@@ -78,9 +76,9 @@ def outline(topic: str, model: str = "openai/gpt-4o-mini", **kw) -> str:
 
 
 @span("ai.fix_tests")
-def fix_tests(test_output: str, model: str = "openai/gpt-4o-mini", **kw) -> str:
+def fix_tests(test_output: str, model: str = "qwen3", **kw) -> str:
     """
-    Analyze test failures and suggest fixes.
+    Analyze test failures and suggest fixes using Qwen3 by default, but allows other models.
     """
     lm = _init_lm(model, **kw)
     prompt = f"Analyze these test failures and suggest fixes:\n\n{test_output}"
@@ -99,18 +97,18 @@ def research_topic(
     perspective: str,
     enable_web_search: bool = True,
     previous_insights: List[Dict[str, Any]] = None,
-    model: str = "openai/gpt-4o-mini",
+    model: str = "qwen3",
     **kw
 ) -> Dict[str, Any]:
     """
-    Research a topic from a specific specialist perspective.
+    Research a topic from a specific specialist perspective using Qwen3 by default, but allows other models.
     
     Args:
         topic: Topic to research
         perspective: Specialist perspective (e.g., "technical", "security")
         enable_web_search: Whether to enable web search (placeholder)
         previous_insights: Previous round insights for context
-        model: AI model to use
+        model: AI model to use (defaults to Qwen3, but allows any LiteLLM-supported model)
         
     Returns:
         Research insights from the specialist perspective
@@ -150,17 +148,17 @@ def analyze_code_expert(
     files: List[tuple],
     expert_type: str,
     depth: str = "standard",
-    model: str = "openai/gpt-4o-mini",
+    model: str = "qwen3",
     **kw
 ) -> Dict[str, Any]:
     """
-    Analyze code from a specific expert perspective.
+    Analyze code from a specific expert perspective using Qwen3 by default, but allows other models.
     
     Args:
         files: List of (file_path, content) tuples
         expert_type: Type of expert (performance, security, architecture)
         depth: Analysis depth (quick, standard, deep)
-        model: AI model to use
+        model: AI model to use (defaults to Qwen3, but allows any LiteLLM-supported model)
         
     Returns:
         Expert analysis results with issues and suggestions
@@ -202,16 +200,16 @@ Format as structured analysis."""
 def search_conversations(
     query: str,
     max_results: int = 10,
-    model: str = "openai/gpt-4o-mini",
+    model: str = "qwen3",
     **kw
 ) -> List[Dict[str, Any]]:
     """
-    Search through conversation history (placeholder implementation).
+    Search through conversation history using Qwen3 by default, but allows other models (placeholder implementation).
     
     Args:
         query: Search query
         max_results: Maximum results to return
-        model: AI model to use
+        model: AI model to use (defaults to Qwen3, but allows any LiteLLM-supported model)
         
     Returns:
         List of matching conversation snippets
@@ -232,16 +230,16 @@ def search_conversations(
 def create_custom_command(
     description: str,
     examples: List[str] = None,
-    model: str = "openai/gpt-4o-mini",
+    model: str = "qwen3",
     **kw
 ) -> Dict[str, Any]:
     """
-    Create a custom command based on description.
+    Create a custom command based on description using Qwen3 by default, but allows other models.
     
     Args:
         description: Description of desired command
         examples: Example use cases
-        model: AI model to use
+        model: AI model to use (defaults to Qwen3, but allows any LiteLLM-supported model)
         
     Returns:
         Custom command specification
@@ -277,8 +275,12 @@ Format as a structured command specification."""
 # --------------------------------------------------------------------------- #
 
 
-def _parse_issues_from_response(response: str) -> List[Dict[str, Any]]:
+def _parse_issues_from_response(response: Union[str, List[str]]) -> List[Dict[str, Any]]:
     """Parse issues from AI response."""
+    # Handle DSPy responses which are lists
+    if isinstance(response, list):
+        response = response[0] if response else ""
+    
     # Simplified parser - in practice would use more sophisticated parsing
     issues = []
     lines = response.split('\n')
@@ -294,8 +296,12 @@ def _parse_issues_from_response(response: str) -> List[Dict[str, Any]]:
     return issues
 
 
-def _parse_suggestions_from_response(response: str) -> List[Dict[str, Any]]:
+def _parse_suggestions_from_response(response: Union[str, List[str]]) -> List[Dict[str, Any]]:
     """Parse suggestions from AI response."""
+    # Handle DSPy responses which are lists
+    if isinstance(response, list):
+        response = response[0] if response else ""
+    
     suggestions = []
     lines = response.split('\n')
     
@@ -309,8 +315,12 @@ def _parse_suggestions_from_response(response: str) -> List[Dict[str, Any]]:
     return suggestions
 
 
-def _parse_metrics_from_response(response: str) -> Dict[str, Any]:
+def _parse_metrics_from_response(response: Union[str, List[str]]) -> Dict[str, Any]:
     """Parse metrics from AI response."""
+    # Handle DSPy responses which are lists
+    if isinstance(response, list):
+        response = response[0] if response else ""
+    
     # Simplified metrics extraction
     return {
         "complexity": "medium",

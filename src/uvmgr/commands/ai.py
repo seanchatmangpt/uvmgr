@@ -175,7 +175,7 @@ def ask(
         }
     )
     add_span_event("ai.ask.started", {"model": model})
-    reply = ai_ops.ask(model, prompt)
+    reply = ai_ops.ask(prompt, model)
     _maybe_json(ctx, {"reply": reply})
     colour(reply, "cyan")
 

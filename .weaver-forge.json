@@ -7,5 +7,11 @@
     "performance_optimization"
   ],
   "otel_integration": true,
-  "created_at": 1751167562.0070279
+  "created_at": 1751167562.0070279,
+  "last_optimization": 1751178400.094363,
+  "optimization_history": [
+    "Cost optimization: $25.00 savings",
+    "Security improvements: 3 items",
+    "Performance gains: 2 improvements"
+  ]
 }

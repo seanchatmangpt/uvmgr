@@ -82,6 +82,7 @@ __all__: Final[list[str]] = [
     "mermaid", # Full Mermaid support with Weaver Forge + DSPy (8020 priority)
     "dod", # Definition of Done automation with Weaver Forge exoskeleton
     "docs", # 8020 Documentation automation with multi-layered approach
+    "ai", # AI-assisted development features
     # "mcp", # FastMCP server with DSPy integration for AI-powered analysis - DISABLED: DSPy init issues
     # "exponential", # Exponential technology capabilities - "The Future Is Faster Than You Think" - DISABLED: testing
     # "democratize", # Democratization platform - Make AI development accessible to everyone - DISABLED: testing
@@ -102,7 +103,6 @@ __all__: Final[list[str]] = [
     # "workflow",  # Workflow orchestration and automation
     # "knowledge", # AI-powered knowledge management
     # Already enabled above
-    # "ai",
     # "claude",  # Claude AI integration
     # "remote",
     # "agent",
@@ -117,6 +117,7 @@ __all__: Final[list[str]] = [
     # Already enabled above
     # "documentation", # Technical writing automation with Spiff and DSPy - 80/20 implementation
     # "dod", # Definition of Done automation with Weaver Forge exoskeleton
+    "fakecode", # Fake code/hallucination detection
 ]
 
 _PACKAGE_PREFIX = __name__ + "."

@@ -33,13 +33,15 @@ console = Console()
 def complete_automation(
     environment: str = typer.Option("development", "--env", "-e"),
     auto_fix: bool = typer.Option(False, "--auto-fix"),
-    parallel: bool = typer.Option(True, "--parallel/--sequential")
+    parallel: bool = typer.Option(True, "--parallel/--sequential"),
+    project: Optional[Path] = typer.Option(None, "--project", help="Path to external project root")
 ):
     """🎯 Execute complete Definition of Done automation."""
     console.print("🎯 [bold blue]Definition of Done Automation[/bold blue]")
     
+    project_path = project or Path.cwd()
     result = execute_complete_automation(
-        project_path=Path.cwd(),
+        project_path=project_path,
         environment=environment,
         auto_fix=auto_fix,
         parallel=parallel
@@ -68,12 +70,14 @@ def complete_automation(
 @app.command("exoskeleton")
 def setup_exoskeleton(
     template: str = typer.Option("standard", "--template", "-t"),
-    force: bool = typer.Option(False, "--force")
+    force: bool = typer.Option(False, "--force"),
+    project: Optional[Path] = typer.Option(None, "--project", help="Path to external project root")
 ):
     """🏗️ Initialize Weaver Forge exoskeleton."""
     console.print("🏗️ [bold blue]Initializing Weaver Forge Exoskeleton[/bold blue]")
     
-    result = create_exoskeleton(Path.cwd(), template, force)
+    project_path = project or Path.cwd()
+    result = create_exoskeleton(project_path, template, force)
     
     if result.get("success", False):
         console.print("✅ [green]Exoskeleton initialized successfully![/green]")
@@ -91,15 +95,17 @@ def setup_exoskeleton(
 @app.command("validate")
 def validate_criteria(
     criteria: Optional[List[str]] = typer.Option(None, "--criteria", "-c"),
-    detailed: bool = typer.Option(False, "--detailed")
+    detailed: bool = typer.Option(False, "--detailed"),
+    project: Optional[Path] = typer.Option(None, "--project", help="Path to external project root")
 ):
     """✅ Validate Definition of Done criteria."""
     console.print("✅ [bold blue]DoD Criteria Validation[/bold blue]")
     
+    project_path = project or Path.cwd()
     criteria_list = criteria or list(DOD_CRITERIA_WEIGHTS.keys())
     
     result = validate_dod_criteria(
-        project_path=Path.cwd(),
+        project_path=project_path,
         criteria=criteria_list,
         detailed=detailed,
         fix_suggestions=True
@@ -129,15 +135,17 @@ def validate_criteria(
 @app.command("pipeline")
 def create_devops_pipeline(
     provider: str = typer.Option("github", "--provider", "-p"),
-    environments: str = typer.Option("dev,staging,prod", "--environments", "-e")
+    environments: str = typer.Option("dev,staging,prod", "--environments", "-e"),
+    project: Optional[Path] = typer.Option(None, "--project", help="Path to external project root")
 ):
     """🚀 Create DevOps pipeline automation."""
     console.print("🚀 [bold blue]DevOps Pipeline Creation[/bold blue]")
     
+    project_path = project or Path.cwd()
     env_list = [env.strip() for env in environments.split(",")]
     
     result = generate_devops_pipeline(
-        project_path=Path.cwd(),
+        project_path=project_path,
         provider=provider,
         environments=env_list,
         features=["testing", "security"],
@@ -156,13 +164,15 @@ def create_devops_pipeline(
 def run_comprehensive_tests(
     strategy: str = typer.Option("comprehensive", "--strategy", "-s"),
     coverage: int = typer.Option(80, "--coverage", "-c"),
-    parallel: bool = typer.Option(True, "--parallel/--sequential")
+    parallel: bool = typer.Option(True, "--parallel/--sequential"),
+    project: Optional[Path] = typer.Option(None, "--project", help="Path to external project root")
 ):
     """🧪 Execute comprehensive testing strategy."""
     console.print("🧪 [bold blue]Comprehensive Testing[/bold blue]")
     
+    project_path = project or Path.cwd()
     result = run_e2e_automation(
-        project_path=Path.cwd(),
+        project_path=project_path,
         environment="development",
         parallel=parallel,
         headless=True,
@@ -190,13 +200,15 @@ def run_comprehensive_tests(
         raise typer.Exit(1)
 
 @app.command("status")
-def show_project_status():
+def show_project_status(
+    project: Optional[Path] = typer.Option(None, "--project", help="Path to external project root")
+):
     """📊 Show project DoD status overview."""
     console.print("📊 [bold blue]Project DoD Status[/bold blue]")
     
-    # Quick validation to show status
+    project_path = project or Path.cwd()
     result = analyze_project_status(
-        project_path=Path.cwd(),
+        project_path=project_path,
         detailed=False,
         suggestions=True
     )

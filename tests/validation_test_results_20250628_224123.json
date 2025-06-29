@@ -1,0 +1,174 @@
+{
+  "status": "completed",
+  "start_time": "2025-06-28T22:41:20.424073",
+  "end_time": "2025-06-28T22:41:23.440209",
+  "duration": 3.016136,
+  "tests": {
+    "mcp_models": {
+      "status": "success",
+      "tests": [
+        {
+          "name": "model_initialization",
+          "status": "passed",
+          "details": "Initialized 11 models"
+        },
+        {
+          "name": "web_search",
+          "status": "passed",
+          "details": "Retrieved 3 search results"
+        },
+        {
+          "name": "analysis_with_web_search",
+          "status": "passed",
+          "details": "Analysis completed successfully"
+        },
+        {
+          "name": "model_info_retrieval",
+          "status": "failed",
+          "error": "'ValidationAnalyzer' object has no attribute 'input_fields'"
+        }
+      ],
+      "total_tests": 4,
+      "passed_tests": 3,
+      "failed_tests": 1
+    },
+    "weaver_telemetry": {
+      "status": "success",
+      "tests": [
+        {
+          "name": "basic_telemetry",
+          "status": "failed",
+          "error": "'NoneType' object has no attribute 'get_spans'"
+        },
+        {
+          "name": "github_actions_telemetry",
+          "status": "failed",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ],
+      "total_tests": 2,
+      "passed_tests": 0,
+      "failed_tests": 2
+    },
+    "performance": {
+      "status": "success",
+      "tests": [
+        {
+          "name": "response_time_consistency",
+          "status": "passed",
+          "details": "Average: 0.101s, Variance: 0.000000"
+        },
+        {
+          "name": "memory_usage",
+          "status": "passed",
+          "details": "Memory increase: 0.00MB"
+        }
+      ],
+      "total_tests": 2,
+      "passed_tests": 2,
+      "failed_tests": 0,
+      "performance_metrics": {
+        "response_time": {
+          "times": [
+            0.10013103485107422,
+            0.10106897354125977,
+            0.10107207298278809,
+            0.10105085372924805,
+            0.10094404220581055
+          ],
+          "average": 0.10085339546203613,
+          "variance": 1.326610436080955e-07,
+          "consistent": true
+        },
+        "memory_usage": {
+          "before": 293.484375,
+          "after": 293.484375,
+          "increase": 0.0,
+          "acceptable": true
+        }
+      }
+    },
+    "integration": {
+      "status": "success",
+      "tests": [
+        {
+          "name": "mcp_weaver_integration",
+          "status": "passed",
+          "details": "Integration test completed successfully"
+        },
+        {
+          "name": "telemetry_integration",
+          "status": "failed",
+          "error": "'NoneType' object has no attribute 'get_spans'"
+        }
+      ],
+      "total_tests": 2,
+      "passed_tests": 1,
+      "failed_tests": 1
+    },
+    "reliability": {
+      "status": "success",
+      "tests": [
+        {
+          "name": "repeated_operations",
+          "status": "passed",
+          "details": "Success rate: 100.0%"
+        },
+        {
+          "name": "concurrent_operations",
+          "status": "passed",
+          "details": "Concurrent success rate: 100.0%"
+        }
+      ],
+      "total_tests": 2,
+      "passed_tests": 2,
+      "failed_tests": 0,
+      "reliability_metrics": {
+        "repeated_operations": {
+          "total_operations": 10,
+          "successful_operations": 10,
+          "success_rate": 1.0,
+          "reliable": true
+        },
+        "concurrent_operations": {
+          "total_operations": 5,
+          "successful_operations": 5,
+          "success_rate": 1.0,
+          "reliable": true
+        }
+      }
+    },
+    "live_data": {
+      "status": "success",
+      "tests": [
+        {
+          "name": "live_workflow_validation",
+          "status": "failed",
+          "error": "HTTP Error 404: Not Found"
+        },
+        {
+          "name": "live_runs_validation",
+          "status": "failed",
+          "error": "HTTP Error 404: Not Found"
+        },
+        {
+          "name": "github_token_validation",
+          "status": "failed",
+          "error": "'GitHubActionsOps' object has no attribute 'get_repo_info'"
+        }
+      ],
+      "total_tests": 3,
+      "passed_tests": 0,
+      "failed_tests": 3,
+      "live_data_metrics": {}
+    }
+  },
+  "summary": {
+    "total_tests": 15,
+    "passed_tests": 8,
+    "failed_tests": 7,
+    "skipped_tests": 0,
+    "success_rate": 0.5333333333333333,
+    "overall_status": "failed"
+  }
+}

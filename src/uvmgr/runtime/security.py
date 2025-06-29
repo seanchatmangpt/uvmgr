@@ -468,6 +468,7 @@ def _map_safety_severity(safety_severity: str) -> str:
     return mapping.get(safety_severity.lower(), "medium")
 
 
+@instrument_command("security_install_security_tools")
 def install_security_tools() -> Dict[str, bool]:
     """
     Install required security tools if not available.
@@ -475,42 +476,65 @@ def install_security_tools() -> Dict[str, bool]:
     Returns:
         Dictionary of tool installation status
     """
-    tools_status = {}
-    
-    security_tools = [
-        ("safety", "safety"),
-        ("pip-audit", "pip-audit"), 
-        ("bandit", "bandit[toml]"),
-        ("detect-secrets", "detect-secrets")
-    ]
-    
-    for tool_name, pip_package in security_tools:
-        try:
-            # Check if tool is already available
-            result = subprocess.run(
-                [sys.executable, "-m", tool_name, "--version"],
-                capture_output=True,
-                timeout=10
-            )
-            if result.returncode == 0:
-                tools_status[tool_name] = True
-                colour(f"✅ {tool_name} is available", "green")
-            else:
-                # Try to install
-                colour(f"📦 Installing {tool_name}...", "cyan")
-                install_result = subprocess.run(
-                    [sys.executable, "-m", "pip", "install", pip_package],
-                    capture_output=True,
-                    timeout=60
-                )
-                tools_status[tool_name] = install_result.returncode == 0
-                if tools_status[tool_name]:
-                    colour(f"✅ {tool_name} installed successfully", "green")
-                else:
-                    colour(f"❌ Failed to install {tool_name}", "red")
-                    
-        except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
-            tools_status[tool_name] = False
-            colour(f"❌ {tool_name} not available", "red")
-    
-    return tools_status
+    with span("security.install_security_tools"):
+        add_span_attributes(**{
+            SecurityAttributes.OPERATION: "install_tools",
+        })
+        add_span_event("security.tools.installation.started")
+        
+        tools_status = {}
+        
+        security_tools = [
+            ("safety", "safety"),
+            ("pip-audit", "pip-audit"), 
+            ("bandit", "bandit[toml]"),
+            ("detect-secrets", "detect-secrets")
+        ]
+        
+        for tool_name, pip_package in security_tools:
+            with span("security.tool.install", tool_name=tool_name, pip_package=pip_package):
+                try:
+                    # Check if tool is already available
+                    result = subprocess.run(
+                        [sys.executable, "-m", tool_name, "--version"],
+                        capture_output=True,
+                        timeout=10
+                    )
+                    if result.returncode == 0:
+                        tools_status[tool_name] = True
+                        add_span_event("security.tool.already_available", {"tool_name": tool_name})
+                        colour(f"✅ {tool_name} is available", "green")
+                    else:
+                        # Try to install
+                        add_span_event("security.tool.installing", {"tool_name": tool_name})
+                        colour(f"📦 Installing {tool_name}...", "cyan")
+                        install_result = subprocess.run(
+                            [sys.executable, "-m", "pip", "install", pip_package],
+                            capture_output=True,
+                            timeout=60
+                        )
+                        tools_status[tool_name] = install_result.returncode == 0
+                        if tools_status[tool_name]:
+                            add_span_event("security.tool.installed", {"tool_name": tool_name})
+                            colour(f"✅ {tool_name} installed successfully", "green")
+                        else:
+                            add_span_event("security.tool.install_failed", {"tool_name": tool_name})
+                            colour(f"❌ Failed to install {tool_name}", "red")
+                            
+                except (subprocess.TimeoutExpired, FileNotFoundError, Exception) as e:
+                    tools_status[tool_name] = False
+                    add_span_event("security.tool.install_error", {"tool_name": tool_name, "error": str(e)})
+                    colour(f"❌ {tool_name} not available", "red")
+        
+        # Add final telemetry
+        successful_installations = sum(1 for status in tools_status.values() if status)
+        add_span_attributes(**{
+            SecurityAttributes.ISSUES_FOUND: len(tools_status) - successful_installations,
+        })
+        add_span_event("security.tools.installation.completed", {
+            "total_tools": len(tools_status),
+            "successful_installations": successful_installations,
+            "failed_installations": len(tools_status) - successful_installations
+        })
+        
+        return tools_status

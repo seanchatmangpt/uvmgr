@@ -483,70 +483,77 @@ def analyze_project_status(
     suggestions: bool = True
 ) -> Dict[str, Any]:
     """
-    Analyze complete project status and automation health.
+    Analyze project Definition of Done status and health.
     
-    Provides comprehensive project analysis including:
-    - DoD criteria completion status
-    - Automation health and performance metrics
-    - Security posture and vulnerability assessment
-    - Technical debt and code quality metrics
-    - AI-powered improvement recommendations
+    Provides comprehensive project health assessment including:
+    - Overall DoD compliance score
+    - Critical criteria status (Testing, Security, DevOps)
+    - Automation pipeline health
+    - Security posture assessment
+    - Code quality metrics
+    - Actionable improvement suggestions
     
     Args:
         project_path: Path to project root
-        detailed: Include detailed project analysis
-        suggestions: Generate AI-powered improvement suggestions
+        detailed: Include detailed analysis and metrics
+        suggestions: Include improvement suggestions
         
     Returns:
-        Dict with project status and health metrics
+        Dict with project health analysis and recommendations
     """
     span = trace.get_current_span()
     span.set_attributes({
+        "project.path": str(project_path),
         "dod.detailed": detailed,
-        "dod.suggestions": suggestions,
-        "project.path": str(project_path)
+        "dod.suggestions": suggestions
     })
     
     try:
-        # Analyze project health using runtime layer
-        status_result = analyze_project_health(
+        # Get project health analysis from runtime layer
+        health_result = analyze_project_health(
             project_path=project_path,
             detailed=detailed,
             suggestions=suggestions
         )
         
-        # Calculate overall health score using 80/20 principles
-        dod_status = status_result.get("dod_status", {})
-        automation_health = status_result.get("automation_health", {})
-        security_posture = status_result.get("security_posture", {})
+        if not health_result.get("success", False):
+            return health_result
         
-        # Weighted health calculation (80/20 focus)
-        health_components = {
-            "dod_compliance": {"score": dod_status.get("overall_score", 0), "weight": 0.40},
-            "automation_health": {"score": automation_health.get("score", 0), "weight": 0.30},
-            "security_posture": {"score": security_posture.get("score", 0), "weight": 0.20},
-            "code_quality": {"score": status_result.get("code_quality", {}).get("score", 0), "weight": 0.10}
+        # Calculate overall health score
+        dod_status = health_result.get("dod_status", {})
+        overall_score = dod_status.get("overall_score", 0)
+        
+        # Determine status level
+        if overall_score >= 90:
+            status = "EXCELLENT"
+        elif overall_score >= 80:
+            status = "GOOD"
+        elif overall_score >= 70:
+            status = "FAIR"
+        elif overall_score >= 60:
+            status = "NEEDS WORK"
+        else:
+            status = "CRITICAL"
+        
+        span.set_attributes({
+            "dod.overall_score": overall_score,
+            "dod.status": status
+        })
+        
+        return {
+            "success": True,
+            "overall_health_score": overall_score,
+            "status": status,
+            "dod_compliance": dod_status.get("overall_score", 0),
+            "security_score": health_result.get("security_posture", {}).get("score", 0),
+            "suggestions": health_result.get("suggestions", [])
         }
-        
-        health_score = sum(
-            component["score"] * component["weight"]
-            for component in health_components.values()
-        )
-        
-        status_result["health_score"] = health_score
-        status_result["health_components"] = health_components
-        status_result["scoring_strategy"] = "80/20 weighted health"
-        
-        span.set_attribute("dod.health_score", health_score)
-        
-        return status_result
         
     except Exception as e:
         span.record_exception(e)
         return {
             "success": False,
-            "error": f"Status analysis failed: {str(e)}",
-            "health_score": 0.0
+            "error": f"Project status analysis failed: {str(e)}"
         }
 
 @tracer.start_as_current_span("dod.generate_dod_report")

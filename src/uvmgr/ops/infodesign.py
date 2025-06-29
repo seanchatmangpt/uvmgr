@@ -438,10 +438,9 @@ def extract_knowledge(
             domain = _rt.detect_domain(content)
             
             if HAS_DSPY:
-                # Configure DSPy model
-                if model.startswith("gpt"):
-                    lm = dspy.OpenAI(model=model)
-                    dspy.settings.configure(lm=lm)
+                # Configure DSPy model - only Qwen3
+                lm = dspy.LM(model="ollama/qwen3")
+                dspy.settings.configure(lm=lm)
                 
                 # Use DSPy for intelligent extraction
                 extractor = KnowledgeExtractor()

@@ -18,7 +18,7 @@ from uvmgr.runtime import ai as _rt
 
 
 @timed
-def ask(model: str, prompt: str) -> str:
+def ask(prompt: str, model: str) -> str:
     start_time = time.time()
 
     with span("ops.ai.ask", model=model):
@@ -35,7 +35,7 @@ def ask(model: str, prompt: str) -> str:
         })
 
         try:
-            response = _rt.ask(model, prompt)
+            response = _rt.ask(prompt, model)
 
             # Record successful AI operation metrics
             duration = time.time() - start_time

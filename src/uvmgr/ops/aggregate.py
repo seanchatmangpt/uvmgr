@@ -545,45 +545,18 @@ def get_aggregation_metrics(workflow_file: Optional[Path] = None) -> Dict[str, A
             "aggregate.workflow_file": str(workflow_file) if workflow_file else "all",
         })
         
-        # Mock metrics for now - in real implementation would query actual data
-        metrics = {
-            "workflows": [
-                {
-                    "name": "8020_development_workflow",
-                    "executions": 15,
-                    "success_rate": 0.93,
-                    "avg_duration": 45.2,
-                    "last_execution": "2024-01-15T10:30:00Z",
-                },
-                {
-                    "name": "8020_ci_cd_workflow", 
-                    "executions": 8,
-                    "success_rate": 0.88,
-                    "avg_duration": 120.5,
-                    "last_execution": "2024-01-15T09:15:00Z",
-                },
-            ],
-            "total_executions": 23,
-            "success_rate": 0.91,
-            "avg_duration": 82.8,
-            "weaver_enabled": True,
-            "spiff_active": True,
-            "detailed_metrics": {
-                "commands_executed": 156,
-                "parallel_executions": 18,
-                "weaver_validations": 23,
-                "total_duration": 1904.4,
-                "error_count": 2,
-            },
-        }
+        # Get metrics from all sources
+        metrics_result = collect_metrics(
+            project_path=project_path,
+            sources=sources,
+            time_range=time_range,
+            detailed=detailed
+        )
         
-        add_span_event("aggregate.metrics.retrieved", {
-            "workflows_count": len(metrics["workflows"]),
-            "total_executions": metrics["total_executions"],
-            "success_rate": metrics["success_rate"],
-        })
-        
-        return metrics
+        raise NotImplementedError(
+            "Metrics collection is not implemented. "
+            "This requires integration with actual metrics collection systems."
+        )
 
 
 def _calculate_critical_path(dependencies: Dict[str, List[str]]) -> List[str]:

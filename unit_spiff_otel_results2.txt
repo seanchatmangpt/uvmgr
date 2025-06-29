@@ -1,0 +1,202 @@
+[1m============================= test session starts ==============================[0m
+platform darwin -- Python 3.13.0, pytest-8.3.5, pluggy-1.6.0 -- /Users/sac/dev/uvmgr/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/sac/dev/uvmgr
+configfile: pyproject.toml
+plugins: anyio-4.9.0, mock-3.14.0, asyncio-1.0.0, xdist-3.6.1
+asyncio: mode=Mode.STRICT, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+[1mcollecting ... [0mcollected 138 items
+run-last-failure: rerun previous 3 failures first
+
+tests/unit/test_e2e_external_validation.py::TestExternalProjectValidator::test_run_validation_failure [32mPASSED[0m[33m [  0%][0m
+tests/unit/test_e2e_external_validation.py::TestExternalProjectValidator::test_project_types_coverage [32mPASSED[0m[33m [  1%][0m
+tests/unit/test_spiff_commands.py::TestSpiffCommands::test_validate_command_success [32mPASSED[0m[33m [  2%][0m
+tests/unit/test_basic.py::test_import_uvmgr [32mPASSED[0m[33m                       [  2%][0m
+tests/unit/test_basic.py::test_cli_import [32mPASSED[0m[33m                         [  3%][0m
+tests/unit/test_basic.py::test_telemetry_import [32mPASSED[0m[33m                   [  4%][0m
+tests/unit/test_basic.py::test_project_structure [32mPASSED[0m[33m                  [  5%][0m
+tests/unit/test_basic.py::test_basic_math [32mPASSED[0m[33m                         [  5%][0m
+tests/unit/test_basic.py::test_async_basic [32mPASSED[0m[33m                        [  6%][0m
+tests/unit/test_e2e_external_validation.py::TestExternalProjectValidator::test_validator_initialization [32mPASSED[0m[33m [  7%][0m
+tests/unit/test_e2e_external_validation.py::TestExternalProjectValidator::test_run_command_success [32mPASSED[0m[33m [  7%][0m
+tests/unit/test_e2e_external_validation.py::TestExternalProjectValidator::test_run_command_failure [32mPASSED[0m[33m [  8%][0m
+tests/unit/test_e2e_external_validation.py::TestExternalProjectValidator::test_run_command_timeout [32mPASSED[0m[33m [  9%][0m
+tests/unit/test_e2e_external_validation.py::TestExternalProjectValidator::test_create_test_project_minimal [32mPASSED[0m[33m [ 10%][0m
+tests/unit/test_e2e_external_validation.py::TestExternalProjectValidator::test_create_test_project_library [32mPASSED[0m[33m [ 10%][0m
+tests/unit/test_e2e_external_validation.py::TestExternalProjectValidator::test_create_test_project_application [32mPASSED[0m[33m [ 11%][0m
+tests/unit/test_e2e_external_validation.py::TestExternalProjectValidator::test_validate_project_lifecycle_success [32mPASSED[0m[33m [ 12%][0m
+tests/unit/test_e2e_external_validation.py::TestExternalProjectValidator::test_validate_project_lifecycle_partial_failure [32mPASSED[0m[33m [ 13%][0m
+tests/unit/test_e2e_external_validation.py::TestExternalProjectValidator::test_validate_advanced_features_success [32mPASSED[0m[33m [ 13%][0m
+tests/unit/test_e2e_external_validation.py::TestExternalProjectValidator::test_validate_advanced_features_otel_failure [32mPASSED[0m[33m [ 14%][0m
+tests/unit/test_e2e_external_validation.py::TestExternalProjectValidator::test_run_validation_success [32mPASSED[0m[33m [ 15%][0m
+tests/unit/test_e2e_external_validation.py::TestExternalProjectValidator::test_results_json_serializable [32mPASSED[0m[33m [ 15%][0m
+tests/unit/test_e2e_external_validation.py::TestExternalProjectValidatorIntegration::test_real_project_creation [32mPASSED[0m[33m [ 16%][0m
+tests/unit/test_e2e_external_validation.py::TestExternalProjectValidatorIntegration::test_command_timeout_handling [32mPASSED[0m[33m [ 17%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestOpenTelemetryIntegration::test_span_creation [32mPASSED[0m[33m [ 18%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestOpenTelemetryIntegration::test_span_nesting [32mPASSED[0m[33m [ 18%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestOpenTelemetryIntegration::test_span_with_attributes [32mPASSED[0m[33m [ 19%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestOpenTelemetryIntegration::test_metric_counter [32mPASSED[0m[33m [ 20%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestOpenTelemetryIntegration::test_metric_histogram [32mPASSED[0m[33m [ 21%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestOpenTelemetryIntegration::test_metric_gauge [32mPASSED[0m[33m [ 21%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestOpenTelemetryIntegration::test_instrumentation_decorator [32mPASSED[0m[33m [ 22%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestOpenTelemetryIntegration::test_add_span_attributes [32mPASSED[0m[33m [ 23%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestOpenTelemetryIntegration::test_add_span_event [32mPASSED[0m[33m [ 23%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestOpenTelemetryIntegration::test_telemetry_graceful_degradation [32mPASSED[0m[33m [ 24%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestSemanticConventions::test_cli_attributes [32mPASSED[0m[33m [ 25%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestSemanticConventions::test_package_attributes [32mPASSED[0m[33m [ 26%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestSemanticConventions::test_package_operations [32mPASSED[0m[33m [ 26%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestSemanticConventions::test_security_attributes [32mPASSED[0m[33m [ 27%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestSemanticConventions::test_worktree_attributes [32mPASSED[0m[33m [ 28%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestSemanticConventions::test_guide_attributes [32mPASSED[0m[33m [ 28%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestSemanticConventions::test_info_design_attributes [32mPASSED[0m[33m [ 29%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestSemanticConventions::test_validate_attribute_function [32mPASSED[0m[33m [ 30%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestSemanticConventions::test_all_attribute_classes_covered [32mPASSED[0m[33m [ 31%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestSemanticConventions::test_semantic_convention_completeness [32mPASSED[0m[33m [ 31%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestWeaverIntegration::test_weaver_semantic_convention_format [32mPASSED[0m[33m [ 32%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestWeaverIntegration::test_weaver_attribute_consistency [32mPASSED[0m[33m [ 33%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestWeaverIntegration::test_weaver_validation_rules [32mPASSED[0m[33m [ 34%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestWeaverIntegration::test_weaver_semantic_convention_registry [32mPASSED[0m[33m [ 34%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestWeaverIntegration::test_weaver_generation_compatibility [32mPASSED[0m[33m [ 35%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestWeaverIntegration::test_otel_semantic_convention_compliance [32mPASSED[0m[33m [ 36%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestWeaverValidationIntegration::test_run_weaver_validation [32mPASSED[0m[33m [ 36%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestWeaverValidationIntegration::test_semantic_convention_coverage [32mPASSED[0m[33m [ 37%][0m
+tests/unit/test_opentelemetry_weaver_validation.py::TestWeaverValidationIntegration::test_weaver_forge_integration [32mPASSED[0m[33m [ 38%][0m
+tests/unit/test_spiff_commands.py::TestSpiffCommands::test_validate_command_workflow_not_found [32mPASSED[0m[33m [ 39%][0m
+tests/unit/test_spiff_commands.py::TestSpiffCommands::test_validate_command_workflow_validation_failure [32mPASSED[0m[33m [ 39%][0m
+tests/unit/test_spiff_commands.py::TestSpiffCommands::test_validate_command_execution_failure [31mFAILED[0m[31m [ 40%][0m
+tests/unit/test_spiff_commands.py::TestSpiffCommands::test_8020_validate_command_success [31mFAILED[0m[31m [ 41%][0m
+tests/unit/test_spiff_commands.py::TestSpiffCommands::test_8020_validate_command_failure [31mFAILED[0m[31m [ 42%][0m
+
+=================================== FAILURES ===================================
+[31m[1m__________ TestSpiffCommands.test_validate_command_execution_failure ___________[0m
+
+self = <test_spiff_commands.TestSpiffCommands object at 0x11899b360>
+runner = <typer.testing.CliRunner object at 0x12a2ad940>
+sample_workflow_path = PosixPath('/Users/sac/.cache/tmp/pytest-of-sac/pytest-95/test_validate_command_executio0/test_workflow.bpmn')
+
+    [0m[94mdef[39;49;00m[90m [39;49;00m[92mtest_validate_command_execution_failure[39;49;00m([96mself[39;49;00m, runner, sample_workflow_path):[90m[39;49;00m
+    [90m    [39;49;00m[33m"""Test validate command with execution failure."""[39;49;00m[90m[39;49;00m
+        [94mwith[39;49;00m patch([33m"[39;49;00m[33muvmgr.commands.spiff_otel.validate_bpmn_file[39;49;00m[33m"[39;49;00m) [94mas[39;49;00m mock_validate, \
+             patch([33m"[39;49;00m[33muvmgr.commands.spiff_otel.run_bpmn[39;49;00m[33m"[39;49;00m) [94mas[39;49;00m mock_run:[90m[39;49;00m
+    [90m[39;49;00m
+            mock_validate.return_value = [94mTrue[39;49;00m[90m[39;49;00m
+            mock_run.return_value = {[90m[39;49;00m
+                [33m"[39;49;00m[33mstatus[39;49;00m[33m"[39;49;00m: [33m"[39;49;00m[33mfailed[39;49;00m[33m"[39;49;00m,[90m[39;49;00m
+                [33m"[39;49;00m[33msteps_executed[39;49;00m[33m"[39;49;00m: [94m1[39;49;00m,[90m[39;49;00m
+                [33m"[39;49;00m[33mcompleted_tasks[39;49;00m[33m"[39;49;00m: [94m0[39;49;00m,[90m[39;49;00m
+                [33m"[39;49;00m[33mfailed_tasks[39;49;00m[33m"[39;49;00m: [94m1[39;49;00m,[90m[39;49;00m
+                [33m"[39;49;00m[33mworkflow_name[39;49;00m[33m"[39;49;00m: [33m"[39;49;00m[33mtest_workflow[39;49;00m[33m"[39;49;00m,[90m[39;49;00m
+                [33m"[39;49;00m[33mduration_seconds[39;49;00m[33m"[39;49;00m: [94m0.5[39;49;00m[90m[39;49;00m
+            }[90m[39;49;00m
+    [90m[39;49;00m
+            result = runner.invoke(app, [[33m"[39;49;00m[33mvalidate[39;49;00m[33m"[39;49;00m, [33m"[39;49;00m[33m--workflow[39;49;00m[33m"[39;49;00m, [96mstr[39;49;00m(sample_workflow_path)])[90m[39;49;00m
+    [90m[39;49;00m
+            [90m# Verify failure handling[39;49;00m[90m[39;49;00m
+>           [94massert[39;49;00m result.exit_code == [94m0[39;49;00m  [90m# Command succeeds but validation fails[39;49;00m[90m[39;49;00m
+[1m[31mE           assert 1 == 0[0m
+[1m[31mE            +  where 1 = <Result SystemExit(1)>.exit_code[0m
+
+[1m[31mtests/unit/test_spiff_commands.py[0m:118: AssertionError
+[31m[1m_____________ TestSpiffCommands.test_8020_validate_command_success _____________[0m
+
+self = <MagicMock name='run_8020_otel_validation' id='5002319184'>
+args = (PosixPath('/Users/sac/.cache/tmp/pytest-of-sac/pytest-95/test_8020_validate_command_suc0'),)
+kwargs = {}
+msg = "Expected 'run_8020_otel_validation' to be called once. Called 0 times."
+
+    [0m[94mdef[39;49;00m[90m [39;49;00m[92massert_called_once_with[39;49;00m([96mself[39;49;00m, /, *args, **kwargs):[90m[39;49;00m
+    [90m    [39;49;00m[33m"""assert that the mock was called exactly once and that that call was[39;49;00m
+    [33m    with the specified arguments."""[39;49;00m[90m[39;49;00m
+        [94mif[39;49;00m [95mnot[39;49;00m [96mself[39;49;00m.call_count == [94m1[39;49;00m:[90m[39;49;00m
+            msg = ([33m"[39;49;00m[33mExpected [39;49;00m[33m'[39;49;00m[33m%s[39;49;00m[33m'[39;49;00m[33m to be called once. Called [39;49;00m[33m%s[39;49;00m[33m times.[39;49;00m[33m%s[39;49;00m[33m"[39;49;00m[90m[39;49;00m
+                   % ([96mself[39;49;00m._mock_name [95mor[39;49;00m [33m'[39;49;00m[33mmock[39;49;00m[33m'[39;49;00m,[90m[39;49;00m
+                      [96mself[39;49;00m.call_count,[90m[39;49;00m
+                      [96mself[39;49;00m._calls_repr()))[90m[39;49;00m
+>           [94mraise[39;49;00m [96mAssertionError[39;49;00m(msg)[90m[39;49;00m
+[1m[31mE           AssertionError: Expected 'run_8020_otel_validation' to be called once. Called 0 times.[0m
+
+[1m[31m../../.local/share/uv/python/cpython-3.13.0-macos-aarch64-none/lib/python3.13/unittest/mock.py[0m:988: AssertionError
+
+[33mDuring handling of the above exception, another exception occurred:[0m
+
+self = <test_spiff_commands.TestSpiffCommands object at 0x11846af90>
+runner = <typer.testing.CliRunner object at 0x12a2ae2c0>
+tmp_path = PosixPath('/Users/sac/.cache/tmp/pytest-of-sac/pytest-95/test_8020_validate_command_suc0')
+
+    [0m[94mdef[39;49;00m[90m [39;49;00m[92mtest_8020_validate_command_success[39;49;00m([96mself[39;49;00m, runner, tmp_path):[90m[39;49;00m
+    [90m    [39;49;00m[33m"""Test successful 8020-validate command."""[39;49;00m[90m[39;49;00m
+        [94mwith[39;49;00m patch([33m"[39;49;00m[33muvmgr.commands.spiff_otel.run_8020_otel_validation[39;49;00m[33m"[39;49;00m) [94mas[39;49;00m mock_8020, \
+             patch([33m"[39;49;00m[33muvmgr.commands.spiff_otel.span[39;49;00m[33m"[39;49;00m) [94mas[39;49;00m mock_span, \
+             patch([33m"[39;49;00m[33muvmgr.commands.spiff_otel.add_span_event[39;49;00m[33m"[39;49;00m) [94mas[39;49;00m mock_event, \
+             patch([33m"[39;49;00m[33muvmgr.commands.spiff_otel.metric_counter[39;49;00m[33m"[39;49;00m) [94mas[39;49;00m mock_counter, \
+             patch([33m"[39;49;00m[33muvmgr.commands.spiff_otel.metric_histogram[39;49;00m[33m"[39;49;00m) [94mas[39;49;00m mock_histogram:[90m[39;49;00m
+    [90m[39;49;00m
+            mock_result = MagicMock()[90m[39;49;00m
+            mock_result.success = [94mTrue[39;49;00m[90m[39;49;00m
+            mock_result.workflow_name = [33m"[39;49;00m[33m8020_otel_validation[39;49;00m[33m"[39;49;00m[90m[39;49;00m
+            mock_result.validation_steps = [][90m[39;49;00m
+            mock_result.metrics_validated = [94m10[39;49;00m[90m[39;49;00m
+            mock_result.spans_validated = [94m5[39;49;00m[90m[39;49;00m
+            mock_result.errors = [][90m[39;49;00m
+            mock_result.performance_data = {[33m"[39;49;00m[33mtotal_duration[39;49;00m[33m"[39;49;00m: [94m1.0[39;49;00m}[90m[39;49;00m
+            mock_result.duration_seconds = [94m1.0[39;49;00m[90m[39;49;00m
+    [90m[39;49;00m
+            mock_8020.return_value = mock_result[90m[39;49;00m
+    [90m[39;49;00m
+            mock_span.return_value.[92m__enter__[39;49;00m = MagicMock()[90m[39;49;00m
+            mock_span.return_value.[92m__exit__[39;49;00m = MagicMock(return_value=[94mNone[39;49;00m)[90m[39;49;00m
+            mock_counter.return_value = MagicMock()[90m[39;49;00m
+            mock_histogram.return_value = MagicMock()[90m[39;49;00m
+    [90m[39;49;00m
+            result = runner.invoke(app, [[33m"[39;49;00m[33m8020-validate[39;49;00m[33m"[39;49;00m, [33m"[39;49;00m[33m--project[39;49;00m[33m"[39;49;00m, [96mstr[39;49;00m(tmp_path)])[90m[39;49;00m
+    [90m[39;49;00m
+            [90m# Verify command executed successfully[39;49;00m[90m[39;49;00m
+            [94massert[39;49;00m result.exit_code == [94m0[39;49;00m[90m[39;49;00m
+            [94massert[39;49;00m [33m"[39;49;00m[33m80/20 OTEL Validation[39;49;00m[33m"[39;49;00m [95min[39;49;00m result.stdout[90m[39;49;00m
+            [94massert[39;49;00m [33m"[39;49;00m[33m✅ 80/20 OTEL Validation PASSED[39;49;00m[33m"[39;49;00m [95min[39;49;00m result.stdout[90m[39;49;00m
+    [90m[39;49;00m
+            [90m# Verify 8020 validation was called[39;49;00m[90m[39;49;00m
+>           mock_8020.assert_called_once_with(tmp_path)[90m[39;49;00m
+[1m[31mE           AssertionError: Expected 'run_8020_otel_validation' to be called once. Called 0 times.[0m
+
+[1m[31mtests/unit/test_spiff_commands.py[0m:154: AssertionError
+[31m[1m_____________ TestSpiffCommands.test_8020_validate_command_failure _____________[0m
+
+self = <test_spiff_commands.TestSpiffCommands object at 0x118a17460>
+runner = <typer.testing.CliRunner object at 0x31bc5d7f0>
+tmp_path = PosixPath('/Users/sac/.cache/tmp/pytest-of-sac/pytest-95/test_8020_validate_command_fai0')
+
+    [0m[94mdef[39;49;00m[90m [39;49;00m[92mtest_8020_validate_command_failure[39;49;00m([96mself[39;49;00m, runner, tmp_path):[90m[39;49;00m
+    [90m    [39;49;00m[33m"""Test 8020-validate command with failure."""[39;49;00m[90m[39;49;00m
+        [94mwith[39;49;00m patch([33m"[39;49;00m[33muvmgr.commands.spiff_otel.run_8020_otel_validation[39;49;00m[33m"[39;49;00m) [94mas[39;49;00m mock_8020:[90m[39;49;00m
+    [90m[39;49;00m
+            mock_result = MagicMock()[90m[39;49;00m
+            mock_result.success = [94mFalse[39;49;00m[90m[39;49;00m
+            mock_result.workflow_name = [33m"[39;49;00m[33m8020_otel_validation[39;49;00m[33m"[39;49;00m[90m[39;49;00m
+            mock_result.validation_steps = [][90m[39;49;00m
+            mock_result.metrics_validated = [94m0[39;49;00m[90m[39;49;00m
+            mock_result.spans_validated = [94m0[39;49;00m[90m[39;49;00m
+            mock_result.errors = [[33m"[39;49;00m[33mOTEL not available[39;49;00m[33m"[39;49;00m][90m[39;49;00m
+            mock_result.performance_data = {}[90m[39;49;00m
+            mock_result.duration_seconds = [94m0.5[39;49;00m[90m[39;49;00m
+    [90m[39;49;00m
+            mock_8020.return_value = mock_result[90m[39;49;00m
+    [90m[39;49;00m
+            result = runner.invoke(app, [[33m"[39;49;00m[33m8020-validate[39;49;00m[33m"[39;49;00m, [33m"[39;49;00m[33m--project[39;49;00m[33m"[39;49;00m, [96mstr[39;49;00m(tmp_path)])[90m[39;49;00m
+    [90m[39;49;00m
+            [90m# Verify failure handling[39;49;00m[90m[39;49;00m
+            [94massert[39;49;00m result.exit_code == [94m0[39;49;00m  [90m# Command succeeds but validation fails[39;49;00m[90m[39;49;00m
+>           [94massert[39;49;00m [33m"[39;49;00m[33m❌ 80/20 OTEL Validation FAILED[39;49;00m[33m"[39;49;00m [95min[39;49;00m result.stdout[90m[39;49;00m
+[1m[31mE           AssertionError: assert '\u274c 80/20 OTEL Validation FAILED' in '\U0001f3af 80/20 OTEL Validation\n\U0001f680 Running critical validation tests...\n\U0001f4c1 Project: \n/Users/sac/.cache/tmp/pytest-of-sac/pytest-95/test_8020_validate_command_fai0\n\u21bb auto-completing service task: Start\n\u2714 BPMN workflow completed\n  Duration: 0.00s, Steps: 1, Tasks: 1\n\u256d\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 OTEL Validation Results \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256e\n\u2502 \u2705 Validation PASSED                                                         \u2502\n\u2502                                                                              \u2502\n\u2502 Workflow: 8020_otel_validation                                               \u2502\n\u2502 Duration: 0.01s                                                              \u2502\n\u2502 Steps: 8                                                                     \u2502\n\u2502 Metrics Validated: 3                                                         \u2502\n\u2502 Spans Validated: 5                                                           \u2502\n\u2570\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256f\n\nValidation Steps:\n\u250f\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2513\n\u2503 # \u2503 Step               \u2503 Status  \u2503\n\u2521\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2529\n\u2502 1 \u2502 BPMN Validation    \u2502 \u2705 PASS \u2502\n\u2502 2 \u2502 Workflow Execution \u2502 \u2705 PASS \u2502\n\u2502 3 \u2502 Test Step 1        \u2502 \u2705 PASS \u2502\n\u2502 4 \u2502 Test Step 2        \u2502 \u2705 PASS \u2502\n\u2502 5 \u2502 Test Step 3        \u2502 \u2705 PASS \u2502\n\u2502 6 \u2502 Test Step 4        \u2502 \u2705 PASS \u2502\n\u2502 7 \u2502 Test Step 5        \u2502 \u2705 PASS \u2502\n\u2502 8 \u2502 OTEL System Health \u2502 \u2705 PASS \u2502\n\u2514\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\nPerformance Data:\n\u250f\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2513\n\u2503 Metric            \u2503 Value  \u2503\n\u2521\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2529\n\u2502 workflow_duration \u2502 0.003s \u2502\n\u2502 workflow_steps    \u2502 1      \u2502\n\u2502 test_1            \u2502 0.000s \u2502\n\u2502 test_2            \u2502 0.000s \u2502\n\u2502 test_3            \u2502 0.000s \u2502\n\u2502 test_4            \u2502 0.000s \u2502\n\u2502 test_5            \u2502 0.000s \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\n\u2705 80/20 OTEL Validation PASSED\n\u2713 All critical systems validated in 0.01s\n  Executing critical OTEL validation...\n'[0m
+[1m[31mE            +  where '\U0001f3af 80/20 OTEL Validation\n\U0001f680 Running critical validation tests...\n\U0001f4c1 Project: \n/Users/sac/.cache/tmp/pytest-of-sac/pytest-95/test_8020_validate_command_fai0\n\u21bb auto-completing service task: Start\n\u2714 BPMN workflow completed\n  Duration: 0.00s, Steps: 1, Tasks: 1\n\u256d\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 OTEL Validation Results \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256e\n\u2502 \u2705 Validation PASSED                                                         \u2502\n\u2502                                                                              \u2502\n\u2502 Workflow: 8020_otel_validation                                               \u2502\n\u2502 Duration: 0.01s                                                              \u2502\n\u2502 Steps: 8                                                                     \u2502\n\u2502 Metrics Validated: 3                                                         \u2502\n\u2502 Spans Validated: 5                                                           \u2502\n\u2570\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256f\n\nValidation Steps:\n\u250f\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2513\n\u2503 # \u2503 Step               \u2503 Status  \u2503\n\u2521\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2529\n\u2502 1 \u2502 BPMN Validation    \u2502 \u2705 PASS \u2502\n\u2502 2 \u2502 Workflow Execution \u2502 \u2705 PASS \u2502\n\u2502 3 \u2502 Test Step 1        \u2502 \u2705 PASS \u2502\n\u2502 4 \u2502 Test Step 2        \u2502 \u2705 PASS \u2502\n\u2502 5 \u2502 Test Step 3        \u2502 \u2705 PASS \u2502\n\u2502 6 \u2502 Test Step 4        \u2502 \u2705 PASS \u2502\n\u2502 7 \u2502 Test Step 5        \u2502 \u2705 PASS \u2502\n\u2502 8 \u2502 OTEL System Health \u2502 \u2705 PASS \u2502\n\u2514\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\nPerformance Data:\n\u250f\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2513\n\u2503 Metric            \u2503 Value  \u2503\n\u2521\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2529\n\u2502 workflow_duration \u2502 0.003s \u2502\n\u2502 workflow_steps    \u2502 1      \u2502\n\u2502 test_1            \u2502 0.000s \u2502\n\u2502 test_2            \u2502 0.000s \u2502\n\u2502 test_3            \u2502 0.000s \u2502\n\u2502 test_4            \u2502 0.000s \u2502\n\u2502 test_5            \u2502 0.000s \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\n\u2705 80/20 OTEL Validation PASSED\n\u2713 All critical systems validated in 0.01s\n  Executing critical OTEL validation...\n' = <Result okay>.stdout[0m
+
+[1m[31mtests/unit/test_spiff_commands.py[0m:176: AssertionError
+--------- generated xml file: /Users/sac/dev/uvmgr/reports/pytest.xml ----------
+[36m[1m=========================== short test summary info ============================[0m
+[31mFAILED[0m tests/unit/test_spiff_commands.py::[1mTestSpiffCommands::test_validate_command_execution_failure[0m - assert 1 == 0
+ +  where 1 = <Result SystemExit(1)>.exit_code
+[31mFAILED[0m tests/unit/test_spiff_commands.py::[1mTestSpiffCommands::test_8020_validate_command_success[0m - AssertionError: Expected 'run_8020_otel_validation' to be called once. Called 0 times.
+[31mFAILED[0m tests/unit/test_spiff_commands.py::[1mTestSpiffCommands::test_8020_validate_command_failure[0m - AssertionError: assert '\u274c 80/20 OTEL Validation FAILED' in '\U0001f3af 80/20 OTEL Validation\n\U0001f680 Running critical validation tests...\n\U0001f4c1 Project: \n/Users/sac/.cache/tmp/pytest-of-sac/pytest-95/test_8020_validate_command_fai0\n\u21bb auto-completing service task: Start\n\u2714 BPMN workflow completed\n  Duration: 0.00s, Steps: 1, Tasks: 1\n\u256d\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 OTEL Validation Results \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256e\n\u2502 \u2705 Validation PASSED                                                         \u2502\n\u2502                                                                              \u2502\n\u2502 Workflow: 8020_otel_validation                                               \u2502\n\u2502 Duration: 0.01s                                                              \u2502\n\u2502 Steps: 8                                                                     \u2502\n\u2502 Metrics Validated: 3                                                         \u2502\n\u2502 Spans Validated: 5                                                           \u2502\n\u2570\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256f\n\nValidation Steps:\n\u250f\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2513\n\u2503 # \u2503 Step               \u2503 Status  \u2503\n\u2521\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2529\n\u2502 1 \u2502 BPMN Validation    \u2502 \u2705 PASS \u2502\n\u2502 2 \u2502 Workflow Execution \u2502 \u2705 PASS \u2502\n\u2502 3 \u2502 Test Step 1        \u2502 \u2705 PASS \u2502\n\u2502 4 \u2502 Test Step 2        \u2502 \u2705 PASS \u2502\n\u2502 5 \u2502 Test Step 3        \u2502 \u2705 PASS \u2502\n\u2502 6 \u2502 Test Step 4        \u2502 \u2705 PASS \u2502\n\u2502 7 \u2502 Test Step 5        \u2502 \u2705 PASS \u2502\n\u2502 8 \u2502 OTEL System Health \u2502 \u2705 PASS \u2502\n\u2514\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\nPerformance Data:\n\u250f\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2513\n\u2503 Metric            \u2503 Value  \u2503\n\u2521\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2529\n\u2502 workflow_duration \u2502 0.003s \u2502\n\u2502 workflow_steps    \u2502 1      \u2502\n\u2502 test_1            \u2502 0.000s \u2502\n\u2502 test_2            \u2502 0.000s \u2502\n\u2502 test_3            \u2502 0.000s \u2502\n\u2502 test_4            \u2502 0.000s \u2502\n\u2502 test_5            \u2502 0.000s \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\n\u2705 80/20 OTEL Validation PASSED\n\u2713 All critical systems validated in 0.01s\n  Executing critical OTEL validation...\n'
+ +  where '\U0001f3af 80/20 OTEL Validation\n\U0001f680 Running critical validation tests...\n\U0001f4c1 Project: \n/Users/sac/.cache/tmp/pytest-of-sac/pytest-95/test_8020_validate_command_fai0\n\u21bb auto-completing service task: Start\n\u2714 BPMN workflow completed\n  Duration: 0.00s, Steps: 1, Tasks: 1\n\u256d\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 OTEL Validation Results \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256e\n\u2502 \u2705 Validation PASSED                                                         \u2502\n\u2502                                                                              \u2502\n\u2502 Workflow: 8020_otel_validation                                               \u2502\n\u2502 Duration: 0.01s                                                              \u2502\n\u2502 Steps: 8                                                                     \u2502\n\u2502 Metrics Validated: 3                                                         \u2502\n\u2502 Spans Validated: 5                                                           \u2502\n\u2570\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256f\n\nValidation Steps:\n\u250f\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2513\n\u2503 # \u2503 Step               \u2503 Status  \u2503\n\u2521\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2529\n\u2502 1 \u2502 BPMN Validation    \u2502 \u2705 PASS \u2502\n\u2502 2 \u2502 Workflow Execution \u2502 \u2705 PASS \u2502\n\u2502 3 \u2502 Test Step 1        \u2502 \u2705 PASS \u2502\n\u2502 4 \u2502 Test Step 2        \u2502 \u2705 PASS \u2502\n\u2502 5 \u2502 Test Step 3        \u2502 \u2705 PASS \u2502\n\u2502 6 \u2502 Test Step 4        \u2502 \u2705 PASS \u2502\n\u2502 7 \u2502 Test Step 5        \u2502 \u2705 PASS \u2502\n\u2502 8 \u2502 OTEL System Health \u2502 \u2705 PASS \u2502\n\u2514\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\nPerformance Data:\n\u250f\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2513\n\u2503 Metric            \u2503 Value  \u2503\n\u2521\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2529\n\u2502 workflow_duration \u2502 0.003s \u2502\n\u2502 workflow_steps    \u2502 1      \u2502\n\u2502 test_1            \u2502 0.000s \u2502\n\u2502 test_2            \u2502 0.000s \u2502\n\u2502 test_3            \u2502 0.000s \u2502\n\u2502 test_4            \u2502 0.000s \u2502\n\u2502 test_5            \u2502 0.000s \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\n\u2705 80/20 OTEL Validation PASSED\n\u2713 All critical systems validated in 0.01s\n  Executing critical OTEL validation...\n' = <Result okay>.stdout
+[31m!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 3 failures !!!!!!!!!!!!!!!!!!!!!!!!!!![0m
+[31m=================== [31m[1m3 failed[0m, [32m55 passed[0m, [33m3 warnings[0m[31m in 6.84s[0m[31m ===================[0m

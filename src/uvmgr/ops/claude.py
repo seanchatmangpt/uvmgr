@@ -354,7 +354,7 @@ def analyze_project(
             Be specific and actionable.
             """
             
-            analysis = ai_runtime.ask("openai/gpt-4o-mini", prompt)
+            analysis = ai_runtime.ask("qwen3", prompt)
             
             # Extract suggestions (simple parsing)
             suggestions = []

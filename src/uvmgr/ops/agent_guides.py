@@ -386,7 +386,7 @@ def analyze_code_deep(
         
         try:
             # Use DSPy for analysis
-            analysis_response = ask("openai/gpt-4o-mini", analysis_prompt)
+            analysis_response = ask("qwen3", analysis_prompt)
             analysis_data = json.loads(analysis_response)
         except (json.JSONDecodeError, Exception) as e:
             # Fallback analysis
@@ -470,7 +470,7 @@ def create_custom_guide(
         
         try:
             # Generate guide content
-            guide_content = ask("openai/gpt-4o-mini", guide_prompt)
+            guide_content = ask("qwen3", guide_prompt)
             
             # Create guide file
             guide_file = output_dir / f"{name}.md"
@@ -738,18 +738,10 @@ def get_guide_status(
 
 def _search_conversations(query: str) -> List[SearchResult]:
     """Search Claude conversations."""
-    # This would integrate with Claude's conversation history
-    # For now, return mock results
-    return [
-        SearchResult(
-            source="conversations",
-            title="Machine Learning Pipeline Discussion",
-            content="Discussion about implementing ML pipeline...",
-            snippet="ML pipeline implementation with error handling...",
-            relevance=0.85,
-            metadata={"date": "2024-01-15", "model": "claude-3-sonnet"}
-        )
-    ]
+    raise NotImplementedError(
+        "Conversation search is not implemented. "
+        "This requires integration with Claude's conversation history API."
+    )
 
 
 def _search_guides(query: str) -> List[SearchResult]:
@@ -778,18 +770,10 @@ def _search_guides(query: str) -> List[SearchResult]:
 
 def _search_codebase(query: str) -> List[SearchResult]:
     """Search codebase."""
-    # This would search the current codebase
-    # For now, return mock results
-    return [
-        SearchResult(
-            source="codebase",
-            title="telemetry.py:span function",
-            content="OpenTelemetry span context manager...",
-            snippet="Context manager for OpenTelemetry spans...",
-            relevance=0.6,
-            metadata={"file": "src/uvmgr/core/telemetry.py", "line": 150}
-        )
-    ]
+    raise NotImplementedError(
+        "Codebase search is not implemented. "
+        "This requires integration with actual code search tools or APIs."
+    )
 
 
 def _auto_assign_experts(topic: str) -> List[str]:
@@ -809,7 +793,7 @@ def _auto_assign_experts(topic: str) -> List[str]:
     """
     
     try:
-        response = ask("openai/gpt-4o-mini", expert_prompt)
+        response = ask("qwen3", expert_prompt)
         experts = json.loads(response)
         return experts if isinstance(experts, list) else []
     except Exception:
@@ -845,7 +829,7 @@ def _generate_expert_insight(
     """
     
     try:
-        return ask("openai/gpt-4o-mini", insight_prompt)
+        return ask("qwen3", insight_prompt)
     except Exception:
         return f"Expert {expert} insight for round {round_num}: Analysis in progress."
 
@@ -877,7 +861,7 @@ def _analyze_multi_mind_results(
     """
     
     try:
-        response = ask("openai/gpt-4o-mini", analysis_prompt)
+        response = ask("qwen3", analysis_prompt)
         return json.loads(response)
     except Exception:
         return {
@@ -921,22 +905,10 @@ def _execute_workflow_iteration(
     iteration: int
 ) -> Dict[str, Any]:
     """Execute a single workflow iteration."""
-    # Mock workflow execution
-    # In real implementation, would execute actual workflow logic
-    
-    success = random.random() > 0.2  # 80% success rate
-    duration = random.uniform(1.0, 5.0)
-    
-    return {
-        "iteration": iteration,
-        "success": success,
-        "duration": duration,
-        "parameters": parameters,
-        "insights": [
-            f"Iteration {iteration} completed with parameters: {list(parameters.keys())}",
-            f"Workflow {workflow_name} executed successfully" if success else "Workflow encountered issues"
-        ]
-    }
+    raise NotImplementedError(
+        "Workflow iteration execution is not implemented. "
+        "This requires integration with actual workflow engines like SpiffWorkflow or similar."
+    )
 
 
 def _vary_parameters(parameters: Dict[str, Any], used_patterns: set) -> Dict[str, Any]:
@@ -960,4 +932,33 @@ def _vary_parameters(parameters: Dict[str, Any], used_patterns: set) -> Dict[str
 def _extract_pattern(result: Dict[str, Any]) -> str:
     """Extract pattern from result for anti-repetition."""
     # Simple pattern extraction
-    return f"{result.get('success', False)}_{len(result.get('insights', []))}" 
+    return f"{result.get('success', False)}_{len(result.get('insights', []))}"
+
+
+def execute_workflow(
+    workflow_id: str,
+    parameters: Dict[str, Any],
+    context: Dict[str, Any]
+) -> Dict[str, Any]:
+    """
+    Execute a workflow using DSPy.
+    
+    Args:
+        workflow_id: Workflow ID
+        parameters: Workflow parameters
+        context: Workflow context
+        
+    Returns:
+        Workflow execution result
+    """
+    # Execute workflow
+    workflow_result = execute_workflow(
+        workflow_id=workflow_id,
+        parameters=parameters,
+        context=context
+    )
+    
+    raise NotImplementedError(
+        "Workflow execution is not implemented. "
+        "This requires integration with actual workflow engines like SpiffWorkflow or similar."
+    ) 

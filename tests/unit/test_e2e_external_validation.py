@@ -290,15 +290,17 @@ class TestExternalProjectValidator:
             mock_lifecycle.return_value = {
                 "project_type": "test",
                 "success_rate": 0.5,  # Below threshold
-                "steps": [{"success": False}] * 4 + [{"success": True}] * 4
+                "steps": [{"success": False}] * 4 + [{"success": True}] * 4,
+                "summary": {}  # Patch: add summary key to match code under test
             }
             
             with patch.object(validator, 'validate_advanced_features') as mock_advanced:
                 mock_advanced.return_value = {
-                    "tests": [{"success": False}] * 4
+                    "tests": [{"success": False}] * 4,
+                    "summary": {}  # Patch: add summary key
                 }
                 
-                with patch('builtins.print'):  # Suppress print output
+                with patch('builtins.print'):
                     validator.run_validation()
                 
                 # Should exit with failure
@@ -331,11 +333,12 @@ class TestExternalProjectValidator:
             mock_lifecycle.return_value = {
                 "project_type": "test",
                 "success_rate": 1.0,
-                "steps": []
+                "steps": [],
+                "summary": {}  # Patch: add summary key
             }
             
             with patch.object(validator, 'validate_advanced_features') as mock_advanced:
-                mock_advanced.return_value = {"tests": []}
+                mock_advanced.return_value = {"tests": [], "summary": {}}  # Patch: add summary key
                 
                 with patch('builtins.print'), patch('sys.exit'):
                     validator.run_validation()

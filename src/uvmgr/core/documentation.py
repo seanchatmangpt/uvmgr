@@ -173,8 +173,8 @@ class GenerateTroubleshootingGuide(dspy.Signature):
 class TechnicalWritingEngine:
     """AI-powered technical writing engine using DSPy."""
     
-    def __init__(self, model: str = "openai/gpt-4"):
-        """Initialize the technical writing engine."""
+    def __init__(self, model: str = "qwen3"):
+        """Initialize the technical writing engine with Qwen3."""
         self.model = model
         self._setup_dspy()
         
@@ -186,15 +186,14 @@ class TechnicalWritingEngine:
         self.troubleshooting_generator = dspy.ChainOfThought(GenerateTroubleshootingGuide)
     
     def _setup_dspy(self):
-        """Setup DSPy configuration."""
+        """Setup DSPy with Qwen3 via Ollama only."""
         try:
-            # Configure DSPy with the specified model
-            lm = dspy.OpenAI(model=self.model, max_tokens=2000)
+            lm = dspy.LM(model="ollama/qwen3", max_tokens=2000)
             dspy.settings.configure(lm=lm)
+            logger.info("DSPy configured with Qwen3 for technical writing")
         except Exception as e:
-            logger.warning(f"Failed to configure DSPy: {e}. Using dummy responses.")
-            # Fallback to mock responses for demo
-            self._use_mock_responses = True
+            logger.error(f"Failed to configure DSPy with Qwen3: {e}")
+            raise RuntimeError("Qwen3 via Ollama is required for technical writing. No fallback is allowed.")
     
     def generate_api_documentation(
         self,
@@ -204,9 +203,6 @@ class TechnicalWritingEngine:
     ) -> str:
         """Generate API documentation for a function."""
         try:
-            if hasattr(self, '_use_mock_responses'):
-                return self._mock_api_documentation(function_signature)
-            
             result = self.api_doc_generator(
                 function_signature=function_signature,
                 function_docstring=docstring,
@@ -225,9 +221,6 @@ class TechnicalWritingEngine:
     ) -> str:
         """Generate user guide section."""
         try:
-            if hasattr(self, '_use_mock_responses'):
-                return self._mock_user_guide(feature_description)
-            
             result = self.user_guide_generator(
                 feature_description=feature_description,
                 usage_examples=usage_examples,
@@ -246,9 +239,6 @@ class TechnicalWritingEngine:
     ) -> str:
         """Generate technical specification."""
         try:
-            if hasattr(self, '_use_mock_responses'):
-                return self._mock_technical_spec(requirements)
-            
             result = self.tech_spec_generator(
                 requirements=requirements,
                 architecture_overview=architecture,
@@ -267,9 +257,6 @@ class TechnicalWritingEngine:
     ) -> str:
         """Generate architecture documentation."""
         try:
-            if hasattr(self, '_use_mock_responses'):
-                return self._mock_architecture_doc(components)
-            
             result = self.architecture_generator(
                 system_components=components,
                 data_flow=data_flow,
@@ -288,9 +275,6 @@ class TechnicalWritingEngine:
     ) -> str:
         """Generate troubleshooting guide."""
         try:
-            if hasattr(self, '_use_mock_responses'):
-                return self._mock_troubleshooting_guide(issues)
-            
             result = self.troubleshooting_generator(
                 common_issues=issues,
                 system_context=context,

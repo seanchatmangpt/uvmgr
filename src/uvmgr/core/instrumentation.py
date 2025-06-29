@@ -241,6 +241,7 @@ def instrument_command(
     return decorator
 
 
+@instrument_command("instrumentation_instrument_subcommand")
 def instrument_subcommand(parent_command: str) -> Callable:
     """
     Decorator for subcommands to maintain trace hierarchy.
@@ -253,12 +254,16 @@ def instrument_subcommand(parent_command: str) -> Callable:
     Callable
         Decorator that instruments as a subcommand
     """
-    def decorator(func: Callable) -> Callable:
-        return instrument_command(
-            f"{parent_command}_{func.__name__}",
-            command_type="cli.subcommand"
-        )(func)
-    return decorator
+    with span("instrumentation.instrument_subcommand", parent_command=parent_command):
+        add_span_event("instrumentation.subcommand.created", {"parent_command": parent_command})
+        metric_counter("instrumentation.subcommand.created")(1, {"parent_command": parent_command})
+        
+        def decorator(func: Callable) -> Callable:
+            return instrument_command(
+                f"{parent_command}_{func.__name__}",
+                command_type="cli.subcommand"
+            )(func)
+        return decorator
 
 
 def add_span_attributes(**attributes):

@@ -21,14 +21,15 @@ from uvmgr.core.telemetry import span, record_exception
 logger = logging.getLogger(__name__)
 
 
-class MockLM:
+class MockLM(dspy.BaseLM):
     """Mock Language Model for testing without external LLM services."""
     
     def __init__(self, model_name: str = "qwen3-mock"):
+        super().__init__(model=model_name)
         self.model_name = model_name
         self.calls = 0
         
-    def __call__(self, prompt: str, **kwargs) -> str:
+    def basic_request(self, prompt: str, **kwargs) -> str:
         """Generate a mock response based on the prompt."""
         self.calls += 1
         
@@ -51,6 +52,10 @@ class MockLM:
             return "Web search results analyzed. Key findings: Best practices align with current implementation. Recommendations: Continue current approach."
         else:
             return "Analysis completed successfully. Confidence: 0.75. Insights: Data appears normal. Recommendations: Monitor for changes."
+    
+    def __call__(self, prompt: str, **kwargs) -> str:
+        """Call the mock LM."""
+        return self.basic_request(prompt, **kwargs)
 
 
 class WebSearchTool:
@@ -80,7 +85,8 @@ class WebSearchTool:
 class UvmgrDSPyModels:
     """Advanced DSPy models for uvmgr MCP with Qwen3 and web search."""
     
-    def __init__(self):
+    def __init__(self, model: str = "ollama/qwen3"):
+        self.model = model
         self.models = {}
         self.predictors = {}
         self.web_search_tool = WebSearchTool()
@@ -89,38 +95,16 @@ class UvmgrDSPyModels:
         self._initialize_predictors()
     
     def _configure_dspy(self):
-        """Configure DSPy with Qwen3 and fallback options."""
+        """Configure DSPy with Qwen3 as default, but allow specific model overrides."""
         try:
-            # Try to configure with OllamaLocal first
-            try:
-                dspy.configure(lm=dspy.OllamaLocal(model="qwen2.5:7b"))
-                logger.info("DSPy configured with OllamaLocal Qwen2.5")
-                return
-            except Exception as e:
-                logger.warning(f"DSPy OllamaLocal not available: {e}")
-            
-            # Try OpenAI as fallback
-            try:
-                dspy.configure(lm=dspy.OpenAI(model="gpt-4"))
-                logger.info("DSPy configured with OpenAI GPT-4")
-                return
-            except Exception as e:
-                logger.warning(f"DSPy OpenAI not available: {e}")
-            
-            # Use MockLM for testing
-            mock_lm = MockLM("qwen3-mock")
-            dspy.configure(lm=mock_lm)
-            logger.info("DSPy configured with MockLM for testing")
-            
+            # Default to Qwen3, but allow model overrides
+            model = getattr(self, 'model', "ollama/qwen3")
+            lm = dspy.LM(model=model)
+            dspy.configure(lm=lm)
+            logger.info(f"DSPy configured with {model}")
         except Exception as e:
-            logger.error(f"Failed to configure DSPy: {e}")
-            # Final fallback to MockLM
-            try:
-                mock_lm = MockLM("qwen3-mock")
-                dspy.configure(lm=mock_lm)
-                logger.info("DSPy configured with MockLM fallback")
-            except Exception as fallback_error:
-                logger.error(f"Failed to configure DSPy with MockLM: {fallback_error}")
+            logger.error(f"Failed to configure DSPy with {model}: {e}")
+            raise RuntimeError(f"Model {model} is required for DSPy. Please ensure the model is available.")
     
     def _initialize_models(self):
         """Initialize all DSPy models."""

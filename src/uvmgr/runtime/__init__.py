@@ -61,7 +61,7 @@ from typing import Final, List
 # --------------------------------------------------------------------------- #
 __all__: Final[list[str]] = [
     "agent",  # BPMN runner (spiffworkflow)
-    "ai",  # DSPy LM factory (OpenAI / Ollama)
+    "ai",  # DSPy LM factory (Qwen3 via Ollama)
     "aps",  # APScheduler singleton
     "build",  # python -m build + twine upload
     "exec",  # run arbitrary Python scripts

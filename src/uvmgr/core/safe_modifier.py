@@ -138,20 +138,23 @@ class SafeCodeModifier:
             print("⚠️  DSPy not available - code generation will be limited")
     
     def _initialize_dspy(self):
-        """Initialize DSPy with Ollama."""
+        """Initialize DSPy with Qwen3 as default, but allow specific model overrides."""
         try:
-            # Configure DSPy to use Ollama
-            ollama = dspy.OllamaLocal(model=self.ollama_model, base_url="http://localhost:11434")
-            dspy.settings.configure(lm=ollama)
+            # Configure DSPy with specified model or default to Qwen3
+            model = getattr(self, 'ollama_model', "ollama/qwen3")
+            lm = dspy.LM(model=model)
+            dspy.settings.configure(lm=lm)
             
             # Define DSPy signatures for code modification
             self.code_improver = dspy.ChainOfThought("context, current_code -> improved_code, explanation")
             self.risk_assessor = dspy.ChainOfThought("code_change, context -> risk_level, safety_concerns")
             self.test_generator = dspy.ChainOfThought("code, modification_type -> test_code, test_explanation")
             
+            logger.info(f"DSPy configured with {model} for safe code modification")
+            
         except Exception as e:
-            print(f"⚠️  DSPy initialization failed: {e}")
-            DSPY_AVAILABLE = False
+            logger.error(f"Failed to configure DSPy with {model}: {e}")
+            raise RuntimeError(f"Model {model} is required for safe code modification. Please ensure the model is available.")
     
     async def propose_code_improvement(self, 
                                      target_file: Path,

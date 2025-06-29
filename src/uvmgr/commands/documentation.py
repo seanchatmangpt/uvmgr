@@ -118,7 +118,7 @@ def generate_documentation(
         ]
     
     # Initialize AI engine
-    engine = TechnicalWritingEngine(model=ai_model or "openai/gpt-4")
+    engine = TechnicalWritingEngine(model=ai_model or "qwen3")
     
     # Generate documentation
     with Progress() as progress:

@@ -59,7 +59,7 @@ from uvmgr.core.semconv import BuildAttributes
 from uvmgr.core.shell import colour, dump_json
 from uvmgr.ops import build as build_ops
 
-app = typer.Typer(help="Build wheel + sdist")
+app = typer.Typer(help="Build wheel + sdist", invoke_without_command=True)
 
 
 @app.callback()

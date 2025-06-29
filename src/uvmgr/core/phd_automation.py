@@ -212,7 +212,7 @@ class GenerateAcademicPaper(dspy.Signature):
 class PhDAutomationEngine:
     """Core engine for PhD-level automation."""
     
-    def __init__(self, model: str = "openai/gpt-4"):
+    def __init__(self, model: str = "qwen3"):
         """Initialize the PhD automation engine."""
         self.model = model
         self._setup_dspy()
@@ -225,23 +225,17 @@ class PhDAutomationEngine:
         self.paper_generator = dspy.ChainOfThought(GenerateAcademicPaper)
     
     def _setup_dspy(self):
-        """Setup DSPy with the specified model."""
+        """Setup DSPy with Qwen3 as default, but allow specific model overrides."""
         try:
-            if "openai" in self.model:
-                lm = dspy.OpenAI(model=self.model.split("/")[1])
-            elif "anthropic" in self.model:
-                lm = dspy.Claude(model=self.model.split("/")[1])
-            else:
-                # Fallback to OpenAI GPT-4
-                lm = dspy.OpenAI(model="gpt-4")
-            
+            # Use specified model or default to Qwen3
+            model = self.model if self.model != "openai/gpt-4" else "ollama/qwen3"
+            lm = dspy.LM(model=model)
             dspy.configure(lm=lm)
-            logger.info(f"DSPy configured with model: {self.model}")
+            logger.info(f"DSPy configured with {model} for PhD automation")
             
         except Exception as e:
-            logger.warning(f"Failed to configure DSPy: {e}. Using dummy responses.")
-            # Use dummy responses for demonstration
-            pass
+            logger.error(f"Failed to configure DSPy with {model}: {e}")
+            raise RuntimeError(f"Model {model} is required for PhD automation. Please ensure the model is available.")
     
     def generate_research_design(self, context: ResearchContext) -> Dict[str, Any]:
         """Generate comprehensive research design."""

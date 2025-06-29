@@ -21,6 +21,7 @@ from typing import Dict, List, Optional, Any
 from uvmgr.core.process import run
 from uvmgr.core.telemetry import span, record_exception
 from uvmgr.core.instrumentation import add_span_attributes, add_span_event
+from uvmgr.core.semconv import WorktreeAttributes, WorktreeOperations
 
 
 class WorktreeError(Exception):
@@ -37,6 +38,18 @@ def create_worktree(
 ) -> Dict[str, Any]:
     """Create a new Git worktree for a branch."""
     with span("runtime.worktree.create", branch=branch):
+        add_span_attributes(**{
+            WorktreeAttributes.OPERATION: WorktreeOperations.CREATE,
+            WorktreeAttributes.BRANCH: branch,
+            WorktreeAttributes.ISOLATED: str(isolated),
+            WorktreeAttributes.TRACK_REMOTE: str(track_remote),
+        })
+        add_span_event("worktree.create.started", {
+            "branch": branch,
+            "isolated": isolated,
+            "force": force
+        })
+        
         try:
             # Determine worktree path
             if path is None:
@@ -44,9 +57,13 @@ def create_worktree(
                 path = repo_root.parent / f"{repo_root.name}-{branch.replace('/', '-')}"
             
             path = Path(path).resolve()
+            add_span_attributes(**{
+                WorktreeAttributes.PATH: str(path),
+            })
             
             # Check if worktree already exists
             if path.exists() and not force:
+                add_span_event("worktree.create.failed", {"reason": "path_exists"})
                 raise WorktreeError(f"Worktree path already exists: {path}")
             
             # Check if branch exists, create if it doesn't
@@ -57,19 +74,14 @@ def create_worktree(
             except subprocess.CalledProcessError:
                 branch_exists = False
             
-            if not branch_exists:
-                # Create the branch first
-                add_span_event("git.branch.create", {"branch": branch})
-                run(["git", "checkout", "-b", branch], capture=True, cwd=_get_git_root())
-            
             # Create Git worktree
             git_cmd = ["git", "worktree", "add"]
             
             if force:
                 git_cmd.append("--force")
             
-            # Don't use -b if branch already exists
-            if track_remote and not branch_exists:
+            # Use -b only if branch doesn't exist
+            if not branch_exists:
                 git_cmd.extend(["-b", branch])
             
             git_cmd.extend([str(path), branch])
@@ -79,6 +91,7 @@ def create_worktree(
             output = run(git_cmd, capture=True, cwd=_get_git_root())
             
             if output is None:
+                add_span_event("worktree.create.failed", {"reason": "command_failed"})
                 raise WorktreeError("Failed to create worktree: Command failed")
             
             # Set up isolated environment if requested
@@ -87,6 +100,9 @@ def create_worktree(
             
             if isolated:
                 env_path, venv_created = _setup_isolated_environment(path)
+                add_span_attributes(**{
+                    WorktreeAttributes.ENVIRONMENT: str(env_path) if env_path else None,
+                })
             
             # Register worktree
             from uvmgr.ops.worktree import register_worktree
@@ -96,6 +112,11 @@ def create_worktree(
                 isolated=isolated,
                 environment=str(env_path) if env_path else None,
             )
+            
+            add_span_event("worktree.create.completed", {
+                "path": str(path),
+                "venv_created": venv_created
+            })
             
             return {
                 "path": path,
@@ -108,9 +129,11 @@ def create_worktree(
             
         except subprocess.CalledProcessError as e:
             record_exception(e)
+            add_span_event("worktree.create.failed", {"error": str(e)})
             raise WorktreeError(f"Git worktree creation failed: {e}") from e
         except Exception as e:
             record_exception(e)
+            add_span_event("worktree.create.failed", {"error": str(e)})
             raise
 
 
