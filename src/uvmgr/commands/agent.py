@@ -87,14 +87,11 @@ from uvmgr.core.telemetry import metric_counter, metric_histogram, span
 from uvmgr.ops import agent as agent_ops
 from uvmgr.runtime.agent.spiff import run_bpmn, validate_bpmn_file, get_workflow_stats
 
-from .. import main as cli_root  # exported root Typer app
-
 console = Console()
-agent_app = typer.Typer(help="Execute BPMN workflows with Spiff engine")
-cli_root.app.add_typer(agent_app, name="agent")
+app = typer.Typer(help="Execute BPMN workflows with Spiff engine")
 
 
-@agent_app.command("run")
+@app.command("run")
 @instrument_command("agent_run_bpmn", track_args=True)
 def run_bpmn_workflow(
     file: Path = typer.Argument(
@@ -173,7 +170,7 @@ def run_bpmn_workflow(
             raise typer.Exit(1)
 
 
-@agent_app.command("validate")
+@app.command("validate")
 @instrument_command("agent_validate_bpmn", track_args=True)
 def validate_workflow(
     file: Path = typer.Argument(
@@ -242,7 +239,7 @@ def validate_workflow(
             raise typer.Exit(1)
 
 
-@agent_app.command("test")
+@app.command("test")
 @instrument_command("agent_test_workflow", track_args=True)
 def test_workflow(
     file: Path = typer.Argument(
@@ -354,7 +351,7 @@ def test_workflow(
         metric_histogram("agent.test.duration")(test_duration)
 
 
-@agent_app.command("parse")
+@app.command("parse")
 @instrument_command("agent_parse_workflow", track_args=True)
 def parse_workflow(
     file: Path = typer.Argument(
@@ -416,7 +413,7 @@ def parse_workflow(
             raise typer.Exit(1)
 
 
-@agent_app.command("stats")
+@app.command("stats")
 @instrument_command("agent_stats_workflow", track_args=True)
 def workflow_stats(
     file: Path = typer.Argument(
@@ -706,7 +703,7 @@ def _display_workflow_statistics(file_stats: dict, workflow_stats: dict, telemet
     console.print(table)
 
 
-@agent_app.command("8020")
+@app.command("8020")
 @instrument_command("agent_8020_validation", track_args=True)
 def run_8020_validation(
     workspace: Optional[Path] = typer.Option(
@@ -865,7 +862,7 @@ def run_8020_validation(
             raise typer.Exit(1)
 
 
-@agent_app.command("otel-validate")
+@app.command("otel-validate")
 @instrument_command("agent_otel_validate", track_args=True)
 def validate_otel_integration(
     bpmn_file: Optional[Path] = typer.Argument(
@@ -1044,7 +1041,7 @@ def validate_otel_integration(
         raise typer.Exit(1)
 
 
-@agent_app.command("coordinate")
+@app.command("coordinate")
 @instrument_command("agent_coordinate", track_args=True)
 def coordinate_agents(
     workflow: Optional[Path] = typer.Option(

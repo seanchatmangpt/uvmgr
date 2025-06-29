@@ -13,7 +13,7 @@ from rich.table import Table
 from rich.panel import Panel
 
 from uvmgr.core.instrumentation import instrument_command
-# from uvmgr.ops import security as security_ops
+from uvmgr.ops import security as security_ops
 
 app = typer.Typer(help="🔒 Security scanning and vulnerability management")
 console = Console()
@@ -54,15 +54,15 @@ def scan_vulnerabilities(
     ))
     
     try:
-        # Run comprehensive security scan
-        # Run comprehensive security scan (placeholder implementation)
-        results = {
-            "dependencies": [],
-            "secrets": [],
-            "code": [],
-            "configuration": {"issues": []}
-        }
-        console.print("[yellow]Security scanning placeholder - implementation in progress[/yellow]")
+        # Run comprehensive security scan using the operations layer
+        results = security_ops.run_comprehensive_scan(
+            project_path=scan_path,
+            severity_threshold=severity,
+            audit_dependencies=audit_deps,
+            scan_code=code_scan,
+            scan_secrets=secrets_scan,
+            fix_mode=fix_mode
+        )
         
         # Display results based on format
         if output_format == "table":
@@ -118,9 +118,11 @@ def audit_dependencies(
     ))
     
     try:
-        # Placeholder audit implementation
-        results = {"vulnerabilities": []}
-        console.print("[yellow]Dependency audit placeholder - implementation in progress[/yellow]")
+        # Run dependency audit using the operations layer
+        results = security_ops.audit_dependencies(
+            project_path=audit_path,
+            fix_mode=fix_mode
+        )
         
         if output_format == "table":
             _display_dependency_audit_table(results)
@@ -162,9 +164,12 @@ def scan_secrets(
     ))
     
     try:
-        # Placeholder secret scan
-        results = {"secrets": []}
-        console.print("[yellow]Secret scanning placeholder - implementation in progress[/yellow]")
+        # Run secret scan using the operations layer
+        results = security_ops.scan_secrets(
+            project_path=scan_path,
+            patterns_file=patterns_file,
+            exclude_patterns=exclude_patterns.split(",") if exclude_patterns else []
+        )
         
         _display_secrets_table(results)
         
@@ -203,9 +208,10 @@ def check_security_config(
     ))
     
     try:
-        # Placeholder config check
-        results = {"issues": []}
-        console.print("[yellow]Security config check placeholder - implementation in progress[/yellow]")
+        # Run security config check using the operations layer
+        results = security_ops.check_security_config(
+            project_path=config_path
+        )
         
         _display_config_security_table(results)
         

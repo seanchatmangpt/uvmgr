@@ -332,7 +332,6 @@ class TestSystemIntegration:
         try:
             import chromadb
             import sentence_transformers
-            import torch
             import transformers
             import spiffworkflow
             import dspy

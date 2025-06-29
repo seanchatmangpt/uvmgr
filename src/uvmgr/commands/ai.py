@@ -67,14 +67,11 @@ from uvmgr.core.semconv import AIAttributes
 from uvmgr.core.shell import colour, dump_json, markdown
 from uvmgr.ops import ai as ai_ops
 
-from .. import main as cli_root
-
-ai_app = typer.Typer(help="Local or remote Language-Model helpers")
-cli_root.app.add_typer(ai_app, name="ai")
+app = typer.Typer(help="Local or remote Language-Model helpers")
 
 # Create ollama subcommand
 ollama_app = typer.Typer(help="Manage Ollama models and interactions")
-ai_app.add_typer(ollama_app, name="ollama")
+app.add_typer(ollama_app, name="ollama")
 
 _DEFAULT_MODEL = "ollama/phi3:medium-128k"
 
@@ -161,7 +158,7 @@ def delete_model(
 # --------------------------------------------------------------------------- #
 # AI Commands
 # --------------------------------------------------------------------------- #
-@ai_app.command("ask")
+@app.command("ask")
 @instrument_command("ai_ask", track_args=True)
 def ask(
     ctx: typer.Context,
@@ -183,7 +180,7 @@ def ask(
     colour(reply, "cyan")
 
 
-@ai_app.command("plan")
+@app.command("plan")
 @instrument_command("ai_plan", track_args=True)
 def plan(
     ctx: typer.Context,
@@ -206,7 +203,7 @@ def plan(
     markdown(md)
 
 
-@ai_app.command("fix-tests")
+@app.command("fix-tests")
 @instrument_command("ai_fix_tests", track_args=True)
 def fix_tests(
     ctx: typer.Context,

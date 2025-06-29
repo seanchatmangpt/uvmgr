@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" 
+                  id="tech_spec_workflow">
+  <bpmn:process id="generate_tech_spec" isExecutable="true">
+    
+    <bpmn:startEvent id="start" name="Start Tech Spec Generation"/>
+    <bpmn:serviceTask id="gather_requirements" name="Gather Requirements"/>
+    <bpmn:serviceTask id="analyze_architecture" name="Analyze Architecture"/>
+    <bpmn:serviceTask id="generate_spec" name="Generate Specification"/>
+    <bpmn:serviceTask id="validate_spec" name="Validate Specification"/>
+    <bpmn:endEvent id="end" name="Tech Spec Complete"/>
+    
+  </bpmn:process>
+</bpmn:definitions>

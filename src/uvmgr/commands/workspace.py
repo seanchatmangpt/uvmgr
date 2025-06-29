@@ -70,7 +70,7 @@ def init(
     # Initialize workspace
     config = manager.initialize_workspace(project_name, project_type)
     
-    add_span_attributes({
+    add_span_attributes(**{
         ProjectAttributes.NAME: project_name,
         ProjectAttributes.LANGUAGE: "python",
         ProjectAttributes.OPERATION: ProjectOperations.CREATE,
@@ -101,7 +101,7 @@ def status(
     manager = get_workspace_manager()
     summary = manager.get_workspace_summary()
     
-    add_span_attributes({
+    add_span_attributes(**{
         CliAttributes.COMMAND: "workspace_status",
         "current_environment": summary["current_environment"],
         "environments_count": len(summary["available_environments"])
@@ -198,7 +198,7 @@ def switch_environment(
         manager = get_workspace_manager()
         manager.switch_environment(environment)
         
-        add_span_attributes({
+        add_span_attributes(**{
             CliAttributes.COMMAND: "workspace_env_switch",
             "environment": environment
         })

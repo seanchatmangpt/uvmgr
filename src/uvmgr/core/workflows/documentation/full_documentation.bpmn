@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" 
+                  id="full_doc_workflow">
+  <bpmn:process id="generate_full_docs" isExecutable="true">
+    
+    <bpmn:startEvent id="start" name="Start Full Documentation"/>
+    
+    <bpmn:parallelGateway id="parallel_start" name="Parallel Generation"/>
+    
+    <bpmn:serviceTask id="generate_api_docs" name="Generate API Docs"/>
+    <bpmn:serviceTask id="generate_user_guide" name="Generate User Guide"/>
+    <bpmn:serviceTask id="generate_tech_spec" name="Generate Tech Spec"/>
+    <bpmn:serviceTask id="generate_architecture" name="Generate Architecture Doc"/>
+    
+    <bpmn:parallelGateway id="parallel_end" name="Combine Results"/>
+    
+    <bpmn:serviceTask id="create_index" name="Create Documentation Index"/>
+    <bpmn:serviceTask id="generate_site" name="Generate Documentation Site"/>
+    
+    <bpmn:endEvent id="end" name="Full Documentation Complete"/>
+    
+  </bpmn:process>
+</bpmn:definitions>

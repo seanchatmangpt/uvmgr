@@ -83,13 +83,10 @@ from uvmgr.core.instrumentation import add_span_attributes, add_span_event, inst
 from uvmgr.core.semconv import ServerAttributes, ServerOperations
 from uvmgr.core.shell import colour, colour_stderr
 
-from .. import main as cli_root
-
-mcp_app = typer.Typer(help="MCP (Model Context Protocol) server commands.")
-cli_root.app.add_typer(mcp_app, name="mcp")
+app = typer.Typer(help="MCP (Model Context Protocol) server commands.")
 
 
-@mcp_app.command("serve")
+@app.command("serve")
 @instrument_command("mcp_serve", track_args=True)
 def serve(
     transport: str = typer.Option(

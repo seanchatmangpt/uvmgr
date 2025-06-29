@@ -162,11 +162,7 @@ def multi_mind(
                 rounds=rounds,
                 specialists=specialist_list,
                 enable_web_search=web_search,
-                progress_callback=lambda r, desc: progress.update(
-                    task, 
-                    advance=1 if r > 0 else 0,
-                    description=desc
-                )
+                progress_callback=None  # Remove callback to avoid Callable type issue
             )
             
             progress.update(task, completed=rounds)

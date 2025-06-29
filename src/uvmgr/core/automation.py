@@ -19,6 +19,7 @@ from __future__ import annotations
 import asyncio
 import time
 import json
+import os
 from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Dict, List, Any, Optional, Callable, Set, Union
@@ -43,6 +44,7 @@ from uvmgr.core.semconv import WorkflowAttributes, WorkflowOperations, CliAttrib
 from uvmgr.core.agi_reasoning import observe_with_agi_reasoning, get_agi_insights
 from uvmgr.core.workspace import get_workspace_config, get_workspace_manager
 from uvmgr.core.workflows import get_workflow_engine, execute_workflow
+from uvmgr.core.instrumentation import add_span_event
 
 
 class EventType(Enum):
@@ -659,10 +661,57 @@ class AutomationEngine:
                 execution.status = "completed" if workflow_execution.status.value == "success" else "failed"
                 
             elif rule.command:
-                # Execute command
-                # TODO: Integrate with command execution system
-                execution.command_output = f"Simulated command: {rule.command}"
-                execution.status = "completed"
+                # Execute command through subprocess with proper handling
+                try:
+                    import subprocess
+                    import shlex
+                    
+                    # Parse command and inject parameters
+                    command = rule.command
+                    for key, value in parameters.items():
+                        command = command.replace(f"{{{key}}}", str(value))
+                    
+                    # Security check - validate command is allowed
+                    allowed_commands = [
+                        'uvmgr', 'python', 'pip', 'uv', 'git', 'echo', 'cat', 'ls',
+                        'grep', 'find', 'test', 'bash', 'sh'
+                    ]
+                    cmd_parts = shlex.split(command)
+                    base_cmd = cmd_parts[0].split('/')[-1] if cmd_parts else ''
+                    
+                    if not any(base_cmd.startswith(allowed) for allowed in allowed_commands):
+                        raise ValueError(f"Command not allowed for security reasons: {base_cmd}")
+                    
+                    # Execute command with timeout
+                    result = subprocess.run(
+                        command,
+                        shell=True,
+                        capture_output=True,
+                        text=True,
+                        timeout=rule.timeout or 60,
+                        env={**os.environ, **parameters}  # Include parameters as env vars
+                    )
+                    
+                    execution.command_output = result.stdout
+                    if result.stderr:
+                        execution.command_output += f"\nSTDERR:\n{result.stderr}"
+                    
+                    execution.status = "completed" if result.returncode == 0 else "failed"
+                    execution.exit_code = result.returncode
+                    
+                    # Log command execution for telemetry
+                    add_span_event("automation.command_executed", {
+                        "command": base_cmd,
+                        "exit_code": result.returncode,
+                        "execution_time": time.time() - execution.started_at
+                    })
+                    
+                except subprocess.TimeoutExpired:
+                    execution.status = "failed"
+                    execution.error_message = f"Command timed out after {rule.timeout or 60} seconds"
+                except Exception as e:
+                    execution.status = "failed"
+                    execution.error_message = f"Command execution failed: {str(e)}"
             
             execution.completed_at = time.time()
             execution.execution_time = execution.completed_at - execution.started_at

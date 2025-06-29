@@ -25,9 +25,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from uvmgr.core.instrumentation import add_span_attributes, add_span_event
+from uvmgr.core.instrumentation import add_span_attributes, add_span_event, span
 from uvmgr.core.semconv import AIAttributes
-from uvmgr.core.telemetry import span
 from uvmgr.runtime import ai as ai_runtime
 import re
 from dataclasses import dataclass
@@ -116,7 +115,7 @@ def multi_mind_analysis(
     Returns:
         Analysis results with specialist insights and synthesis
     """
-    with span("claude.multi_mind", topic=topic, rounds=rounds):
+    with span("claude.multi_mind", **{"topic": topic, "rounds": rounds}) as current_span:
         add_span_attributes(**{
             AIAttributes.OPERATION: "multi_mind_analysis",
             "ai.specialists_count": len(specialists) if specialists else "auto",
@@ -208,7 +207,7 @@ def analyze_code(
     Returns:
         Analysis results with issues, suggestions, and metrics
     """
-    with span("claude.analyze_code", file=str(file_path)):
+    with span("claude.analyze_code", **{"file": str(file_path)}) as current_span:
         add_span_attributes(**{
             AIAttributes.OPERATION: "code_analysis",
             "ai.focus": focus or "all",

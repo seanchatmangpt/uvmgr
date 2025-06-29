@@ -68,16 +68,13 @@ from uvmgr.core.instrumentation import add_span_attributes, add_span_event, inst
 from uvmgr.core.semconv import ProcessAttributes
 from uvmgr.ops import exec as exec_ops
 
-from .. import main as cli_root
-
-exec_app = typer.Typer(
+app = typer.Typer(
     help="Execute Python scripts with uv run",
     rich_markup_mode="rich",
 )
-cli_root.app.add_typer(exec_app, name="exec")
 
 
-@exec_app.callback(invoke_without_command=True)
+@app.callback(invoke_without_command=True)
 @instrument_command("exec_fallback", track_args=True)
 def fallback(
     ctx: typer.Context,
@@ -147,7 +144,7 @@ def fallback(
     raise typer.Exit(1)
 
 
-@exec_app.command("script")
+@app.command("script")
 @instrument_command("exec_script", track_args=True)
 def script(
     path: pathlib.Path = typer.Argument(

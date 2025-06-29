@@ -32,6 +32,7 @@ See Also
 from __future__ import annotations
 
 import importlib
+import importlib.metadata
 import os
 import sys
 
@@ -65,6 +66,17 @@ def _json_cb(ctx: typer.Context, value: bool):
         ctx.meta["json"] = True
 
 
+def _version_callback(value: bool):
+    """Show version and exit."""
+    if value:
+        try:
+            version = importlib.metadata.version("uvmgr")
+        except importlib.metadata.PackageNotFoundError:
+            version = "dev"
+        typer.echo(f"uvmgr {version}")
+        raise typer.Exit()
+
+
 @app.callback()
 @instrument_command("uvmgr_main", track_args=True)
 def _root(
@@ -76,6 +88,13 @@ def _root(
         callback=_json_cb,
         is_eager=True,
         help="Print machine-readable JSON and exit",
+    ),
+    version: bool = typer.Option(
+        None,
+        "--version",
+        callback=_version_callback,
+        is_eager=True,
+        help="Show version and exit",
     ),
 ):
     """Callback only sets the JSON flag – no other side-effects."""

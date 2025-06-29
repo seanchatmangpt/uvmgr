@@ -40,11 +40,7 @@ from uvmgr.core.semconv import PackageAttributes, PackageOperations
 from uvmgr.core.shell import colour, dump_json
 from uvmgr.ops import deps as deps_ops
 
-from .. import main as cli_root
-
-deps_app = typer.Typer(help="Dependency management (uv add/remove/upgrade)")
-
-cli_root.app.add_typer(deps_app, name="deps")
+app = typer.Typer(help="Dependency management (uv add/remove/upgrade)")
 
 
 # --------------------------------------------------------------------------- #
@@ -59,7 +55,7 @@ def _maybe_json(ctx: typer.Context, payload):
 # --------------------------------------------------------------------------- #
 # Commands
 # --------------------------------------------------------------------------- #
-@deps_app.command("add")
+@app.command("add")
 @instrument_command("deps_add", track_args=True)
 def add(
     ctx: typer.Context,
@@ -118,7 +114,7 @@ def add(
     colour(f"✔ added {' '.join(pkgs)}", "green")
 
 
-@deps_app.command("remove")
+@app.command("remove")
 @instrument_command("deps_remove", track_args=True)
 def remove(
     ctx: typer.Context,
@@ -172,7 +168,7 @@ def remove(
     colour(f"✔ removed {' '.join(pkgs)}", "green")
 
 
-@deps_app.command("upgrade")
+@app.command("upgrade")
 @instrument_command("deps_upgrade", track_args=True)
 def upgrade(
     ctx: typer.Context,
@@ -235,7 +231,7 @@ def upgrade(
     colour("✔ dependencies upgraded", "green")
 
 
-@deps_app.command("list")
+@app.command("list")
 @instrument_command("deps_list")
 def _list(ctx: typer.Context):
     """
@@ -281,7 +277,7 @@ def _list(ctx: typer.Context):
         colour(p, "cyan")
 
 
-@deps_app.command("lock")
+@app.command("lock")
 @instrument_command("deps_lock", track_args=True)
 def lock_dependencies(
     ctx: typer.Context,

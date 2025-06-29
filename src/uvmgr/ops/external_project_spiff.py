@@ -568,7 +568,7 @@ def _detect_project_type(project_path: Path) -> str:
         return "data"
     
     # Check for ML projects
-    if any(dep in str(project_path) for dep in ["tensorflow", "pytorch", "keras"]):
+    if any(dep in str(project_path) for dep in ["tensorflow", "keras"]):
         return "ml"
     
     return "library"

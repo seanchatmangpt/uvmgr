@@ -96,11 +96,8 @@ from uvmgr.ops.weaver import (
     search_registry,
 )
 
-from .. import main as cli_root
-
 console = Console()
 app = typer.Typer(help="OpenTelemetry Weaver semantic convention tools")
-cli_root.app.add_typer(app, name="weaver")
 
 # Paths
 REGISTRY_PATH = Path(__file__).parent.parent.parent.parent / "weaver-forge" / "registry"

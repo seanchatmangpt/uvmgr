@@ -92,6 +92,160 @@ class SecurityOperations:
 
 
 
+# Git worktree operation attributes
+class WorktreeAttributes:
+    """Git worktree operation attributes"""
+    
+    OPERATION: Final[str] = "worktree.operation"  # The type of worktree operation
+    
+    BRANCH: Final[str] = "worktree.branch"  # Git branch for the worktree
+    
+    PATH: Final[str] = "worktree.path"  # Path to the worktree
+    
+    PROJECT_PATH: Final[str] = "worktree.project_path"  # Path to external project
+    
+    ISOLATED: Final[str] = "worktree.isolated"  # Whether the worktree is isolated
+    
+    ENVIRONMENT: Final[str] = "worktree.environment"  # Associated virtual environment
+    
+    TRACK_REMOTE: Final[str] = "worktree.track_remote"  # Whether to track remote branch
+
+
+# Git worktree operation values
+class WorktreeOperations:
+    """Standard worktree operation values"""
+    
+    CREATE: Final[str] = "create"  # Create new worktree
+    
+    LIST: Final[str] = "list"  # List existing worktrees
+    
+    REMOVE: Final[str] = "remove"  # Remove worktree
+    
+    SWITCH: Final[str] = "switch"  # Switch to different worktree
+    
+    ISOLATE: Final[str] = "isolate"  # Create isolated environment
+    
+    CLEANUP: Final[str] = "cleanup"  # Clean up unused worktrees
+    
+    STATUS: Final[str] = "status"  # Get worktree status
+
+
+# Remote execution operation attributes
+class RemoteAttributes:
+    """Remote execution operation attributes"""
+    
+    HOST: Final[str] = "remote.host"  # Remote host identifier
+    
+    OPERATION: Final[str] = "remote.operation"  # The type of remote operation
+    
+    USER: Final[str] = "remote.user"  # SSH username
+    
+    PORT: Final[str] = "remote.port"  # SSH port
+    
+    COMMAND: Final[str] = "remote.command"  # Command being executed
+
+
+# Remote execution operation values
+class RemoteOperations:
+    """Standard remote operation values"""
+    
+    EXECUTE_COMMAND: Final[str] = "execute_command"  # Execute command on remote host
+    
+    COPY_FILE: Final[str] = "copy_file"  # Copy file to remote host
+    
+    LIST_HOSTS: Final[str] = "list_hosts"  # List configured hosts
+
+
+# Agent Guide operation attributes
+class GuideAttributes:
+    """Agent guide catalog attributes"""
+    
+    OPERATION: Final[str] = "guide.operation"  # The type of guide operation
+    
+    NAME: Final[str] = "guide.name"  # Name of the guide
+    
+    VERSION: Final[str] = "guide.version"  # Guide version
+    
+    CATEGORY: Final[str] = "guide.category"  # Guide category
+    
+    SOURCE: Final[str] = "guide.source"  # Guide source repository
+    
+    CACHED: Final[str] = "guide.cached"  # Whether guide is cached
+    
+    SIZE: Final[str] = "guide.size"  # Guide size in bytes
+
+
+# Agent Guide operation values
+class GuideOperations:
+    """Standard guide operation values"""
+    
+    CATALOG: Final[str] = "catalog"  # Browse guide catalog
+    
+    FETCH: Final[str] = "fetch"  # Fetch/download guide
+    
+    LIST: Final[str] = "list"  # List cached guides
+    
+    UPDATE: Final[str] = "update"  # Update guides
+    
+    VALIDATE: Final[str] = "validate"  # Validate guide structure
+    
+    PIN: Final[str] = "pin"  # Pin guide version
+    
+    CACHE: Final[str] = "cache"  # Cache management
+
+
+# Information Design operation attributes
+class InfoDesignAttributes:
+    """Information design operation attributes with DSPy"""
+    
+    OPERATION: Final[str] = "infodesign.operation"  # The type of information design operation
+    
+    SOURCE: Final[str] = "infodesign.source"  # Source content path
+    
+    ANALYSIS_TYPE: Final[str] = "infodesign.analysis_type"  # Type of analysis
+    
+    DOC_TYPE: Final[str] = "infodesign.doc_type"  # Documentation type
+    
+    PATTERN: Final[str] = "infodesign.pattern"  # Design pattern applied
+    
+    OUTPUT_FORMAT: Final[str] = "infodesign.output_format"  # Output format
+    
+    TEMPLATE: Final[str] = "infodesign.template"  # Template used
+    
+    ENTITIES_COUNT: Final[str] = "infodesign.entities_count"  # Number of entities found
+    
+    RELATIONSHIPS_COUNT: Final[str] = "infodesign.relationships_count"  # Number of relationships
+    
+    COMPLEXITY_SCORE: Final[str] = "infodesign.complexity_score"  # Complexity score
+    
+    GRAPH_TYPE: Final[str] = "infodesign.graph_type"  # Knowledge graph type
+    
+    EXTRACT_TYPE: Final[str] = "infodesign.extract_type"  # Knowledge extraction type
+    
+    MODEL: Final[str] = "infodesign.model"  # AI model used
+    
+    CONFIDENCE_THRESHOLD: Final[str] = "infodesign.confidence_threshold"  # Confidence threshold
+    
+    DSPY_ENABLED: Final[str] = "infodesign.dspy_enabled"  # Whether DSPy is enabled
+
+
+# Information Design operation values
+class InfoDesignOperations:
+    """Standard information design operation values"""
+    
+    ANALYZE: Final[str] = "analyze"  # Analyze information structure
+    
+    GENERATE: Final[str] = "generate"  # Generate documentation
+    
+    OPTIMIZE: Final[str] = "optimize"  # Optimize information architecture
+    
+    EXTRACT: Final[str] = "extract"  # Extract knowledge
+    
+    GRAPH: Final[str] = "graph"  # Create knowledge graph
+    
+    TEMPLATE: Final[str] = "template"  # Manage templates
+
+
 # Validation helpers
 def validate_attribute(attribute_name: str, attribute_value: str) -> bool:
     """Validate that an attribute name and value are valid semantic conventions."""
@@ -528,9 +682,15 @@ class SearchAttributes:
     
     QUERY: Final[str] = "search.query"  # Search query
     
+    PATTERN: Final[str] = "search.pattern"  # Search pattern (alias for query)
+    
     RESULTS_COUNT: Final[str] = "search.results_count"  # Number of results
     
     SOURCE: Final[str] = "search.source"  # Search source
+    
+    FILE_PATTERN: Final[str] = "search.file_pattern"  # File pattern for search
+    
+    SEARCH_TYPE: Final[str] = "search.type"  # Type of search being performed
 
 
 # Search operations
@@ -542,6 +702,25 @@ class SearchOperations:
     FILE: Final[str] = "file"
     
     CODE: Final[str] = "code"
+    
+    DEPS: Final[str] = "deps"
+    
+    LOGS: Final[str] = "logs"
+    
+    SEMANTIC_SEARCH: Final[str] = "semantic_search"
+    
+    ALL: Final[str] = "all"
+    
+    # Extended search operations for better semantic conventions
+    CODE_SEARCH: Final[str] = "code_search"
+    
+    DEPS_SEARCH: Final[str] = "deps_search"
+    
+    FILE_SEARCH: Final[str] = "file_search"
+    
+    LOG_SEARCH: Final[str] = "log_search"
+    
+    MULTI_SEARCH: Final[str] = "multi_search"
 
 
 # Server operation attributes
@@ -666,6 +845,8 @@ __all__ = [
     "CIOperations",
     "WorkflowAttributes",
     "WorkflowOperations",
+    "InfoDesignAttributes",
+    "InfoDesignOperations",
     "validate_attribute",
     "GitHubAttributes",
 ]

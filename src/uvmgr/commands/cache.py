@@ -42,13 +42,10 @@ from uvmgr.core.semconv import CacheAttributes
 from uvmgr.core.shell import colour
 from uvmgr.ops import cache as cache_ops
 
-from .. import main as cli_root
-
-cache_app = typer.Typer(help="Manage uv cache")
-cli_root.app.add_typer(cache_app, name="cache")
+app = typer.Typer(help="Manage uv cache")
 
 
-@cache_app.command("dir")
+@app.command("dir")
 @instrument_command("cache_dir", track_args=True)
 def _dir():
     # Track cache dir operation
@@ -65,7 +62,7 @@ def _dir():
     colour(cache_dir, "cyan")
 
 
-@cache_app.command("prune")
+@app.command("prune")
 @instrument_command("cache_prune", track_args=True)
 def _prune():
     # Track cache prune operation

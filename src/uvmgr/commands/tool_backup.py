@@ -56,16 +56,13 @@ from uvmgr.core.semconv import ToolAttributes, ToolOperations
 from uvmgr.core.shell import colour
 from uvmgr.ops import tools as tools_ops
 
-from .. import main as cli_root
-
-tool_app = typer.Typer(help="Run or manage extra tools inside the venv")
-cli_root.app.add_typer(tool_app, name="tool")  # ← mount on the root CLI
+app = typer.Typer(help="Run or manage extra tools inside the venv")
 
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Commands
 # ──────────────────────────────────────────────────────────────────────────────
-@tool_app.command("run")
+@app.command("run")
 @instrument_command("tool_run", track_args=True)
 def run(
     pkg_and_args: list[str] = typer.Argument(
@@ -83,7 +80,7 @@ def run(
     tools_ops.run(command, args)
 
 
-@tool_app.command("install")
+@app.command("install")
 @instrument_command("tool_install", track_args=True)
 def install(
     pkgs: list[str] = typer.Argument(
@@ -96,7 +93,7 @@ def install(
     tools_ops.install(pkgs)
 
 
-@tool_app.command("dir")
+@app.command("dir")
 @instrument_command("tool_dir", track_args=True)
 def dir_() -> None:
     """Print the venv's *bin* directory that hosts console-scripts."""

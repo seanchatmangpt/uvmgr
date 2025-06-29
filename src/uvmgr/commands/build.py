@@ -59,13 +59,10 @@ from uvmgr.core.semconv import BuildAttributes
 from uvmgr.core.shell import colour, dump_json
 from uvmgr.ops import build as build_ops
 
-from .. import main as cli_root
-
-build_app = typer.Typer(help="Build wheel + sdist")
-cli_root.app.add_typer(build_app, name="build")
+app = typer.Typer(help="Build wheel + sdist")
 
 
-@build_app.command()
+@app.command()
 @instrument_command("build_dist", track_args=True)
 def dist(
     ctx: typer.Context,
@@ -91,7 +88,7 @@ def dist(
         colour("✔ build completed", "green")
 
 
-@build_app.command("wheel")
+@app.command("wheel")
 @instrument_command("build_wheel", track_args=True)
 def wheel(
     ctx: typer.Context,
@@ -118,7 +115,7 @@ def wheel(
         colour("✔ wheel build completed", "green")
 
 
-@build_app.command()
+@app.command()
 @instrument_command("build_exe", track_args=True)
 def exe(
     ctx: typer.Context,
@@ -166,7 +163,7 @@ def exe(
         colour(f"✔ executable built: {payload['output_file']}", "green")
 
 
-@build_app.command()
+@app.command()
 @instrument_command("build_spec", track_args=True)
 def spec(
     ctx: typer.Context,
@@ -204,7 +201,7 @@ def spec(
         colour(f"✔ spec file generated: {payload['spec_file']}", "green")
 
 
-@build_app.command()
+@app.command()
 @instrument_command("build_dogfood", track_args=True)
 def dogfood(
     ctx: typer.Context,

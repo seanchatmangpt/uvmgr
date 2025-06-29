@@ -73,11 +73,8 @@ from uvmgr.cli_utils import handle_cli_exception, maybe_json
 from uvmgr.core.instrumentation import add_span_attributes, add_span_event, instrument_command
 from uvmgr.ops.forge import run_generation, run_otel_validation, run_validation, run_workflow
 
-from .. import main as cli_root
-
 console = Console()
 app = typer.Typer(help="Forge workflow management for semantic convention development")
-cli_root.app.add_typer(app, name="forge")
 
 
 def _show_workflow_plan(validate: bool, generate: bool, test: bool):

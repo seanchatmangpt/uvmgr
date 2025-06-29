@@ -17,7 +17,7 @@ from uvmgr.core.semconv import SecurityAttributes, SecurityOperations
 
 
 @span("security.comprehensive_scan")
-def comprehensive_scan(
+def run_comprehensive_scan(
     project_path: Path,
     severity_threshold: str = "medium",
     audit_dependencies: bool = True,
@@ -74,14 +74,15 @@ def comprehensive_scan(
 @span("security.audit_dependencies") 
 def audit_dependencies(
     project_path: Path,
-    fix_vulnerabilities: bool = False
+    fix_mode: bool = False
 ) -> Dict[str, Any]:
     """
     Audit project dependencies for known vulnerabilities.
     
     Uses safety and pip-audit for comprehensive vulnerability detection.
     """
-    return audit_dependencies_impl(project_path, fix_vulnerabilities)
+    vulnerabilities = audit_dependencies_impl(project_path, fix_mode)
+    return {"vulnerabilities": vulnerabilities}
 
 
 def audit_dependencies_impl(project_path: Path, fix_mode: bool = False) -> List[Dict[str, Any]]:
@@ -247,7 +248,8 @@ def scan_secrets(
     """
     Scan for exposed secrets and credentials.
     """
-    return scan_secrets_impl(project_path, patterns_file, exclude_patterns or [])
+    secrets = scan_secrets_impl(project_path, patterns_file, exclude_patterns or [])
+    return {"secrets": secrets}
 
 
 def scan_secrets_impl(

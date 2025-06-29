@@ -144,9 +144,9 @@ def search_code(
     # Track search execution
     add_span_attributes(**{
         SearchAttributes.OPERATION: SearchOperations.CODE_SEARCH,
-        SearchAttributes.PATTERN: pattern,
-        SearchAttributes.FILE_PATTERN: files,
-        SearchAttributes.SEARCH_TYPE: search_type,
+        SearchAttributes.QUERY: pattern,
+        "search.file_pattern": files,
+        "search.type": search_type,
         "search.path": path or ".",
         "search.include_tests": include_tests,
         "search.include_docs": include_docs,

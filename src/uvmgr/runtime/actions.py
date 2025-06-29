@@ -406,32 +406,55 @@ def get_repository_variables(owner, repo, token=None):
             return []
 
 def get_repository_usage(owner, repo, token=None):
-    """Get repository usage from GitHub API."""
-    with span("github.api.request",
-              owner=owner,
-              repository=repo,
-              endpoint="/repos/{owner}/{repo}/actions/cache/usage"):
-        
-        url = f"https://api.github.com/repos/{owner}/{repo}/actions/cache/usage"
-        
+    """Get repository usage statistics."""
+    url = f"https://api.github.com/repos/{owner}/{repo}/actions/billing/usage"
+    return _make_request(url, token)
+
+
+def get_github_token():
+    """Get GitHub token from environment or keyring."""
+    import os
+    token = os.environ.get("GITHUB_TOKEN")
+    if not token:
         try:
-            resp = _make_request(url, token)
-            if not resp:
-                return None
+            import keyring
+            token = keyring.get_password("github", "token")
+        except ImportError:
+            pass
+    return token
+
+
+def get_repo_info(owner=None, repo=None):
+    """Get repository owner and name from git remote or arguments."""
+    if owner and repo:
+        return owner, repo
+    
+    # Try to get from git remote
+    try:
+        import subprocess
+        result = subprocess.run(
+            ["git", "remote", "get-url", "origin"],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        remote_url = result.stdout.strip()
+        
+        # Parse GitHub URL
+        if "github.com" in remote_url:
+            # Handle both SSH and HTTPS URLs
+            if remote_url.startswith("git@"):
+                # SSH format: git@github.com:owner/repo.git
+                parts = remote_url.split(":")[-1].replace(".git", "").split("/")
+            else:
+                # HTTPS format: https://github.com/owner/repo.git
+                parts = remote_url.split("/")[-2:]
+                parts[-1] = parts[-1].replace(".git", "")
             
-            data = json.loads(resp.read().decode())
-            
-            return {
-                "billable_minutes": data.get("billable_minutes", {}),
-                "total_minutes": data.get("total_minutes", {}),
-                "included_minutes": data.get("included_minutes", {}),
-                "period": data.get("period", ""),
-            }
-            
-        except Exception as e:
-            record_exception(e, attributes={
-                "github.api.endpoint": url,
-                "github.api.owner": owner,
-                "github.api.repository": repo
-            })
-            return None 
+            if len(parts) >= 2:
+                return parts[-2], parts[-1]
+    except (subprocess.CalledProcessError, IndexError):
+        pass
+    
+    # Fallback: prompt user or use defaults
+    return owner or "unknown", repo or "unknown"

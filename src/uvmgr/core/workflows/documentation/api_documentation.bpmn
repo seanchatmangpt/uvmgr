@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" 
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+                  id="api_doc_workflow">
+  <bpmn:process id="generate_api_docs" isExecutable="true">
+    
+    <bpmn:startEvent id="start" name="Start API Doc Generation">
+      <bpmn:outgoing>to_analyze_code</bpmn:outgoing>
+    </bpmn:startEvent>
+    
+    <bpmn:serviceTask id="analyze_code" name="Analyze Codebase">
+      <bpmn:incoming>to_analyze_code</bpmn:incoming>
+      <bpmn:outgoing>to_extract_functions</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <bpmn:serviceTask id="extract_functions" name="Extract Functions">
+      <bpmn:incoming>to_extract_functions</bpmn:incoming>
+      <bpmn:outgoing>to_generate_docs</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <bpmn:serviceTask id="generate_docs" name="Generate API Documentation">
+      <bpmn:incoming>to_generate_docs</bpmn:incoming>
+      <bpmn:outgoing>to_format_output</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <bpmn:serviceTask id="format_output" name="Format Output">
+      <bpmn:incoming>to_format_output</bpmn:incoming>
+      <bpmn:outgoing>to_end</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <bpmn:endEvent id="end" name="Documentation Generated">
+      <bpmn:incoming>to_end</bpmn:incoming>
+    </bpmn:endEvent>
+    
+    <bpmn:sequenceFlow id="to_analyze_code" sourceRef="start" targetRef="analyze_code"/>
+    <bpmn:sequenceFlow id="to_extract_functions" sourceRef="analyze_code" targetRef="extract_functions"/>
+    <bpmn:sequenceFlow id="to_generate_docs" sourceRef="extract_functions" targetRef="generate_docs"/>
+    <bpmn:sequenceFlow id="to_format_output" sourceRef="generate_docs" targetRef="format_output"/>
+    <bpmn:sequenceFlow id="to_end" sourceRef="format_output" targetRef="end"/>
+    
+  </bpmn:process>
+</bpmn:definitions>

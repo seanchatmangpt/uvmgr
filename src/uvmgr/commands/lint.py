@@ -59,7 +59,6 @@ See Also
 
 from __future__ import annotations
 
-import subprocess
 import sys
 from pathlib import Path
 
@@ -69,8 +68,8 @@ from rich.console import Console
 from uvmgr.cli_utils import handle_cli_exception, maybe_json
 from uvmgr.core.instrumentation import add_span_attributes, add_span_event, instrument_command
 from uvmgr.core.lint import map_exception
-from uvmgr.core.process import run_logged
 from uvmgr.core.semconv import CliAttributes
+from uvmgr.ops import lint as lint_ops
 
 app = typer.Typer(
     help="Run code quality checks and formatting using Ruff.",
@@ -80,17 +79,7 @@ app = typer.Typer(
 console = Console()
 
 
-def _run_ruff(cmd: list[str], path: str | None = None) -> int:
-    """Run Ruff with the given command and path."""
-    args = ["ruff"] + cmd
-    if path:
-        args.append(str(path))
-    # Use instrumented subprocess call
-    try:
-        run_logged(args)
-        return 0
-    except subprocess.CalledProcessError as e:
-        return e.returncode
+# This function is no longer needed - operations layer handles execution
 
 
 @app.command()
@@ -132,13 +121,10 @@ def check(
     add_span_event("lint.check.started", {"path": str(path) if path else "."})
 
     try:
-        cmd = ["check"]
-        if fix:
-            cmd.append("--fix")
-        if show_fixes:
-            cmd.append("--show-fixes")
-
-        if _run_ruff(cmd, str(path) if path else "."):
+        # Use operations layer
+        result = lint_ops.check_code(path=path, fix=fix, show_fixes=show_fixes)
+        
+        if not result["success"]:
             maybe_json(ctx, {"status": "error", "message": "❌ Ruff violations found"}, exit_code=1)
             console.print("[red]❌ Ruff violations found[/red]")
             sys.exit(1)
@@ -186,11 +172,10 @@ def format(
     add_span_event("lint.format.started", {"path": str(path) if path else ".", "check_only": check})
 
     try:
-        cmd = ["format"]
-        if check:
-            cmd.append("--check")
-
-        if _run_ruff(cmd, str(path) if path else "."):
+        # Use operations layer
+        result = lint_ops.format_code(path=path, check_only=check)
+        
+        if not result["success"]:
             maybe_json(
                 ctx, {"status": "error", "message": "❌ Formatting issues found"}, exit_code=1
             )
@@ -234,20 +219,13 @@ def fix(
     add_span_event("lint.fix.started", {"path": str(path) if path else "."})
 
     try:
-        # First run the formatter
-        if _run_ruff(["format"], str(path) if path else "."):
-            maybe_json(ctx, {"status": "error", "message": "❌ Formatting failed"}, exit_code=1)
-            console.print("[red]❌ Formatting failed[/red]")
-            sys.exit(1)
-
-        # Then run the linter with fixes
-        if _run_ruff(["check", "--fix"], str(path) if path else "."):
-            maybe_json(
-                ctx,
-                {"status": "error", "message": "❌ Some issues could not be fixed automatically"},
-                exit_code=1,
-            )
-            console.print("[red]❌ Some issues could not be fixed automatically[/red]")
+        # Use operations layer for comprehensive fix
+        result = lint_ops.fix_all(path=path)
+        
+        if not result["success"]:
+            message = result.get("message", "❌ Some issues could not be fixed automatically")
+            maybe_json(ctx, {"status": "error", "message": message}, exit_code=1)
+            console.print(f"[red]{message}[/red]")
             sys.exit(1)
 
         maybe_json(

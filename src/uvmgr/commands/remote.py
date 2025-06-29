@@ -42,9 +42,9 @@ app = typer.Typer(help="Remote execution and management for distributed developm
 @app.command("run")
 @instrument_command("remote_run", track_args=True)
 def run_remote(
+    ctx: typer.Context,
     host: str = typer.Argument(..., help="Remote host (hostname, IP, or ssh://user@host:port)"),
     command: str = typer.Argument(..., help="Command to execute remotely"),
-    ctx: typer.Context = typer.Option(None, help="Typer context"),
     user: str = typer.Option(None, "--user", "-u", help="SSH username"),
     port: int = typer.Option(22, "--port", "-p", help="SSH port"),
     key_file: str = typer.Option(None, "--key", "-k", help="SSH private key file"),
@@ -55,7 +55,7 @@ def run_remote(
 ):
     """Execute a command on a remote host via SSH."""
     
-    add_span_attributes({
+    add_span_attributes(**{
         RemoteAttributes.HOST: host,
         RemoteAttributes.OPERATION: RemoteOperations.EXECUTE_COMMAND,
         "remote.command": command,
@@ -113,14 +113,14 @@ def run_remote(
 @app.command("hosts")
 @instrument_command("remote_hosts", track_args=True)
 def list_hosts(
-    ctx: typer.Context = typer.Option(None, help="Typer context"),
+    ctx: typer.Context,
 ):
     """List configured remote hosts."""
     
     try:
         hosts = remote_ops.list_hosts()
         
-        add_span_attributes({
+        add_span_attributes(**{
             RemoteAttributes.OPERATION: "list_hosts",
             "hosts_count": len(hosts)
         })
@@ -176,7 +176,7 @@ def add_host(
             description=description
         )
         
-        add_span_attributes({
+        add_span_attributes(**{
             RemoteAttributes.HOST: host,
             RemoteAttributes.OPERATION: "add_host",
             "host_name": name

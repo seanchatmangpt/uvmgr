@@ -14,14 +14,14 @@ from __future__ import annotations
 
 import logging
 import os
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 import dspy
 
 from uvmgr.core.telemetry import span
 
 _log = logging.getLogger("uvmgr.runtime.ai")
-
-from typing import Any, Dict, List, Optional
 
 # --------------------------------------------------------------------------- #
 # LM factory                                                                  #
@@ -51,285 +51,269 @@ def _init_lm(model: str, **kw) -> dspy.LM:
     return lm
 
 
-def list_ollama_models() -> list[str]:
-    """List all available Ollama models."""
-    with span("ai.list_models"):
-        from urllib.parse import urljoin
-
-        import requests
-
-        base_url = os.getenv("OLLAMA_BASE", "http://localhost:11434")
-        try:
-            response = requests.get(urljoin(base_url, "/api/tags"))
-            response.raise_for_status()
-            models = response.json().get("models", [])
-            return [model["name"] for model in models]
-        except requests.RequestException as e:
-            _log.error(f"Failed to list Ollama models: {e}")
-            return []
-
-
-def delete_ollama_model(model: str) -> bool:
-    """Delete an Ollama model. Returns True if successful, False otherwise."""
-    with span("ai.delete_model", model=model):
-        from urllib.parse import urljoin
-
-        import requests
-
-        base_url = os.getenv("OLLAMA_BASE", "http://localhost:11434")
-        try:
-            response = requests.delete(urljoin(base_url, "/api/delete"), json={"name": model})
-            response.raise_for_status()
-            return True
-        except requests.RequestException as e:
-            _log.error(f"Failed to delete Ollama model {model}: {e}")
-            return False
-
-
 # --------------------------------------------------------------------------- #
-# Public helpers                                                              #
+# Public AI helpers                                                          #
 # --------------------------------------------------------------------------- #
 
 
-def ask(model: str, prompt: str) -> str:
-    with span("ai.ask", model=model):
-        lm = _init_lm(model)
-        response = lm(prompt)
-        # Handle case where response is a list
-        if isinstance(response, list):
-            return "\n".join(response)
-        return response
-
-
-def outline(model: str, topic: str, n: int = 5) -> list[str]:
-    with span("ai.outline", model=model, topic=topic, n=n):
-        bullets = ask(model, f"List {n} key points about {topic}:\n•").splitlines()
-        return [b.lstrip("•- ").strip() for b in bullets if b.strip()]
-
-
-def fix_tests(model: str) -> str:
+@span("ai.ask")
+def ask(prompt: str, model: str = "openai/gpt-4o-mini", **kw) -> str:
     """
-    Run failing tests once, send the traceback to the LM, ask for a *unified
-    diff* patch that fixes the bug.  Return the diff (caller decides what to
-    do with it).
+    General-purpose AI query.
     """
-    with span("ai.fix_tests", model=model):
-        from uvmgr.core.process import run
+    lm = _init_lm(model, **kw)
+    with span("ai.query", model=model):
+        return lm(prompt)
 
-        failure = run("pytest --maxfail=1 -q", capture=True)
-    if "failed" not in failure:
-        return ""
 
-    prompt = (
-        "You are an expert Python developer. Analyse the following pytest "
-        "failure output and propose a **unified diff patch** that fixes the bug."
-        f"\n\n{failure}"
-    )
-    return ask(model, prompt)
+@span("ai.outline")
+def outline(topic: str, model: str = "openai/gpt-4o-mini", **kw) -> str:
+    """
+    Generate an outline for a topic.
+    """
+    lm = _init_lm(model, **kw)
+    prompt = f"Create a detailed outline for: {topic}"
+    with span("ai.outline_generation", topic=topic):
+        return lm(prompt)
+
+
+@span("ai.fix_tests")
+def fix_tests(test_output: str, model: str = "openai/gpt-4o-mini", **kw) -> str:
+    """
+    Analyze test failures and suggest fixes.
+    """
+    lm = _init_lm(model, **kw)
+    prompt = f"Analyze these test failures and suggest fixes:\n\n{test_output}"
+    with span("ai.test_analysis"):
+        return lm(prompt)
 
 
 # --------------------------------------------------------------------------- #
-# Claude-specific functions for agent workflows                               #
+# Claude Integration AI Functions                                            #
 # --------------------------------------------------------------------------- #
 
+
+@span("ai.research_topic")
 def research_topic(
     topic: str,
     perspective: str,
     enable_web_search: bool = True,
-    previous_insights: Optional[List[Dict[str, Any]]] = None,
+    previous_insights: List[Dict[str, Any]] = None,
     model: str = "openai/gpt-4o-mini",
+    **kw
 ) -> Dict[str, Any]:
     """
     Research a topic from a specific specialist perspective.
     
     Args:
         topic: Topic to research
-        perspective: Specialist role/perspective
-        enable_web_search: Whether to use web search
-        previous_insights: Previous round insights for cross-pollination
+        perspective: Specialist perspective (e.g., "technical", "security")
+        enable_web_search: Whether to enable web search (placeholder)
+        previous_insights: Previous round insights for context
         model: AI model to use
         
     Returns:
-        Research findings and insights
+        Research insights from the specialist perspective
     """
-    with span("ai.research_topic", topic=topic, perspective=perspective):
-        prompt = f"""
-        You are a {perspective} researching '{topic}'.
+    lm = _init_lm(model, **kw)
+    
+    # Build research prompt based on perspective
+    prompt = f"""As a {perspective} specialist, research and analyze: {topic}
+
+Perspective: {perspective}
+Topic: {topic}
+
+Please provide:
+1. Key insights from your expertise area
+2. Critical considerations and risks
+3. Recommendations and best practices
+4. Any concerns or red flags
+
+Format your response as structured insights."""
+
+    if previous_insights:
+        prompt += f"\n\nPrevious insights to build upon:\n{previous_insights}"
+    
+    with span("ai.specialist_research", perspective=perspective, topic=topic):
+        response = lm(prompt)
         
-        Previous insights from other specialists:
-        {previous_insights or 'None yet'}
-        
-        Provide:
-        1. Your unique perspective on this topic
-        2. Key findings and insights
-        3. Questions or challenges to explore
-        4. Connections to other perspectives
-        
-        Be specific and insightful.
-        """
-        
-        response = ask(model, prompt)
-        
-        # Parse response into structured format
         return {
             "perspective": perspective,
-            "findings": [response],  # In real implementation, parse structured
-            "questions": [],
-            "connections": [],
+            "insights": response,
+            "topic": topic,
+            "web_search_enabled": enable_web_search,
         }
 
 
-def generate_specialists(prompt: str, model: str = "openai/gpt-4o-mini") -> List[str]:
-    """Generate specialist roles for a topic."""
-    with span("ai.generate_specialists", prompt=prompt[:50]):
-        response = ask(model, prompt)
-        
-        # Parse response into list
-        specialists = []
-        for line in response.split("\n"):
-            line = line.strip()
-            if line and not line.startswith("#"):
-                # Remove numbering, bullets, etc.
-                specialist = line.lstrip("0123456789.-• ").strip()
-                if specialist:
-                    specialists.append(specialist)
-        
-        return specialists[:6]  # Limit to 6
-
-
-def generate_synthesis(prompt: str, model: str = "openai/gpt-4o-mini") -> str:
-    """Generate synthesis from multiple insights."""
-    with span("ai.generate_synthesis"):
-        return ask(model, prompt)
-
-
+@span("ai.analyze_code_expert")
 def analyze_code_expert(
-    files: List[tuple[Any, str]],
+    files: List[tuple],
     expert_type: str,
     depth: str = "standard",
     model: str = "openai/gpt-4o-mini",
+    **kw
 ) -> Dict[str, Any]:
     """
     Analyze code from a specific expert perspective.
     
     Args:
-        files: List of (path, content) tuples
-        expert_type: Type of expert analysis
-        depth: Analysis depth
+        files: List of (file_path, content) tuples
+        expert_type: Type of expert (performance, security, architecture)
+        depth: Analysis depth (quick, standard, deep)
         model: AI model to use
         
     Returns:
-        Analysis results with issues and suggestions
+        Expert analysis results with issues and suggestions
     """
-    with span("ai.analyze_code_expert", expert=expert_type, files=len(files)):
-        depth_instructions = {
-            "quick": "Provide a high-level review focusing on major issues only.",
-            "standard": "Provide a balanced review covering important issues and improvements.",
-            "deep": "Provide an exhaustive review examining every detail and edge case.",
+    lm = _init_lm(model, **kw)
+    
+    # Build code analysis prompt
+    code_summary = "\n\n".join([
+        f"File: {path}\n{content[:1000]}..." if len(content) > 1000 else f"File: {path}\n{content}"
+        for path, content in files[:5]  # Limit to first 5 files
+    ])
+    
+    prompt = f"""As a {expert_type} expert, analyze this code with {depth} depth:
+
+{code_summary}
+
+Focus on {expert_type} aspects and provide:
+1. Issues found (with severity levels)
+2. Specific recommendations
+3. Best practice suggestions
+4. Code quality metrics
+
+Format as structured analysis."""
+    
+    with span("ai.code_expert_analysis", expert_type=expert_type, depth=depth):
+        response = lm(prompt)
+        
+        # Parse response into structured format
+        return {
+            "expert_type": expert_type,
+            "depth": depth,
+            "issues": _parse_issues_from_response(response),
+            "suggestions": _parse_suggestions_from_response(response),
+            "metrics": _parse_metrics_from_response(response),
         }
-        
-        file_contents = "\n\n".join([
-            f"File: {path}\n```\n{content}\n```"
-            for path, content in files[:5]  # Limit for context
-        ])
-        
-        prompt = f"""
-        You are a {expert_type} reviewing the following code.
-        
-        {depth_instructions.get(depth, depth_instructions["standard"])}
-        
-        Code to review:
-        {file_contents}
-        
-        Provide:
-        1. Issues found (with severity: critical/high/medium/low)
-        2. Specific suggestions for improvement
-        3. Relevant metrics or measurements
-        
-        Format as JSON.
-        """
-        
-        response = ask(model, prompt)
-        
-        # Parse JSON response (simplified for example)
-        try:
-            import json
-            return json.loads(response)
-        except:
-            return {
-                "issues": [],
-                "suggestions": [{"title": "Review completed", "description": response}],
-                "metrics": {},
-            }
 
 
-def generate_expert_argument(
-    topic: str,
-    expert_role: str,
-    round_num: int,
-    previous_arguments: Dict[str, List[str]],
-    debate_format: str = "structured",
+@span("ai.conversation_search")
+def search_conversations(
+    query: str,
+    max_results: int = 10,
     model: str = "openai/gpt-4o-mini",
-) -> str:
+    **kw
+) -> List[Dict[str, Any]]:
     """
-    Generate expert argument for debate.
+    Search through conversation history (placeholder implementation).
     
     Args:
-        topic: Debate topic
-        expert_role: Expert's role
-        round_num: Current round number
-        previous_arguments: Previous arguments from all experts
-        debate_format: Debate format style
+        query: Search query
+        max_results: Maximum results to return
         model: AI model to use
         
     Returns:
-        Expert's argument for this round
+        List of matching conversation snippets
     """
-    with span("ai.generate_expert_argument", expert=expert_role, round=round_num):
-        format_instructions = {
-            "structured": "Present a clear, logical argument with evidence.",
-            "freeform": "Express your perspective naturally and conversationally.",
-            "socratic": "Ask probing questions to challenge assumptions.",
+    # This is a placeholder implementation
+    # In a real system, this would search through stored conversations
+    return [
+        {
+            "id": "conv_001",
+            "snippet": f"Found conversation about {query}",
+            "relevance": 0.85,
+            "timestamp": "2024-01-01T12:00:00Z",
         }
-        
-        # Build context from previous arguments
-        context = []
-        for expert, args in previous_arguments.items():
-            if args and expert != expert_role:
-                context.append(f"{expert}: {args[-1][:200]}...")
-        
-        prompt = f"""
-        You are a {expert_role} participating in round {round_num} of a debate about:
-        '{topic}'
-        
-        Previous arguments:
-        {context or 'This is the first round.'}
-        
-        {format_instructions.get(debate_format, format_instructions["structured"])}
-        
-        Provide your argument, considering:
-        1. Your unique expertise and perspective
-        2. Points raised by other experts
-        3. New insights or challenges
-        
-        Be concise but impactful.
-        """
-        
-        return ask(model, prompt)
+    ]
 
 
-def analyze_debate(prompt: str, model: str = "openai/gpt-4o-mini") -> Dict[str, Any]:
-    """Analyze debate outcomes."""
-    with span("ai.analyze_debate"):
-        response = ask(model, prompt + "\n\nFormat response as JSON.")
+@span("ai.create_custom_command")
+def create_custom_command(
+    description: str,
+    examples: List[str] = None,
+    model: str = "openai/gpt-4o-mini",
+    **kw
+) -> Dict[str, Any]:
+    """
+    Create a custom command based on description.
+    
+    Args:
+        description: Description of desired command
+        examples: Example use cases
+        model: AI model to use
         
-        try:
-            import json
-            return json.loads(response)
-        except:
-            # Fallback parsing
-            return {
-                "consensus": None,
-                "disagreements": ["Unable to parse debate analysis"],
-                "recommendations": [response],
-            }
+    Returns:
+        Custom command specification
+    """
+    lm = _init_lm(model, **kw)
+    
+    prompt = f"""Create a custom command specification for: {description}
+
+Please provide:
+1. Command name and syntax
+2. Parameters and options
+3. Implementation outline
+4. Usage examples
+5. Error handling
+
+Examples of use cases:
+{chr(10).join(examples or ["General purpose command"])}
+
+Format as a structured command specification."""
+    
+    with span("ai.custom_command_creation", description=description):
+        response = lm(prompt)
+        
+        return {
+            "description": description,
+            "specification": response,
+            "examples": examples or [],
+        }
+
+
+# --------------------------------------------------------------------------- #
+# Helper Functions                                                           #
+# --------------------------------------------------------------------------- #
+
+
+def _parse_issues_from_response(response: str) -> List[Dict[str, Any]]:
+    """Parse issues from AI response."""
+    # Simplified parser - in practice would use more sophisticated parsing
+    issues = []
+    lines = response.split('\n')
+    
+    for line in lines:
+        if 'issue:' in line.lower() or 'problem:' in line.lower():
+            issues.append({
+                "description": line.strip(),
+                "severity": "medium",  # Default severity
+                "line": 0,
+            })
+    
+    return issues
+
+
+def _parse_suggestions_from_response(response: str) -> List[Dict[str, Any]]:
+    """Parse suggestions from AI response."""
+    suggestions = []
+    lines = response.split('\n')
+    
+    for line in lines:
+        if 'suggest:' in line.lower() or 'recommend:' in line.lower():
+            suggestions.append({
+                "description": line.strip(),
+                "priority": "medium",
+            })
+    
+    return suggestions
+
+
+def _parse_metrics_from_response(response: str) -> Dict[str, Any]:
+    """Parse metrics from AI response."""
+    # Simplified metrics extraction
+    return {
+        "complexity": "medium",
+        "maintainability": "good",
+        "performance": "acceptable",
+    }

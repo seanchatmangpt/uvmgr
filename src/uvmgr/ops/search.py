@@ -736,9 +736,96 @@ class DependencyAnalyzer:
     
     def _add_vulnerability_info(self, matches: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Add vulnerability information using safety or similar tools."""
-        # This would integrate with vulnerability databases
-        # For now, return matches as-is
+        if not matches:
+            return matches
+        
+        # Get package names
+        package_names = [m['name'] for m in matches if 'name' in m]
+        if not package_names:
+            return matches
+        
+        vulnerabilities = {}
+        
+        # Try using safety tool if available
+        try:
+            import tempfile
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+                # Write requirements for safety check
+                for match in matches:
+                    if 'name' in match and 'version' in match:
+                        f.write(f"{match['name']}=={match['version']}\n")
+                req_file = f.name
+            
+            # Run safety check
+            result = subprocess.run(
+                ['safety', 'check', '-r', req_file, '--json'],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            
+            if result.returncode in [0, 64]:  # 64 = vulnerabilities found
+                try:
+                    vuln_data = json.loads(result.stdout)
+                    for vuln in vuln_data:
+                        pkg_name = vuln.get('package_name', '').lower()
+                        if pkg_name not in vulnerabilities:
+                            vulnerabilities[pkg_name] = []
+                        vulnerabilities[pkg_name].append({
+                            'id': vuln.get('vulnerability_id', 'UNKNOWN'),
+                            'severity': vuln.get('severity', 'unknown'),
+                            'description': vuln.get('advisory', '')[:100]
+                        })
+                except json.JSONDecodeError:
+                    pass
+            
+            # Clean up temp file
+            try:
+                Path(req_file).unlink()
+            except:
+                pass
+                
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            # Safety not available, use basic known vulnerabilities
+            known_vulns = {
+                'urllib3': {'min_safe': '1.26.5', 'severity': 'high'},
+                'pyyaml': {'min_safe': '5.4', 'severity': 'high'},
+                'jinja2': {'min_safe': '2.11.3', 'severity': 'medium'},
+                'django': {'min_safe': '3.2.0', 'severity': 'high'},
+                'flask': {'min_safe': '2.0.0', 'severity': 'medium'},
+            }
+            
+            for match in matches:
+                pkg_name = match.get('name', '').lower()
+                if pkg_name in known_vulns:
+                    vuln_info = known_vulns[pkg_name]
+                    current_version = match.get('version', '0.0.0')
+                    if self._version_less_than(current_version, vuln_info['min_safe']):
+                        vulnerabilities[pkg_name] = [{
+                            'id': f'KNOWN-{pkg_name.upper()}',
+                            'severity': vuln_info['severity'],
+                            'description': f'Version < {vuln_info["min_safe"]} has known vulnerabilities'
+                        }]
+        
+        # Add vulnerability info to matches
+        for match in matches:
+            pkg_name = match.get('name', '').lower()
+            if pkg_name in vulnerabilities:
+                match['vulnerabilities'] = vulnerabilities[pkg_name]
+                match['has_vulnerabilities'] = True
+            else:
+                match['has_vulnerabilities'] = False
+        
         return matches
+    
+    def _version_less_than(self, version1: str, version2: str) -> bool:
+        """Compare version strings."""
+        try:
+            from packaging.version import parse
+            return parse(version1) < parse(version2)
+        except:
+            # Simple string comparison fallback
+            return version1 < version2
     
     def _filter_outdated(self, matches: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Filter to show only outdated packages."""
@@ -1120,14 +1207,171 @@ class LogSearchEngine:
         return matches, files_scanned
     
     def _get_otel_logs(self, config: Dict[str, Any]) -> Tuple[List[Dict[str, Any]], int]:
-        """Get OpenTelemetry logs and traces."""
-        # This would integrate with OTEL collector or Jaeger
-        return [], 0
+        """Get OpenTelemetry logs and traces from OTLP endpoints."""
+        otel_logs = []
+        sources_checked = 0
+        
+        # Check for OTEL environment configuration
+        otel_endpoint = os.getenv('OTEL_EXPORTER_OTLP_ENDPOINT', 'http://localhost:4318')
+        
+        # Try to get traces from Jaeger API
+        jaeger_endpoints = [
+            f"{otel_endpoint}/v1/traces",
+            "http://localhost:16686/api/traces",  # Jaeger UI API
+            "http://localhost:14268/api/traces",  # Jaeger collector
+        ]
+        
+        for endpoint in jaeger_endpoints:
+            try:
+                import requests
+                response = requests.get(
+                    endpoint,
+                    params={
+                        'service': 'uvmgr',
+                        'limit': config.get('limit', 100),
+                        'lookback': '1h',
+                    },
+                    timeout=5
+                )
+                sources_checked += 1
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    traces = data.get('data', [])
+                    
+                    # Convert traces to log-like entries
+                    for trace in traces:
+                        for span in trace.get('spans', []):
+                            log_entry = {
+                                'timestamp': span.get('startTime'),
+                                'level': 'info',
+                                'message': f"[OTEL] {span.get('operationName', 'unknown')}",
+                                'source': 'opentelemetry',
+                                'trace_id': trace.get('traceID'),
+                                'span_id': span.get('spanID'),
+                                'duration': span.get('duration'),
+                                'tags': {tag['key']: tag['value'] for tag in span.get('tags', [])},
+                            }
+                            otel_logs.append(log_entry)
+                    break
+            except Exception:
+                continue
+        
+        # Also check for OTEL log files if collector exports to file
+        otel_log_paths = [
+            Path.home() / '.uvmgr' / 'otel' / 'traces.json',
+            Path('/var/log/opentelemetry/uvmgr.json'),
+            Path.cwd() / '.otel' / 'traces.json',
+        ]
+        
+        for log_path in otel_log_paths:
+            if log_path.exists():
+                try:
+                    import json
+                    with open(log_path, 'r') as f:
+                        for line in f:
+                            try:
+                                entry = json.loads(line)
+                                otel_logs.append(entry)
+                            except json.JSONDecodeError:
+                                continue
+                    sources_checked += 1
+                except Exception:
+                    continue
+        
+        return otel_logs, sources_checked
     
     def _get_system_logs(self, config: Dict[str, Any]) -> Tuple[List[Dict[str, Any]], int]:
-        """Get system logs."""
-        # This would search system logs (/var/log, journalctl, etc.)
-        return [], 0
+        """Get system logs from various sources."""
+        system_logs = []
+        sources_checked = 0
+        
+        # Define log sources based on platform
+        import platform
+        system = platform.system().lower()
+        
+        log_sources = []
+        
+        # Common application logs
+        app_log_paths = [
+            Path.home() / '.uvmgr' / 'logs' / 'uvmgr.log',
+            Path.cwd() / 'uvmgr.log',
+            Path.cwd() / 'logs' / 'uvmgr.log',
+            Path('/tmp/uvmgr.log'),
+        ]
+        
+        # System logs by platform
+        if system == 'darwin':  # macOS
+            log_sources.extend([
+                Path('/var/log/system.log'),
+                Path('/private/var/log/system.log'),
+            ])
+        elif system == 'linux':
+            log_sources.extend([
+                Path('/var/log/syslog'),
+                Path('/var/log/messages'),
+                Path('/var/log/auth.log'),
+            ])
+        
+        # Add app logs
+        log_sources.extend(app_log_paths)
+        
+        # Search each log source
+        for log_path in log_sources:
+            if log_path.exists() and log_path.is_file():
+                sources_checked += 1
+                try:
+                    # Read last N lines to avoid huge files
+                    max_lines = config.get('max_lines_per_file', 1000)
+                    with open(log_path, 'r', encoding='utf-8', errors='ignore') as f:
+                        # Use deque for efficient last N lines
+                        from collections import deque
+                        lines = deque(f, maxlen=max_lines)
+                        
+                        for line_num, line in enumerate(lines, 1):
+                            log_entry = self._parse_log_line(
+                                line.strip(), 
+                                str(log_path), 
+                                line_num
+                            )
+                            log_entry['source'] = 'system'
+                            system_logs.append(log_entry)
+                            
+                except Exception:
+                    continue
+        
+        # Try journalctl on Linux
+        if system == 'linux':
+            try:
+                import subprocess
+                result = subprocess.run(
+                    ['journalctl', '-u', 'uvmgr', '--no-pager', '-n', '100', '-o', 'json'],
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+                sources_checked += 1
+                
+                if result.returncode == 0:
+                    import json
+                    for line in result.stdout.strip().split('\n'):
+                        try:
+                            entry = json.loads(line)
+                            log_entry = {
+                                'timestamp': entry.get('__REALTIME_TIMESTAMP'),
+                                'level': entry.get('PRIORITY', '6'),
+                                'message': entry.get('MESSAGE', ''),
+                                'source': 'journald',
+                                'unit': entry.get('_SYSTEMD_UNIT'),
+                                'pid': entry.get('_PID'),
+                            }
+                            system_logs.append(log_entry)
+                        except json.JSONDecodeError:
+                            continue
+            except Exception:
+                pass
+        
+        return system_logs, sources_checked
     
     def _search_log_file(self, log_file: Path, regex: re.Pattern, 
                         config: Dict[str, Any]) -> List[Dict[str, Any]]:

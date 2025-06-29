@@ -88,7 +88,7 @@ def instrument_command(
     name: str = None,
     command_type: str = "cli",
     track_args: bool = True
-) -> Callable[[Callable], Callable]:
+) -> Callable:
     """
     Decorator to instrument CLI commands with OpenTelemetry.
     
@@ -112,7 +112,7 @@ def instrument_command(
     
     Returns
     -------
-    Callable[[Callable], Callable]
+    Callable
         A decorator function that wraps the original function with telemetry.
     
     Notes
@@ -234,7 +234,7 @@ def instrument_command(
     return decorator
 
 
-def instrument_subcommand(parent_command: str) -> Callable[[Callable], Callable]:
+def instrument_subcommand(parent_command: str) -> Callable:
     """
     Decorator for subcommands to maintain trace hierarchy.
     
@@ -243,6 +243,7 @@ def instrument_subcommand(parent_command: str) -> Callable[[Callable], Callable]
         
     Returns
     -------
+    Callable
         Decorator that instruments as a subcommand
     """
     def decorator(func: Callable) -> Callable:

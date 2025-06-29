@@ -65,13 +65,10 @@ from uvmgr.core.instrumentation import add_span_attributes, add_span_event, inst
 from uvmgr.core.shell import colour, dump_json
 from uvmgr.ops import aps as ops_aps
 
-from .. import main as cli_root
-
-app_aps = typer.Typer(help="Minimal APScheduler wrapper")
-cli_root.app.add_typer(app_aps, name="ap-scheduler")
+app = typer.Typer(help="Minimal APScheduler wrapper")
 
 
-@app_aps.command("add")
+@app.command("add")
 @instrument_command("scheduler_add", track_args=True)
 def add(
     job_id: str,
@@ -87,21 +84,21 @@ def add(
         raise typer.BadParameter("Either --cron or --every required")
 
 
-@app_aps.command("remove")
+@app.command("remove")
 @instrument_command("scheduler_remove", track_args=True)
 def remove(job_id: str):
     ops_aps.remove(job_id)
     colour(f"❎ removed {job_id}", "yellow")
 
 
-@app_aps.command("list")
+@app.command("list")
 @instrument_command("scheduler_list", track_args=True)
 def list_(json_: bool = typer.Option(False, "--json")):
     jobs = ops_aps.list_jobs()
     dump_json(jobs) if json_ else [colour(j, "cyan") for j in jobs]
 
 
-@app_aps.command("run")
+@app.command("run")
 @instrument_command("scheduler_run", track_args=True)
 def run():
     ops_aps.run()

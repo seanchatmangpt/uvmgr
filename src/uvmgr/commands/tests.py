@@ -34,6 +34,7 @@ See Also
 
 from __future__ import annotations
 
+import asyncio
 import subprocess
 import sys
 import time
@@ -53,85 +54,259 @@ from uvmgr.core.instrumentation import (
     instrument_subcommand,
 )
 from uvmgr.core.process import run_logged
-from uvmgr.core.semconv import CIAttributes, CIOperations, TestAttributes
+from uvmgr.core.semconv import CIAttributes, CIOperations, TestAttributes, TestCoverageAttributes
+from uvmgr.core.testing import (
+    get_test_infrastructure,
+    TestDiscovery,
+    TestReporter,
+    TestType,
+    generate_test_templates
+)
+from uvmgr.core.shell import dump_json
 
-from .. import main as cli_root
-
-tests_app = typer.Typer(help="Run the test suite (and coverage) using pytest and coverage.")
-
-# Mount the sub-app under the name 'tests' (so that 'uvmgr tests' works)
-cli_root.app.add_typer(tests_app, name="tests")
+app = typer.Typer(help="Run the test suite (and coverage) using pytest and coverage.")
 
 console = Console()
 
 
-@tests_app.command("run")
+@app.command("run")
 @instrument_command("tests_run", track_args=True)
-def run_tests(verbose: bool = typer.Option(False, "--verbose", "-v", help="Run tests verbosely.")):
+def run_tests(
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Run tests verbosely"),
+    parallel: bool = typer.Option(True, "--parallel/--no-parallel", help="Run tests in parallel"),
+    coverage: bool = typer.Option(True, "--coverage/--no-coverage", help="Collect coverage data"),
+    fail_fast: bool = typer.Option(False, "--fail-fast", "-x", help="Stop on first failure"),
+    test_type: List[str] = typer.Option([], "--type", "-t", help="Test types to run (unit, integration, e2e)"),
+    markers: List[str] = typer.Option([], "--marker", "-m", help="Test markers to run"),
+    json_output: bool = typer.Option(False, "--json", "-j", help="Output results as JSON"),
+    generate_report: bool = typer.Option(True, "--report/--no-report", help="Generate comprehensive test report")
+):
     """
-    Run the test suite using pytest.
+    🧪 Run comprehensive test suite with intelligent optimization.
     
-    This command executes the project's test suite using pytest. It automatically
-    discovers and runs all tests in the project, providing detailed output and
-    telemetry for test execution.
+    This enhanced command uses the new Tier 2B testing infrastructure to provide:
+    - Intelligent test discovery and classification
+    - Parallel execution for performance
+    - Comprehensive coverage analysis
+    - Advanced failure analysis and recommendations
+    - Performance benchmarking
     
-    Parameters
-    ----------
-    verbose : bool, optional
-        If True, run tests with verbose output showing more details about
-        test execution, including individual test names and results.
-        Default is False.
-    
-    Notes
-    -----
-    The command automatically:
-    - Discovers tests in the project using pytest
-    - Runs all discovered tests
-    - Provides detailed output and error reporting
-    - Records telemetry for test execution
-    - Uses project's pytest configuration from pyproject.toml
-    
-    Test discovery follows pytest conventions:
-    - Looks for files named test_*.py or *_test.py
-    - Searches in tests/ and src/ directories
-    - Respects pytest.ini and pyproject.toml configuration
-    
-    Example
-    -------
-    >>> # Run tests with default output
-    >>> uvmgr tests run
-    >>> 
-    >>> # Run tests with verbose output
-    >>> uvmgr tests run --verbose
-    >>> 
-    >>> # Run tests and capture output
-    >>> result = subprocess.run(["uvmgr", "tests", "run"], capture_output=True)
+    The command automatically discovers and categorizes tests by type (unit, integration, e2e)
+    and provides detailed analytics and recommendations for improving test quality.
     """
-    # Track test execution
-    add_span_attributes(
-        **{
-            TestAttributes.OPERATION: "run",
-            TestAttributes.FRAMEWORK: "pytest",
-            "test.verbose": verbose,
+    
+    # Parse test types
+    test_types = []
+    if test_type:
+        type_map = {
+            "unit": TestType.UNIT,
+            "integration": TestType.INTEGRATION,
+            "e2e": TestType.E2E,
+            "performance": TestType.PERFORMANCE,
+            "security": TestType.SECURITY
         }
-    )
-    add_span_event("tests.run.started", {"framework": "pytest", "verbose": verbose})
-
-    cmd = ["pytest"]
-    if verbose:
-        cmd.append("-v")
+        test_types = [type_map.get(t) for t in test_type if t in type_map]
+    
+    if not test_types:
+        test_types = [TestType.UNIT, TestType.INTEGRATION]  # Default types
+    
+    # Track enhanced test execution
+    add_span_attributes(**{
+        TestAttributes.OPERATION: "run_comprehensive",
+        TestAttributes.FRAMEWORK: "pytest_enhanced",
+        "test.verbose": verbose,
+        "test.parallel": parallel,
+        "test.coverage": coverage,
+        "test.types": [t.value for t in test_types],
+        "test.markers": markers
+    })
+    add_span_event("tests.comprehensive.started", {
+        "test_types": [t.value for t in test_types],
+        "parallel": parallel,
+        "coverage": coverage
+    })
+    
+    console.print(Panel(
+        f"🧪 [bold]Comprehensive Test Execution[/bold]\n"
+        f"Types: {', '.join(t.value for t in test_types)}\n"
+        f"Parallel: {'✅' if parallel else '❌'}\n"
+        f"Coverage: {'✅' if coverage else '❌'}\n"
+        f"Markers: {', '.join(markers) if markers else 'None'}",
+        title="Test Configuration"
+    ))
     
     try:
-        run_logged(cmd)
-        add_span_event("tests.run.completed", {"success": True})
-    except subprocess.CalledProcessError as e:
-        # Tests may fail, but command execution succeeded
-        add_span_event("tests.run.completed", {"success": False, "exit_code": e.returncode})
-        typer.echo(f"Tests completed with failures (exit code: {e.returncode})")
-        raise typer.Exit(e.returncode)
+        # Use the comprehensive testing infrastructure
+        async def _run_tests():
+            infrastructure = get_test_infrastructure()
+            return await infrastructure.run_tests(
+                test_types=test_types,
+                parallel=parallel,
+                coverage=coverage,
+                fail_fast=fail_fast,
+                verbose=verbose,
+                markers=markers
+            )
+        
+        # Run tests asynchronously
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console
+        ) as progress:
+            task = progress.add_task("Running comprehensive test suite...", total=None)
+            test_suite = asyncio.run(_run_tests())
+            progress.update(task, description="Test execution completed")
+        
+        # Generate comprehensive report
+        if generate_report:
+            reporter = TestReporter(Path.cwd())
+            report = reporter.generate_comprehensive_report(test_suite)
+            
+            if json_output:
+                dump_json(report)
+            else:
+                _display_test_results(test_suite, report)
+        
+        # Record final metrics
+        add_span_attributes(**{
+            TestAttributes.TEST_COUNT: test_suite.total_tests,
+            TestAttributes.PASSED: test_suite.passed,
+            TestAttributes.FAILED: test_suite.failed,
+            TestAttributes.SKIPPED: test_suite.skipped,
+            TestCoverageAttributes.COVERAGE_PERCENTAGE: test_suite.coverage_percentage or 0.0
+        })
+        
+        if test_suite.failed > 0:
+            add_span_event("tests.comprehensive.completed", {"success": False})
+            console.print(f"\n[red]❌ {test_suite.failed} test(s) failed[/red]")
+            raise typer.Exit(1)
+        else:
+            add_span_event("tests.comprehensive.completed", {"success": True})
+            console.print(f"\n[green]✅ All {test_suite.passed} test(s) passed![/green]")
+    
+    except Exception as e:
+        console.print(f"[red]❌ Test execution failed: {e}[/red]")
+        add_span_event("tests.comprehensive.failed", {"error": str(e)})
+        raise typer.Exit(1)
 
 
-@tests_app.command("coverage")
+def _display_test_results(test_suite, report):
+    """Display comprehensive test results."""
+    
+    # Summary table
+    summary_table = Table(title="Test Execution Summary", show_header=True)
+    summary_table.add_column("Metric", style="cyan")
+    summary_table.add_column("Value", style="white")
+    summary_table.add_column("Status", style="green")
+    
+    summary_data = [
+        ("Total Tests", str(test_suite.total_tests), "✅"),
+        ("Passed", str(test_suite.passed), "🟢"),
+        ("Failed", str(test_suite.failed), "🔴" if test_suite.failed > 0 else "✅"),
+        ("Skipped", str(test_suite.skipped), "🟡" if test_suite.skipped > 0 else "✅"),
+        ("Success Rate", f"{test_suite.success_rate:.1%}", "🟢" if test_suite.success_rate > 0.95 else "🟡"),
+        ("Duration", f"{test_suite.total_duration:.2f}s", "✅"),
+        ("Coverage", f"{test_suite.coverage_percentage:.1f}%" if test_suite.coverage_percentage else "N/A", 
+         "🟢" if (test_suite.coverage_percentage or 0) >= 80 else "🟡")
+    ]
+    
+    for metric, value, status in summary_data:
+        summary_table.add_row(metric, value, status)
+    
+    console.print(summary_table)
+    
+    # Performance insights
+    if report.get("performance"):
+        perf = report["performance"]
+        console.print(f"\n📊 Performance Insights:")
+        console.print(f"   Average test duration: {perf['average_test_duration']:.3f}s")
+        
+        if perf.get("slowest_tests"):
+            console.print(f"   Slowest tests:")
+            for test in perf["slowest_tests"][:3]:
+                console.print(f"     • {test['name']}: {test['duration']:.3f}s")
+    
+    # Failure analysis
+    if report.get("failures") and test_suite.failed > 0:
+        console.print(f"\n🔍 Failure Analysis:")
+        for failure in report["failures"][:3]:
+            console.print(f"   ❌ {failure['name']}")
+            console.print(f"      Category: {failure['category']}")
+            console.print(f"      Fix: {failure['suggested_fix']}")
+    
+    # Recommendations
+    if report.get("recommendations"):
+        console.print(f"\n💡 Recommendations:")
+        for rec in report["recommendations"]:
+            console.print(f"   • {rec}")
+
+
+@app.command("discover")
+@instrument_command("tests_discover", track_args=True)
+def discover_tests(
+    json_output: bool = typer.Option(False, "--json", "-j", help="Output as JSON")
+):
+    """🔍 Discover and analyze test structure."""
+    
+    discovery = TestDiscovery(Path.cwd())
+    discovered = discovery.discover_tests()
+    stats = discovery.get_test_statistics()
+    
+    if json_output:
+        dump_json({
+            "discovered_tests": {k.value: [str(f) for f in v] for k, v in discovered.items()},
+            "statistics": stats
+        })
+        return
+    
+    console.print("🔍 Test Discovery Results")
+    console.print("=" * 40)
+    
+    for test_type, files in discovered.items():
+        type_stats = stats["by_type"].get(test_type.value, {})
+        console.print(f"\n📋 {test_type.value.title()} Tests:")
+        console.print(f"   Files: {len(files)}")
+        console.print(f"   Functions: {type_stats.get('functions', 0)}")
+        console.print(f"   Async functions: {type_stats.get('async_functions', 0)}")
+        
+        if type_stats.get("markers"):
+            console.print(f"   Markers: {', '.join(type_stats['markers'])}")
+        
+        for test_file in files[:3]:  # Show first 3 files
+            console.print(f"     📄 {test_file.relative_to(Path.cwd())}")
+        
+        if len(files) > 3:
+            console.print(f"     ... and {len(files) - 3} more files")
+    
+    console.print(f"\n📊 Summary:")
+    console.print(f"   Total test files: {stats['total_test_files']}")
+    console.print(f"   Total test functions: {stats['total_functions']}")
+
+
+@app.command("generate")
+@instrument_command("tests_generate", track_args=True)
+def generate_test_templates(
+    module: str = typer.Argument(..., help="Module path to generate tests for (e.g., uvmgr.core.config)"),
+    test_type: str = typer.Option("unit", "--type", "-t", help="Test type to generate (unit, integration)")
+):
+    """🏗️ Generate test templates for modules (8020 test generation)."""
+    
+    try:
+        templates = generate_test_templates(Path.cwd(), module)
+        
+        console.print(f"✅ Generated test templates for {module}:")
+        for template in templates:
+            console.print(f"   📄 {template.relative_to(Path.cwd())}")
+        
+        console.print(f"\n💡 Edit the generated templates to implement actual tests")
+        
+    except Exception as e:
+        console.print(f"❌ Failed to generate test templates: {e}")
+        raise typer.Exit(1)
+
+
+@app.command("coverage")
 @instrument_command("tests_coverage", track_args=True)
 def run_coverage(
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Run coverage verbosely."),
@@ -195,7 +370,7 @@ def run_coverage(
 
 # CI subcommand group
 ci_app = typer.Typer(help="Run CI tests locally")
-tests_app.add_typer(ci_app, name="ci")
+app.add_typer(ci_app, name="ci")
 
 
 class CIVerifier:

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" 
+                  id="user_guide_workflow">
+  <bpmn:process id="generate_user_guide" isExecutable="true">
+    
+    <bpmn:startEvent id="start" name="Start User Guide Generation"/>
+    <bpmn:serviceTask id="analyze_features" name="Analyze Features"/>
+    <bpmn:serviceTask id="create_outline" name="Create Guide Outline"/>
+    <bpmn:serviceTask id="generate_sections" name="Generate Sections"/>
+    <bpmn:serviceTask id="add_examples" name="Add Examples"/>
+    <bpmn:serviceTask id="review_content" name="Review Content"/>
+    <bpmn:endEvent id="end" name="User Guide Complete"/>
+    
+  </bpmn:process>
+</bpmn:definitions>

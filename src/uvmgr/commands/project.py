@@ -60,13 +60,10 @@ from uvmgr.core.semconv import ProjectAttributes, ProjectOperations
 from uvmgr.core.shell import colour, dump_json
 from uvmgr.ops import project as project_ops
 
-from .. import main as cli_root
-
-proj_app = typer.Typer(help="Project scaffolding with Substrate-inspired features")
-cli_root.app.add_typer(proj_app, name="new")
+app = typer.Typer(help="Project scaffolding with Substrate-inspired features")
 
 
-@proj_app.command("substrate")
+@app.command("substrate")
 @instrument_command("project_substrate", track_args=True)
 def substrate_project(
     ctx: typer.Context,
@@ -91,7 +88,7 @@ def substrate_project(
     )
 
 
-@proj_app.command()
+@app.command()
 @instrument_command("project_new", track_args=True)
 def new(
     ctx: typer.Context,
@@ -173,7 +170,7 @@ def new(
         colour(f"✔ created project in {payload['path']}", "green")
 
 
-@proj_app.command("status")
+@app.command("status")
 @instrument_command("project_status", track_args=True)
 def status(ctx: typer.Context):
     """Show current project status and uvmgr configuration."""

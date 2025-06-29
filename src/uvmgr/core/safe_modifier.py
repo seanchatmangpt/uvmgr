@@ -79,12 +79,14 @@ class ModificationProposal:
     description: str
     modification_type: ModificationType
     risk_level: RiskLevel
-    status: ModificationStatus = ModificationStatus.PROPOSED
     
     # Code changes
     target_file: Path
     original_code: str
     modified_code: str
+    
+    # Optional fields with defaults
+    status: ModificationStatus = ModificationStatus.PROPOSED
     diff: str = ""
     
     # Safety analysis

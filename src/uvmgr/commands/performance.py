@@ -14,7 +14,8 @@ from rich.table import Table
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
-from uvmgr.core.instrumentation import instrument_command, span, metric_counter, metric_histogram
+from uvmgr.core.instrumentation import instrument_command, add_span_event
+from uvmgr.core.telemetry import span, metric_counter, metric_histogram
 from uvmgr.core.semconv import CliAttributes
 
 app = typer.Typer(help="⚡ Performance profiling and optimization")
@@ -277,13 +278,42 @@ def _run_performance_analysis(project_path: Path, target: str, benchmark: bool) 
 
 def _analyze_startup_performance() -> dict:
     """Analyze uvmgr startup performance."""
-    # Measure import time and initialization
+    import time
+    import subprocess
+    
+    # Measure actual startup time
+    start_time = time.time()
+    result = subprocess.run(
+        ["python", "-c", "import uvmgr; print('imported')"],
+        capture_output=True,
+        text=True
+    )
+    import_time = time.time() - start_time
+    
+    # Measure CLI initialization time
+    start_time = time.time()
+    result = subprocess.run(
+        ["uvmgr", "--version"],
+        capture_output=True,
+        text=True
+    )
+    cli_init_time = time.time() - start_time - import_time
+    
+    total_startup = import_time + cli_init_time
+    status = "good" if total_startup < 0.5 else "slow" if total_startup < 1.0 else "very_slow"
+    
+    recommendations = []
+    if total_startup > 0.5:
+        recommendations.append("Consider lazy loading of heavy dependencies")
+    if import_time > 0.3:
+        recommendations.append("Review import statements for optimization opportunities")
+    
     return {
-        "import_time": 0.05,  # Placeholder - would measure actual import time
-        "cli_init_time": 0.02,
-        "total_startup": 0.07,
-        "status": "good",
-        "recommendations": []
+        "import_time": round(import_time, 3),
+        "cli_init_time": round(cli_init_time, 3),
+        "total_startup": round(total_startup, 3),
+        "status": status,
+        "recommendations": recommendations
     }
 
 
@@ -344,17 +374,44 @@ def _analyze_build_performance(project_path: Path) -> dict:
 
 def _run_benchmark_command(command: str) -> bool:
     """Run a benchmark for a specific command."""
-    # Simplified benchmark - would actually run uvmgr commands
-    benchmark_times = {
-        "deps": 0.5,
-        "tests": 2.0,
-        "build": 5.0,
-        "lint": 1.0,
+    import subprocess
+    import time
+    
+    # Map commands to actual uvmgr commands
+    command_map = {
+        "deps": ["uvmgr", "deps", "list"],
+        "tests": ["uvmgr", "tests", "--help"],  # Use help to avoid actually running tests
+        "build": ["uvmgr", "build", "--help"],
+        "lint": ["uvmgr", "lint", "--help"],
     }
     
-    # Simulate command execution
-    time.sleep(min(benchmark_times.get(command, 1.0), 0.1))  # Shortened for demo
-    return True
+    cmd = command_map.get(command)
+    if not cmd:
+        return False
+    
+    try:
+        # Run the actual command and measure time
+        start_time = time.time()
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+        execution_time = time.time() - start_time
+        
+        # Store in telemetry
+        add_span_event("benchmark.command_executed", {
+            "command": command,
+            "execution_time": execution_time,
+            "exit_code": result.returncode
+        })
+        
+        return result.returncode == 0
+    except subprocess.TimeoutExpired:
+        return False
+    except Exception:
+        return False
 
 
 def _identify_optimizations(project_path: Path, target: str) -> list:
@@ -449,12 +506,51 @@ def _measure_optimization_impact(project_path: Path, applied_optimizations: list
 
 def _measure_current_performance() -> dict:
     """Measure current uvmgr performance."""
-    # Simplified performance measurement
+    import subprocess
+    import psutil
+    import os
+    
+    # Get real performance metrics
+    measurements = []
+    commands = [
+        (["uvmgr", "--version"], "version_check"),
+        (["uvmgr", "deps", "--help"], "deps_help"),
+        (["uvmgr", "--help"], "main_help"),
+    ]
+    
+    total_duration = 0.0
+    for cmd, name in commands:
+        try:
+            start_time = time.time()
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+            duration = time.time() - start_time
+            total_duration += duration
+            measurements.append((name, duration))
+        except Exception:
+            continue
+    
+    # Get cache stats
+    cache_dir = Path.home() / ".uvmgr_cache"
+    cache_hit_rate = 0.0
+    if cache_dir.exists():
+        # Simple cache estimation based on file count
+        cache_files = list(cache_dir.rglob("*"))
+        cache_hit_rate = min(len(cache_files) / 100.0, 0.95)  # Estimate based on cache size
+    
+    # Get process stats if available
+    try:
+        process = psutil.Process(os.getpid())
+        memory_usage = process.memory_info().rss / 1024 / 1024  # MB
+    except:
+        memory_usage = 0
+    
     return {
         "timestamp": time.time(),
-        "avg_duration": 1.0 + (time.time() % 3),  # Simulated varying performance
-        "command_count": 1,
-        "cache_hit_rate": 0.8
+        "avg_duration": total_duration / len(commands) if commands else 0,
+        "command_count": len(measurements),
+        "cache_hit_rate": cache_hit_rate,
+        "memory_usage_mb": round(memory_usage, 2),
+        "measurements": measurements
     }
 
 

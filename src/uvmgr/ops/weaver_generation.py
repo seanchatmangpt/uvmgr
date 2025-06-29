@@ -244,12 +244,57 @@ def consolidate_generation(
         generator = WeaverGenerator(registry_path, template_path)
         
         # Load attributes from registry
-        # For 80/20, we assume a simple JSON format
         attributes = {}
+        
+        try:
+            import yaml
+        except ImportError:
+            # Fallback for environments without PyYAML
+            import json
+            yaml = None
+        
         for yaml_file in registry_path.glob("**/*.yaml"):
-            # Simple attribute extraction (real implementation would parse YAML)
-            # This is a placeholder for the actual YAML parsing logic
-            pass
+            try:
+                with open(yaml_file, 'r', encoding='utf-8') as f:
+                    if yaml:
+                        # Use PyYAML if available
+                        yaml_content = yaml.safe_load(f)
+                    else:
+                        # Fallback: try to parse as JSON-like YAML
+                        content = f.read()
+                        # Simple YAML-to-JSON conversion for basic cases
+                        content = content.replace(':', ': ').replace('- ', '"- "')
+                        try:
+                            yaml_content = json.loads(content)
+                        except:
+                            # Skip malformed files
+                            continue
+                
+                # Extract semantic convention attributes
+                if isinstance(yaml_content, dict):
+                    # Look for semantic convention patterns
+                    for key, value in yaml_content.items():
+                        if key.startswith('attribute_') or 'semantic_conventions' in str(key).lower():
+                            if isinstance(value, dict):
+                                attributes.update(value)
+                            elif isinstance(value, list):
+                                # Handle list of attributes
+                                for item in value:
+                                    if isinstance(item, dict) and 'id' in item:
+                                        attributes[item['id']] = item
+                
+                add_span_event("yaml_file_parsed", {
+                    "file": str(yaml_file),
+                    "attributes_found": len(attributes)
+                })
+                
+            except Exception as e:
+                add_span_event("yaml_parsing_failed", {
+                    "file": str(yaml_file),
+                    "error": str(e)
+                })
+                # Continue processing other files
+                continue
             
         # Validate
         config = {"attributes": attributes}
