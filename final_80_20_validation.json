@@ -1,0 +1,18 @@
+{
+  "validation_summary": {
+    "command_success_rate": 1.0,
+    "telemetry_success_rate": 0.8,
+    "external_success_rate": 1.0,
+    "performance_success_rate": 1.0,
+    "overall_success_rate": 0.95,
+    "meets_8020_threshold": true,
+    "timestamp": "2025-06-28 20:27:05"
+  },
+  "details": {
+    "commands_tested": 11,
+    "commands_working": 11,
+    "telemetry_functional": false,
+    "external_tests_passed": 3,
+    "performance_tests_passed": 2
+  }
+}

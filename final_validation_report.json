@@ -1,103 +1,162 @@
 {
-  "timestamp": "2025-06-28T20:23:26.293142",
   "summary": {
-    "all_tests_passed": false,
-    "telemetry_validated": true,
-    "external_project_support": false
+    "command_success_rate": 1.0,
+    "telemetry_success_rate": 1.0,
+    "external_success_rate": 0.0,
+    "performance_success_rate": 0.6666666666666666,
+    "overall_success_rate": 0.6666666666666666,
+    "meets_8020_threshold": false
   },
-  "test_suite": [
-    {
-      "test": "CLI Tests",
-      "success": true,
-      "details": {
+  "results": {
+    "command_tests": [
+      {
+        "command": "deps",
+        "description": "Dependency management",
         "success": true,
-        "stdout": "\u001b[1m============================= test session starts ==============================\u001b[0m\nplatform darwin -- Python 3.13.0, pytest-8.3.5, pluggy-1.6.0 -- /Users/sac/dev/uvmgr/.venv/bin/python\ncachedir: .pytest_cache\nrootdir: /Users/sac/dev/uvmgr\nconfigfile: pyproject.toml\nplugins: anyio-4.9.0, mock-3.14.0, asyncio-1.0.0, xdist-3.6.1\nasyncio: mode=Mode.STRICT, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\n\u001b[1mcollecting ... \u001b[0mcollected 7 items\nrun-last-failure: 122 known failures not in selected tests\n\ntests/test_cli.py::test_help \u001b[32mPASSED\u001b[0m\u001b[32m                                      [ 14%]\u001b[0m\ntests/test_cli.py::test_version \u001b[32mPASSED\u001b[0m\u001b[32m                                   [ 28%]\u001b[0m\ntests/test_cli.py::test_json_output \u001b[32mPASSED\u001b[0m\u001b[32m                               [ 42%]\u001b[0m\ntests/test_cli.py::test_command_discovery \u001b[32mPASSED\u001b[0m\u001b[32m                         [ 57%]\u001b[0m\ntests/test_cli.py::test_workspace_command_available \u001b[33mSKIPPED\u001b[0m (workspace\ncommand currently disabled due to Callable type issues)\u001b[32m                  [ 71%]\u001b[0m\ntests/test_cli.py::test_claude_command_available \u001b[33mSKIPPED\u001b[0m (claude command\ncurrently disabled due to Callable type issues)\u001b[32m                          [ 85%]\u001b[0m\ntests/test_cli.py::test_remote_command_available \u001b[33mSKIPPED\u001b[0m (remote command\ncurrently disabled due to Callable type issues)\u001b[32m                          [100%]\u001b[0m\n\n--------- generated xml file: /Users/sac/dev/uvmgr/reports/pytest.xml ----------\n\u001b[32m========================= \u001b[32m\u001b[1m4 passed\u001b[0m, \u001b[33m3 skipped\u001b[0m\u001b[32m in 0.29s\u001b[0m\u001b[32m =========================\u001b[0m\n",
-        "stderr": "/Users/sac/dev/uvmgr/.venv/lib/python3.13/site-packages/pytest_asyncio/plugin.py:208: PytestDeprecationWarning: The configuration option \"asyncio_default_fixture_loop_scope\" is unset.\nThe event loop scope for asynchronous fixtures will default to the fixture caching scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to function scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: \"function\", \"class\", \"module\", \"package\", \"session\"\n\n  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))\n",
-        "returncode": 0
+        "exit_code": 0,
+        "elapsed": 0.29517197608947754,
+        "has_output": true
+      },
+      {
+        "command": "build",
+        "description": "Build system",
+        "success": true,
+        "exit_code": 0,
+        "elapsed": 0.2789130210876465,
+        "has_output": true
+      },
+      {
+        "command": "tests",
+        "description": "Test execution",
+        "success": true,
+        "exit_code": 0,
+        "elapsed": 0.26599597930908203,
+        "has_output": true
+      },
+      {
+        "command": "cache",
+        "description": "Cache management",
+        "success": true,
+        "exit_code": 0,
+        "elapsed": 0.2558600902557373,
+        "has_output": true
+      },
+      {
+        "command": "lint",
+        "description": "Code quality",
+        "success": true,
+        "exit_code": 0,
+        "elapsed": 0.2551429271697998,
+        "has_output": true
+      },
+      {
+        "command": "otel",
+        "description": "OpenTelemetry",
+        "success": true,
+        "exit_code": 0,
+        "elapsed": 0.2768840789794922,
+        "has_output": true
+      },
+      {
+        "command": "guides",
+        "description": "Agent guides",
+        "success": true,
+        "exit_code": 0,
+        "elapsed": 0.26291894912719727,
+        "has_output": true
+      },
+      {
+        "command": "worktree",
+        "description": "Git worktree",
+        "success": true,
+        "exit_code": 0,
+        "elapsed": 0.2593839168548584,
+        "has_output": true
+      },
+      {
+        "command": "infodesign",
+        "description": "Information design",
+        "success": true,
+        "exit_code": 0,
+        "elapsed": 0.26833415031433105,
+        "has_output": true
+      },
+      {
+        "command": "mermaid",
+        "description": "Mermaid diagrams",
+        "success": true,
+        "exit_code": 0,
+        "elapsed": 0.2645440101623535,
+        "has_output": true
       }
-    },
-    {
-      "test": "OTEL Integration",
-      "success": false,
-      "details": {
+    ],
+    "telemetry_tests": [
+      {
+        "check": "span_creation",
+        "passed": true
+      },
+      {
+        "check": "metrics_collection",
+        "passed": true
+      },
+      {
+        "check": "error_handling",
+        "passed": true
+      },
+      {
+        "check": "performance_tracking",
+        "passed": true
+      },
+      {
+        "check": "validation_passed",
+        "passed": true
+      },
+      {
+        "check": "otel_status",
+        "passed": true,
+        "details": "OTEL status command working"
+      }
+    ],
+    "external_tests": [
+      {
+        "project_type": "minimal",
         "success": false,
-        "stdout": "\u001b[1m============================= test session starts ==============================\u001b[0m\nplatform darwin -- Python 3.13.0, pytest-8.3.5, pluggy-1.6.0 -- /Users/sac/dev/uvmgr/.venv/bin/python\ncachedir: .pytest_cache\nrootdir: /Users/sac/dev/uvmgr\nconfigfile: pyproject.toml\nplugins: anyio-4.9.0, mock-3.14.0, asyncio-1.0.0, xdist-3.6.1\nasyncio: mode=Mode.STRICT, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\n\u001b[1mcollecting ... \u001b[0mcollected 9 items\nrun-last-failure: 122 known failures not in selected tests\n\ntests/test_otel_integration.py::TestOTELIntegration::test_span_creation_and_context \u001b[32mPASSED\u001b[0m\u001b[32m [ 11%]\u001b[0m\ntests/test_otel_integration.py::TestOTELIntegration::test_metrics_collection \u001b[32mPASSED\u001b[0m\u001b[32m [ 22%]\u001b[0m\ntests/test_otel_integration.py::TestOTELIntegration::test_semantic_conventions_usage \u001b[32mPASSED\u001b[0m\u001b[32m [ 33%]\u001b[0m\ntests/test_otel_integration.py::TestOTELIntegration::test_instrumentation_decorator \u001b[31mFAILED\u001b[0m\u001b[31m [ 44%]\u001b[0m\n\n=================================== FAILURES ===================================\n\u001b[31m\u001b[1m______________ TestOTELIntegration.test_instrumentation_decorator ______________\u001b[0m\n\nself = <tests.test_otel_integration.TestOTELIntegration object at 0x105e483e0>\n\n    \u001b[0m\u001b[94mdef\u001b[39;49;00m\u001b[90m \u001b[39;49;00m\u001b[92mtest_instrumentation_decorator\u001b[39;49;00m(\u001b[96mself\u001b[39;49;00m):\u001b[90m\u001b[39;49;00m\n    \u001b[90m    \u001b[39;49;00m\u001b[33m\"\"\"Test command instrumentation decorator.\"\"\"\u001b[39;49;00m\u001b[90m\u001b[39;49;00m\n        executed = []\u001b[90m\u001b[39;49;00m\n    \u001b[90m\u001b[39;49;00m\n        \u001b[37m@instrument_command\u001b[39;49;00m(\u001b[33m\"\u001b[39;49;00m\u001b[33mtest_command\u001b[39;49;00m\u001b[33m\"\u001b[39;49;00m)\u001b[90m\u001b[39;49;00m\n        \u001b[94mdef\u001b[39;49;00m\u001b[90m \u001b[39;49;00m\u001b[92mtest_function\u001b[39;49;00m(arg1: \u001b[96mstr\u001b[39;49;00m, arg2: \u001b[96mint\u001b[39;49;00m = \u001b[94m42\u001b[39;49;00m):\u001b[90m\u001b[39;49;00m\n            executed.append((arg1, arg2))\u001b[90m\u001b[39;49;00m\n            \u001b[94mreturn\u001b[39;49;00m \u001b[33mf\u001b[39;49;00m\u001b[33m\"\u001b[39;49;00m\u001b[33mresult_\u001b[39;49;00m\u001b[33m{\u001b[39;49;00marg1\u001b[33m}\u001b[39;49;00m\u001b[33m_\u001b[39;49;00m\u001b[33m{\u001b[39;49;00marg2\u001b[33m}\u001b[39;49;00m\u001b[33m\"\u001b[39;49;00m\u001b[90m\u001b[39;49;00m\n    \u001b[90m\u001b[39;49;00m\n        \u001b[90m# Mock telemetry to capture calls\u001b[39;49;00m\u001b[90m\u001b[39;49;00m\n        \u001b[94mwith\u001b[39;49;00m patch(\u001b[33m\"\u001b[39;49;00m\u001b[33muvmgr.core.telemetry.span\u001b[39;49;00m\u001b[33m\"\u001b[39;49;00m) \u001b[94mas\u001b[39;49;00m mock_span:\u001b[90m\u001b[39;49;00m\n            mock_span.return_value.\u001b[92m__enter__\u001b[39;49;00m = MagicMock()\u001b[90m\u001b[39;49;00m\n            mock_span.return_value.\u001b[92m__exit__\u001b[39;49;00m = MagicMock(return_value=\u001b[94mNone\u001b[39;49;00m)\u001b[90m\u001b[39;49;00m\n    \u001b[90m\u001b[39;49;00m\n            result = test_function(\u001b[33m\"\u001b[39;49;00m\u001b[33mtest\u001b[39;49;00m\u001b[33m\"\u001b[39;49;00m, \u001b[94m123\u001b[39;49;00m)\u001b[90m\u001b[39;49;00m\n    \u001b[90m\u001b[39;49;00m\n            \u001b[94massert\u001b[39;49;00m result == \u001b[33m\"\u001b[39;49;00m\u001b[33mresult_test_123\u001b[39;49;00m\u001b[33m\"\u001b[39;49;00m\u001b[90m\u001b[39;49;00m\n            \u001b[94massert\u001b[39;49;00m executed == [(\u001b[33m\"\u001b[39;49;00m\u001b[33mtest\u001b[39;49;00m\u001b[33m\"\u001b[39;49;00m, \u001b[94m123\u001b[39;49;00m)]\u001b[90m\u001b[39;49;00m\n>           \u001b[94massert\u001b[39;49;00m mock_span.call_count >= \u001b[94m1\u001b[39;49;00m\u001b[90m\u001b[39;49;00m\n\u001b[1m\u001b[31mE           AssertionError: assert 0 >= 1\u001b[0m\n\u001b[1m\u001b[31mE            +  where 0 = <MagicMock name='span' id='4393766928'>.call_count\u001b[0m\n\n\u001b[1m\u001b[31mtests/test_otel_integration.py\u001b[0m:85: AssertionError\n--------- generated xml file: /Users/sac/dev/uvmgr/reports/pytest.xml ----------\n\u001b[36m\u001b[1m=========================== short test summary info ============================\u001b[0m\n\u001b[31mFAILED\u001b[0m tests/test_otel_integration.py::\u001b[1mTestOTELIntegration::test_instrumentation_decorator\u001b[0m - AssertionError: assert 0 >= 1\n +  where 0 = <MagicMock name='span' id='4393766928'>.call_count\n\u001b[31m!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!\u001b[0m\n\u001b[31m========================= \u001b[31m\u001b[1m1 failed\u001b[0m, \u001b[32m3 passed\u001b[0m\u001b[31m in 0.23s\u001b[0m\u001b[31m ==========================\u001b[0m\n",
-        "stderr": "/Users/sac/dev/uvmgr/.venv/lib/python3.13/site-packages/pytest_asyncio/plugin.py:208: PytestDeprecationWarning: The configuration option \"asyncio_default_fixture_loop_scope\" is unset.\nThe event loop scope for asynchronous fixtures will default to the fixture caching scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to function scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: \"function\", \"class\", \"module\", \"package\", \"session\"\n\n  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))\n",
-        "returncode": 1
+        "path": "/Users/sac/.cache/tmp/tmp1kcfrgb9/minimal"
+      },
+      {
+        "project_type": "library",
+        "success": false,
+        "path": "/Users/sac/.cache/tmp/tmp1kcfrgb9/library"
+      },
+      {
+        "project_type": "cli_app",
+        "success": false,
+        "path": "/Users/sac/.cache/tmp/tmp1kcfrgb9/cli_app"
       }
-    },
-    {
-      "test": "Dependency Management",
-      "success": true,
-      "details": {
-        "success": true,
-        "stdout": "\u001b[1m============================= test session starts ==============================\u001b[0m\nplatform darwin -- Python 3.13.0, pytest-8.3.5, pluggy-1.6.0 -- /Users/sac/dev/uvmgr/.venv/bin/python\ncachedir: .pytest_cache\nrootdir: /Users/sac/dev/uvmgr\nconfigfile: pyproject.toml\nplugins: anyio-4.9.0, mock-3.14.0, asyncio-1.0.0, xdist-3.6.1\nasyncio: mode=Mode.STRICT, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\n\u001b[1mcollecting ... \u001b[0mcollected 7 items\nrun-last-failure: rerun previous 7 failures first\n\ntests/test_deps.py::TestDepsOperations::test_add_operation_success \u001b[32mPASSED\u001b[0m\u001b[32m [ 14%]\u001b[0m\ntests/test_deps.py::TestDepsOperations::test_add_dev_dependency \u001b[32mPASSED\u001b[0m\u001b[32m   [ 28%]\u001b[0m\ntests/test_deps.py::TestDepsOperations::test_remove_operation \u001b[32mPASSED\u001b[0m\u001b[32m     [ 42%]\u001b[0m\ntests/test_deps.py::TestDepsOperations::test_list_packages \u001b[32mPASSED\u001b[0m\u001b[32m        [ 57%]\u001b[0m\ntests/test_deps.py::TestDepsUpgrade::test_upgrade_all_packages \u001b[32mPASSED\u001b[0m\u001b[32m    [ 71%]\u001b[0m\ntests/test_deps.py::TestDepsUpgrade::test_upgrade_specific_packages \u001b[32mPASSED\u001b[0m\u001b[32m [ 85%]\u001b[0m\ntests/test_deps.py::TestDepsWithFileSystem::test_project_structure_validation \u001b[32mPASSED\u001b[0m\u001b[32m [100%]\u001b[0m\n\n--------- generated xml file: /Users/sac/dev/uvmgr/reports/pytest.xml ----------\n\u001b[32m============================== \u001b[32m\u001b[1m7 passed\u001b[0m\u001b[32m in 0.19s\u001b[0m\u001b[32m ===============================\u001b[0m\n",
-        "stderr": "/Users/sac/dev/uvmgr/.venv/lib/python3.13/site-packages/pytest_asyncio/plugin.py:208: PytestDeprecationWarning: The configuration option \"asyncio_default_fixture_loop_scope\" is unset.\nThe event loop scope for asynchronous fixtures will default to the fixture caching scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to function scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: \"function\", \"class\", \"module\", \"package\", \"session\"\n\n  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))\n",
-        "returncode": 0
+    ],
+    "performance_tests": [
+      {
+        "command": "uvmgr --help",
+        "description": "help",
+        "elapsed": 0.2708561420440674,
+        "max_time": 2.0,
+        "passed": true
+      },
+      {
+        "command": "uvmgr deps --help",
+        "description": "deps help",
+        "elapsed": 0.26447582244873047,
+        "max_time": 2.0,
+        "passed": true
+      },
+      {
+        "command": "uvmgr otel status",
+        "description": "otel status",
+        "elapsed": 6.095725774765015,
+        "max_time": 3.0,
+        "passed": false
       }
-    }
-  ],
-  "telemetry_validation": {
-    "success": true,
-    "output": "8020 OTEL Validation - Focus on critical 80% of functionality\n\n  Testing span creation and context...\n  Testing metrics collection...       \n  Testing semantic conventions...     \n  Testing error handling...           \n  Testing performance tracking...     \n\u256d\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 8020 OTEL Validation Results \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256e\n\u2502 Duration: 0.01s | Success Rate: 100.0%                                       \u2502\n\u2570\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256f\n\n                             Detailed Test Results                              \n\u250f\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2513\n\u2503 Test                \u2503 Status    \u2503 Message              \u2503 Details             \u2503\n\u2521\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2529\n\u2502 Span Creation       \u2502 \u2705 PASSED \u2502 Span creation and    \u2502 spans_tested: 3     \u2502\n\u2502                     \u2502           \u2502 nesting works        \u2502                     \u2502\n\u2502                     \u2502           \u2502 correctly            \u2502                     \u2502\n\u2502 Metrics Collection  \u2502 \u2705 PASSED \u2502 Metrics collection   \u2502 counters: 1 |       \u2502\n\u2502                     \u2502           \u2502 working correctly    \u2502 histograms: 1       \u2502\n\u2502 Semantic            \u2502 \u2705 PASSED \u2502 Semantic conventions \u2502 conventions_tested: \u2502\n\u2502 Conventions         \u2502           \u2502 properly defined and \u2502 4                   \u2502\n\u2502                     \u2502           \u2502 accessible           \u2502                     \u2502\n\u2502 Error Handling      \u2502 \u2705 PASSED \u2502 Error handling and   \u2502 exceptions_recorde\u2026 \u2502\n\u2502                     \u2502           \u2502 exception recording  \u2502 1                   \u2502\n\u2502                     \u2502           \u2502 works correctly      \u2502                     \u2502\n\u2502 Performance         \u2502 \u2705 PASSED \u2502 Performance tracking \u2502 duration_recorded:  \u2502\n\u2502 Tracking            \u2502           \u2502 with histograms      \u2502 0.0125093460083007\u2026 \u2502\n\u2502                     \u2502           \u2502 works correctly      \u2502 | metrics_created:  \u2502\n\u2502                     \u2502           \u2502                      \u2502 5                   \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\n\u2705 All 5 critical OTEL features validated successfully!\n",
-    "details": {
-      "success": true,
-      "stdout": "8020 OTEL Validation - Focus on critical 80% of functionality\n\n  Testing span creation and context...\n  Testing metrics collection...       \n  Testing semantic conventions...     \n  Testing error handling...           \n  Testing performance tracking...     \n\u256d\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 8020 OTEL Validation Results \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256e\n\u2502 Duration: 0.01s | Success Rate: 100.0%                                       \u2502\n\u2570\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256f\n\n                             Detailed Test Results                              \n\u250f\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2513\n\u2503 Test                \u2503 Status    \u2503 Message              \u2503 Details             \u2503\n\u2521\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2529\n\u2502 Span Creation       \u2502 \u2705 PASSED \u2502 Span creation and    \u2502 spans_tested: 3     \u2502\n\u2502                     \u2502           \u2502 nesting works        \u2502                     \u2502\n\u2502                     \u2502           \u2502 correctly            \u2502                     \u2502\n\u2502 Metrics Collection  \u2502 \u2705 PASSED \u2502 Metrics collection   \u2502 counters: 1 |       \u2502\n\u2502                     \u2502           \u2502 working correctly    \u2502 histograms: 1       \u2502\n\u2502 Semantic            \u2502 \u2705 PASSED \u2502 Semantic conventions \u2502 conventions_tested: \u2502\n\u2502 Conventions         \u2502           \u2502 properly defined and \u2502 4                   \u2502\n\u2502                     \u2502           \u2502 accessible           \u2502                     \u2502\n\u2502 Error Handling      \u2502 \u2705 PASSED \u2502 Error handling and   \u2502 exceptions_recorde\u2026 \u2502\n\u2502                     \u2502           \u2502 exception recording  \u2502 1                   \u2502\n\u2502                     \u2502           \u2502 works correctly      \u2502                     \u2502\n\u2502 Performance         \u2502 \u2705 PASSED \u2502 Performance tracking \u2502 duration_recorded:  \u2502\n\u2502 Tracking            \u2502           \u2502 with histograms      \u2502 0.0125093460083007\u2026 \u2502\n\u2502                     \u2502           \u2502 works correctly      \u2502 | metrics_created:  \u2502\n\u2502                     \u2502           \u2502                      \u2502 5                   \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n\n\u2705 All 5 critical OTEL features validated successfully!\n",
-      "stderr": "",
-      "returncode": 0
-    }
+    ]
   },
-  "external_project_validation": [
-    {
-      "operation": "Initialize venv",
-      "success": true,
-      "details": {
-        "success": true,
-        "stdout": "",
-        "stderr": "Using CPython 3.13.0\nCreating virtual environment at: .venv\nActivate with: source .venv/bin/activate\n",
-        "returncode": 0
-      }
-    },
-    {
-      "operation": "Add dependency",
-      "success": false,
-      "details": {
-        "success": false,
-        "stdout": "",
-        "stderr": "warning: `VIRTUAL_ENV=/Users/sac/dev/uvmgr/.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead\n   Building test-project @ file:///Users/sac/.cache/tmp/tmpfk20ui17/test-project\n      Built test-project @ file:///Users/sac/.cache/tmp/tmpfk20ui17/test-project\nInstalled 1 package in 1ms\n/Users/sac/.cache/tmp/tmpfk20ui17/test-project/.venv/bin/python3: No module named uvmgr\n",
-        "returncode": 1
-      }
-    },
-    {
-      "operation": "List dependencies",
-      "success": false,
-      "details": {
-        "success": false,
-        "stdout": "",
-        "stderr": "warning: `VIRTUAL_ENV=/Users/sac/dev/uvmgr/.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead\n/Users/sac/.cache/tmp/tmpfk20ui17/test-project/.venv/bin/python3: No module named uvmgr\n",
-        "returncode": 1
-      }
-    },
-    {
-      "operation": "Run tests",
-      "success": false,
-      "details": {
-        "success": false,
-        "stdout": "",
-        "stderr": "warning: `VIRTUAL_ENV=/Users/sac/dev/uvmgr/.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead\n/Users/sac/.cache/tmp/tmpfk20ui17/test-project/.venv/bin/python3: No module named uvmgr\n",
-        "returncode": 1
-      }
-    },
-    {
-      "operation": "Build project",
-      "success": false,
-      "details": {
-        "success": false,
-        "stdout": "",
-        "stderr": "warning: `VIRTUAL_ENV=/Users/sac/dev/uvmgr/.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead\n/Users/sac/.cache/tmp/tmpfk20ui17/test-project/.venv/bin/python3: No module named uvmgr\n",
-        "returncode": 1
-      }
-    }
-  ],
-  "overall_success": false
+  "timestamp": "2025-06-28 20:24:58"
 }

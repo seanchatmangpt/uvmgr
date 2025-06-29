@@ -1,0 +1,26 @@
+{
+  "external_validation": {
+    "projects_tested": 3,
+    "projects_passed": 2,
+    "success_rate": 0.6666666666666666,
+    "meets_8020": false
+  },
+  "results": [
+    {
+      "project": "minimal",
+      "success": false,
+      "path": "/Users/sac/.cache/tmp/tmpmfd_11hy/minimal"
+    },
+    {
+      "project": "fastapi",
+      "success": true,
+      "path": "/Users/sac/.cache/tmp/tmpmfd_11hy/fastapi"
+    },
+    {
+      "project": "datascience",
+      "success": true,
+      "path": "/Users/sac/.cache/tmp/tmpmfd_11hy/datascience"
+    }
+  ],
+  "timestamp": "2025-06-28 20:26:04"
+}

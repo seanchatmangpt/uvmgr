@@ -1,0 +1,140 @@
+{
+  "description": "Example batch specification for Weaver Forge bulk generation",
+  "version": "1.0.0",
+  "generations": [
+    {
+      "template": "component",
+      "name": "UserProfile",
+      "parameters": {
+        "style": "styled-components",
+        "typescript": true,
+        "props": ["name", "email", "avatar", "bio"],
+        "variants": ["default", "compact", "detailed"]
+      },
+      "subdir": "components"
+    },
+    {
+      "template": "component",
+      "name": "ProductCard",
+      "parameters": {
+        "style": "css-modules",
+        "typescript": true,
+        "props": ["title", "price", "image", "rating", "description"],
+        "variants": ["grid", "list", "featured"]
+      },
+      "subdir": "components"
+    },
+    {
+      "template": "component",
+      "name": "OrderItem",
+      "parameters": {
+        "style": "styled-components",
+        "typescript": false,
+        "props": ["id", "quantity", "total", "status"],
+        "variants": ["pending", "confirmed", "shipped", "delivered"]
+      },
+      "subdir": "components"
+    },
+    {
+      "template": "api",
+      "name": "users",
+      "parameters": {
+        "framework": "express",
+        "validation": true,
+        "authentication": true,
+        "pagination": true,
+        "endpoints": ["GET", "POST", "PUT", "DELETE"]
+      },
+      "subdir": "api"
+    },
+    {
+      "template": "api",
+      "name": "products",
+      "parameters": {
+        "framework": "fastify",
+        "validation": true,
+        "pagination": true,
+        "search": true,
+        "endpoints": ["GET", "POST", "PUT", "DELETE"]
+      },
+      "subdir": "api"
+    },
+    {
+      "template": "api",
+      "name": "orders",
+      "parameters": {
+        "framework": "express",
+        "validation": true,
+        "authentication": true,
+        "authorization": true,
+        "endpoints": ["GET", "POST", "PUT", "DELETE"]
+      },
+      "subdir": "api"
+    },
+    {
+      "template": "workflow",
+      "name": "user-registration",
+      "parameters": {
+        "type": "bpmn",
+        "steps": ["validate", "create", "notify", "activate"],
+        "error_handling": true,
+        "timeout": 300
+      },
+      "subdir": "workflows"
+    },
+    {
+      "template": "workflow",
+      "name": "order-processing",
+      "parameters": {
+        "type": "mermaid",
+        "steps": ["validate", "payment", "inventory", "shipping"],
+        "error_handling": true,
+        "timeout": 600
+      },
+      "subdir": "workflows"
+    }
+  ],
+  "scaffolds": [
+    {
+      "type": "react-app",
+      "name": "frontend",
+      "parameters": {
+        "typescript": true,
+        "testing": "jest",
+        "styling": "styled-components",
+        "routing": "react-router",
+        "state": "redux-toolkit"
+      },
+      "subdir": "apps"
+    },
+    {
+      "type": "node-api",
+      "name": "backend",
+      "parameters": {
+        "framework": "express",
+        "database": "postgres",
+        "authentication": "jwt",
+        "validation": "joi",
+        "testing": "jest"
+      },
+      "subdir": "apps"
+    },
+    {
+      "type": "python-package",
+      "name": "utils",
+      "parameters": {
+        "testing": "pytest",
+        "linting": "flake8",
+        "formatting": "black",
+        "documentation": "sphinx"
+      },
+      "subdir": "packages"
+    }
+  ],
+  "metadata": {
+    "author": "Weaver Forge Team",
+    "created_at": "2024-01-01T00:00:00Z",
+    "tags": ["example", "batch", "generation"],
+    "notes": "This is an example batch specification file demonstrating various generation patterns"
+  }
+} 

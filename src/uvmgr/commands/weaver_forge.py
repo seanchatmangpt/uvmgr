@@ -28,6 +28,11 @@ Available Commands
 - **scaffold**: Create project scaffolds
 - **prompt**: Interactive prompt-based generation
 - **status**: Show Weaver Forge status and metrics
+- **bulk-generate**: Generate multiple items from template in bulk
+- **bulk-scaffold**: Create multiple project scaffolds in bulk
+- **batch**: Generate from a batch specification file
+- **bulk-create**: Create multiple templates in bulk
+- **bulk-validate**: Validate multiple templates in bulk
 
 Examples
 --------
@@ -78,7 +83,12 @@ from uvmgr.ops.weaver_forge import (
     validate_templates,
     create_scaffold,
     interactive_prompt_generation,
-    get_weaver_forge_status
+    get_weaver_forge_status,
+    generate_bulk_from_templates,
+    generate_bulk_scaffolds,
+    generate_from_batch_file,
+    create_bulk_template,
+    validate_bulk_templates
 )
 
 app = typer.Typer(help="Weaver Forge integration with Hygen-like capabilities")
@@ -759,6 +769,493 @@ def show_status(
         raise typer.Exit(1)
 
 
+@app.command("bulk-generate")
+@instrument_command("weaver_forge_bulk_generate", track_args=True)
+def bulk_generate_code(
+    template_name: str = typer.Argument(..., help="Template name to use"),
+    names: List[str] = typer.Argument(..., help="Names for the generated items"),
+    output_path: Optional[Path] = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Output path for generated files"
+    ),
+    parameters: Optional[str] = typer.Option(
+        None,
+        "--params",
+        "-p",
+        help="Template parameters (JSON string)"
+    ),
+    parallel: bool = typer.Option(
+        False,
+        "--parallel",
+        help="Run generations in parallel"
+    ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        "-d",
+        help="Show what would be generated without creating files"
+    ),
+):
+    """
+    Generate multiple items from template in bulk.
+    
+    This command generates multiple items using the same template,
+    similar to Hygen's bulk generation capabilities.
+    
+    Examples:
+        uvmgr weaver-forge bulk-generate component UserProfile ProductCard OrderItem
+        uvmgr weaver-forge bulk-generate api users products orders --parallel
+        uvmgr weaver-forge bulk-generate component Button Input Select --params '{"style": "styled-components"}'
+    """
+    add_span_attributes(**{
+        "weaver_forge.operation": "bulk_generate",
+        "weaver_forge.template": template_name,
+        "weaver_forge.items_count": len(names),
+        "weaver_forge.parallel": parallel,
+        "weaver_forge.dry_run": dry_run,
+    })
+    
+    console.print(f"🔧 [bold cyan]Bulk Generating {len(names)} items[/bold cyan]")
+    console.print(f"📋 Template: {template_name}")
+    console.print(f"📝 Items: {', '.join(names)}")
+    if parallel:
+        console.print(f"⚡ Parallel execution: enabled")
+    if dry_run:
+        console.print(f"👀 Dry run mode: enabled")
+    
+    # Parse parameters
+    parsed_params = {}
+    if parameters:
+        try:
+            parsed_params = json.loads(parameters)
+        except json.JSONDecodeError as e:
+            console.print(f"[red]❌ Invalid JSON parameters: {e}[/red]")
+            raise typer.Exit(1)
+    
+    # Prepare generation specifications
+    generation_specs = []
+    for name in names:
+        spec = {
+            "template": template_name,
+            "name": name,
+            "parameters": parsed_params,
+            "subdir": name.lower().replace(" ", "_")
+        }
+        generation_specs.append(spec)
+    
+    try:
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TimeElapsedColumn(),
+            console=console,
+        ) as progress:
+            
+            # Step 1: Bulk generation
+            task1 = progress.add_task(f"Generating {len(names)} items...", total=len(names))
+            
+            bulk_result = generate_bulk_from_templates(
+                generation_specs=generation_specs,
+                output_path=output_path,
+                parallel=parallel,
+                dry_run=dry_run
+            )
+            
+            progress.advance(task1, len(names))
+        
+        # Display bulk generation results
+        _display_bulk_generation_results(bulk_result, dry_run)
+        
+        add_span_event("weaver_forge.bulk_generated", {
+            "template": template_name,
+            "items_count": len(names),
+            "successful": bulk_result["successful"],
+            "failed": bulk_result["failed"],
+            "total_files": bulk_result["total_files"],
+        })
+        
+    except Exception as e:
+        record_exception(e)
+        console.print(f"[red]❌ Bulk generation failed: {e}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command("bulk-scaffold")
+@instrument_command("weaver_forge_bulk_scaffold", track_args=True)
+def bulk_create_scaffolds(
+    scaffold_type: ScaffoldType = typer.Argument(..., help="Type of scaffold to create"),
+    project_names: List[str] = typer.Argument(..., help="Project names"),
+    output_path: Optional[Path] = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Output path for scaffolds"
+    ),
+    parameters: Optional[str] = typer.Option(
+        None,
+        "--params",
+        "-p",
+        help="Scaffold parameters (JSON string)"
+    ),
+    parallel: bool = typer.Option(
+        False,
+        "--parallel",
+        help="Run scaffold generation in parallel"
+    ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        "-d",
+        help="Show what would be generated without creating files"
+    ),
+):
+    """
+    Create multiple project scaffolds in bulk.
+    
+    This command creates multiple project scaffolds of the same type,
+    useful for creating multiple similar projects at once.
+    
+    Examples:
+        uvmgr weaver-forge bulk-scaffold react-app frontend admin dashboard
+        uvmgr weaver-forge bulk-scaffold node-api users-api products-api orders-api --parallel
+        uvmgr weaver-forge bulk-scaffold python-package utils core models --params '{"testing": "pytest"}'
+    """
+    add_span_attributes(**{
+        "weaver_forge.operation": "bulk_scaffold",
+        "weaver_forge.scaffold_type": scaffold_type.value,
+        "weaver_forge.projects_count": len(project_names),
+        "weaver_forge.parallel": parallel,
+        "weaver_forge.dry_run": dry_run,
+    })
+    
+    console.print(f"🏗️ [bold cyan]Bulk Creating {len(project_names)} scaffolds[/bold cyan]")
+    console.print(f"📋 Scaffold Type: {scaffold_type.value}")
+    console.print(f"📝 Projects: {', '.join(project_names)}")
+    if parallel:
+        console.print(f"⚡ Parallel execution: enabled")
+    if dry_run:
+        console.print(f"👀 Dry run mode: enabled")
+    
+    # Parse parameters
+    parsed_params = {}
+    if parameters:
+        try:
+            parsed_params = json.loads(parameters)
+        except json.JSONDecodeError as e:
+            console.print(f"[red]❌ Invalid JSON parameters: {e}[/red]")
+            raise typer.Exit(1)
+    
+    # Prepare scaffold specifications
+    scaffold_specs = []
+    for name in project_names:
+        spec = {
+            "type": scaffold_type.value,
+            "name": name,
+            "parameters": parsed_params,
+            "subdir": name.lower().replace(" ", "_")
+        }
+        scaffold_specs.append(spec)
+    
+    try:
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TimeElapsedColumn(),
+            console=console,
+        ) as progress:
+            
+            # Step 1: Bulk scaffold generation
+            task1 = progress.add_task(f"Creating {len(project_names)} scaffolds...", total=len(project_names))
+            
+            bulk_result = generate_bulk_scaffolds(
+                scaffold_specs=scaffold_specs,
+                output_path=output_path,
+                parallel=parallel,
+                dry_run=dry_run
+            )
+            
+            progress.advance(task1, len(project_names))
+        
+        # Display bulk scaffold results
+        _display_bulk_scaffold_results(bulk_result, dry_run)
+        
+        add_span_event("weaver_forge.bulk_scaffolded", {
+            "scaffold_type": scaffold_type.value,
+            "projects_count": len(project_names),
+            "successful": bulk_result["successful"],
+            "failed": bulk_result["failed"],
+            "total_files": bulk_result["total_files"],
+        })
+        
+    except Exception as e:
+        record_exception(e)
+        console.print(f"[red]❌ Bulk scaffold generation failed: {e}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command("batch")
+@instrument_command("weaver_forge_batch", track_args=True)
+def batch_generate(
+    batch_file: Path = typer.Argument(..., help="Batch specification file (JSON/YAML)"),
+    output_path: Optional[Path] = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Output path for generated files"
+    ),
+    parallel: bool = typer.Option(
+        False,
+        "--parallel",
+        help="Run generations in parallel"
+    ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        "-d",
+        help="Show what would be generated without creating files"
+    ),
+):
+    """
+    Generate from a batch specification file.
+    
+    This command reads a batch specification file (JSON/YAML) and generates
+    multiple templates and scaffolds according to the specification.
+    
+    Examples:
+        uvmgr weaver-forge batch batch-spec.json
+        uvmgr weaver-forge batch batch-spec.yaml --parallel --dry-run
+        uvmgr weaver-forge batch my-batch.yml --output ./generated
+    """
+    add_span_attributes(**{
+        "weaver_forge.operation": "batch",
+        "weaver_forge.batch_file": str(batch_file),
+        "weaver_forge.parallel": parallel,
+        "weaver_forge.dry_run": dry_run,
+    })
+    
+    console.print(f"📋 [bold cyan]Batch Generation from {batch_file.name}[/bold cyan]")
+    console.print(f"📄 Batch File: {batch_file}")
+    if parallel:
+        console.print(f"⚡ Parallel execution: enabled")
+    if dry_run:
+        console.print(f"👀 Dry run mode: enabled")
+    
+    try:
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TimeElapsedColumn(),
+            console=console,
+        ) as progress:
+            
+            # Step 1: Load and process batch file
+            task1 = progress.add_task("Processing batch specification...", total=1)
+            
+            batch_result = generate_from_batch_file(
+                batch_file=batch_file,
+                output_path=output_path,
+                parallel=parallel,
+                dry_run=dry_run
+            )
+            
+            progress.advance(task1)
+        
+        # Display batch generation results
+        _display_batch_results(batch_result, dry_run)
+        
+        add_span_event("weaver_forge.batch_completed", {
+            "batch_file": str(batch_file),
+            "total_files": batch_result["total_files"],
+            "total_errors": batch_result["total_errors"],
+        })
+        
+    except Exception as e:
+        record_exception(e)
+        console.print(f"[red]❌ Batch generation failed: {e}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command("bulk-create")
+@instrument_command("weaver_forge_bulk_create", track_args=True)
+def bulk_create_templates(
+    template_specs_file: Path = typer.Argument(..., help="Template specifications file (JSON/YAML)"),
+    output_dir: Optional[Path] = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Output directory for templates"
+    ),
+    interactive: bool = typer.Option(
+        False,
+        "--interactive",
+        "-i",
+        help="Interactive template creation"
+    ),
+):
+    """
+    Create multiple templates in bulk.
+    
+    This command reads a template specifications file and creates multiple
+    templates according to the specification.
+    
+    Examples:
+        uvmgr weaver-forge bulk-create template-specs.json
+        uvmgr weaver-forge bulk-create template-specs.yaml --interactive
+        uvmgr weaver-forge bulk-create my-templates.yml --output ./custom-templates
+    """
+    add_span_attributes(**{
+        "weaver_forge.operation": "bulk_create",
+        "weaver_forge.specs_file": str(template_specs_file),
+        "weaver_forge.interactive": interactive,
+    })
+    
+    console.print(f"📝 [bold cyan]Bulk Template Creation[/bold cyan]")
+    console.print(f"📄 Specs File: {template_specs_file}")
+    if interactive:
+        console.print(f"🎯 Interactive mode: enabled")
+    
+    # Load template specifications
+    try:
+        with open(template_specs_file, 'r') as f:
+            if template_specs_file.suffix.lower() in ['.yaml', '.yml']:
+                import yaml
+                template_specs = yaml.safe_load(f)
+            else:
+                template_specs = json.load(f)
+    except Exception as e:
+        console.print(f"[red]❌ Failed to load template specifications: {e}[/red]")
+        raise typer.Exit(1)
+    
+    if not isinstance(template_specs, list):
+        console.print(f"[red]❌ Template specifications must be a list[/red]")
+        raise typer.Exit(1)
+    
+    try:
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TimeElapsedColumn(),
+            console=console,
+        ) as progress:
+            
+            # Step 1: Bulk template creation
+            task1 = progress.add_task(f"Creating {len(template_specs)} templates...", total=len(template_specs))
+            
+            bulk_result = create_bulk_template(
+                template_specs=template_specs,
+                output_dir=output_dir,
+                interactive=interactive
+            )
+            
+            progress.advance(task1, len(template_specs))
+        
+        # Display bulk template creation results
+        _display_bulk_template_results(bulk_result)
+        
+        add_span_event("weaver_forge.bulk_templates_created", {
+            "templates_count": len(template_specs),
+            "successful": bulk_result["successful"],
+            "failed": bulk_result["failed"],
+        })
+        
+    except Exception as e:
+        record_exception(e)
+        console.print(f"[red]❌ Bulk template creation failed: {e}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command("bulk-validate")
+@instrument_command("weaver_forge_bulk_validate", track_args=True)
+def bulk_validate_templates_cmd(
+    template_names: Optional[List[str]] = typer.Option(
+        None,
+        "--templates",
+        "-t",
+        help="Specific templates to validate (default: all)"
+    ),
+    fix_issues: bool = typer.Option(
+        False,
+        "--fix",
+        "-f",
+        help="Automatically fix validation issues"
+    ),
+    output_report: Optional[Path] = typer.Option(
+        None,
+        "--report",
+        "-r",
+        help="Output validation report to file"
+    ),
+):
+    """
+    Validate multiple templates in bulk.
+    
+    This command validates multiple templates at once, providing
+    comprehensive validation reports and optional auto-fixing.
+    
+    Examples:
+        uvmgr weaver-forge bulk-validate
+        uvmgr weaver-forge bulk-validate --templates component api workflow
+        uvmgr weaver-forge bulk-validate --fix --report validation-report.json
+        uvmgr weaver-forge bulk-validate --report validation-report.yaml
+    """
+    add_span_attributes(**{
+        "weaver_forge.operation": "bulk_validate",
+        "weaver_forge.templates": template_names,
+        "weaver_forge.fix_issues": fix_issues,
+    })
+    
+    if template_names:
+        console.print(f"🔍 [bold cyan]Bulk Validating {len(template_names)} Templates[/bold cyan]")
+        console.print(f"📋 Templates: {', '.join(template_names)}")
+    else:
+        console.print(f"🔍 [bold cyan]Bulk Validating All Templates[/bold cyan]")
+    
+    if fix_issues:
+        console.print(f"🔧 Auto-fix: enabled")
+    if output_report:
+        console.print(f"📄 Report: {output_report}")
+    
+    try:
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TimeElapsedColumn(),
+            console=console,
+        ) as progress:
+            
+            # Step 1: Bulk validation
+            task1 = progress.add_task("Validating templates...", total=1)
+            
+            validation_result = validate_bulk_templates(
+                template_names=template_names,
+                fix_issues=fix_issues,
+                output_report=output_report
+            )
+            
+            progress.advance(task1)
+        
+        # Display bulk validation results
+        _display_bulk_validation_results(validation_result)
+        
+        add_span_event("weaver_forge.bulk_validated", {
+            "total_templates": validation_result["total_templates"],
+            "total_issues": validation_result["total_issues"],
+            "fixed_issues": validation_result["fixed_issues"],
+        })
+        
+    except Exception as e:
+        record_exception(e)
+        console.print(f"[red]❌ Bulk validation failed: {e}[/red]")
+        raise typer.Exit(1)
+
+
 def _display_init_summary(init_result: Dict[str, Any]):
     """Display initialization summary."""
     console.print("\n✅ [bold green]Weaver Forge Initialized Successfully[/bold green]")
@@ -1086,4 +1583,180 @@ def _display_status_table(status_info: Dict[str, Any], detailed: bool, include_m
             else:
                 metrics_table.add_row(key, str(value))
         
-        console.print(metrics_table) 
+        console.print(metrics_table)
+
+
+def _display_bulk_generation_results(bulk_result: Dict[str, Any], dry_run: bool):
+    """Display bulk generation results."""
+    console.print(f"\n📊 [bold]Bulk Generation Results[/bold]")
+    
+    # Summary table
+    summary_table = Table(title="Generation Summary")
+    summary_table.add_column("Metric", style="cyan")
+    summary_table.add_column("Value", style="green")
+    
+    summary_table.add_row("Total Items", str(bulk_result["total_specs"]))
+    summary_table.add_row("Successful", str(bulk_result["successful"]))
+    summary_table.add_row("Failed", str(bulk_result["failed"]))
+    summary_table.add_row("Success Rate", f"{bulk_result['success_rate']:.1f}%")
+    summary_table.add_row("Total Files", str(bulk_result["total_files"]))
+    summary_table.add_row("Duration", f"{bulk_result['duration']:.2f}s")
+    
+    console.print(summary_table)
+    
+    # Show errors if any
+    if bulk_result["errors"]:
+        console.print(f"\n❌ [bold red]Errors ({len(bulk_result['errors'])}):[/bold red]")
+        for error in bulk_result["errors"][:5]:  # Show first 5 errors
+            console.print(f"   • {error}")
+        if len(bulk_result["errors"]) > 5:
+            console.print(f"   ... and {len(bulk_result['errors']) - 5} more errors")
+    
+    # Show individual results
+    if bulk_result["results"]:
+        console.print(f"\n📁 [bold]Generated Files:[/bold]")
+        for result in bulk_result["results"][:3]:  # Show first 3 results
+            if result.get("files"):
+                for file_info in result["files"][:2]:  # Show first 2 files per result
+                    status = "👀 Would create" if dry_run else "✅ Created"
+                    console.print(f"   {status}: {file_info['path']}")
+        if len(bulk_result["results"]) > 3:
+            console.print(f"   ... and {len(bulk_result['results']) - 3} more results")
+
+
+def _display_bulk_scaffold_results(bulk_result: Dict[str, Any], dry_run: bool):
+    """Display bulk scaffold results."""
+    console.print(f"\n📊 [bold]Bulk Scaffold Results[/bold]")
+    
+    # Summary table
+    summary_table = Table(title="Scaffold Summary")
+    summary_table.add_column("Metric", style="cyan")
+    summary_table.add_column("Value", style="green")
+    
+    summary_table.add_row("Total Scaffolds", str(bulk_result["total_scaffolds"]))
+    summary_table.add_row("Successful", str(bulk_result["successful"]))
+    summary_table.add_row("Failed", str(bulk_result["failed"]))
+    summary_table.add_row("Success Rate", f"{bulk_result['success_rate']:.1f}%")
+    summary_table.add_row("Total Files", str(bulk_result["total_files"]))
+    summary_table.add_row("Duration", f"{bulk_result['duration']:.2f}s")
+    
+    console.print(summary_table)
+    
+    # Show errors if any
+    if bulk_result["errors"]:
+        console.print(f"\n❌ [bold red]Errors ({len(bulk_result['errors'])}):[/bold red]")
+        for error in bulk_result["errors"][:5]:
+            console.print(f"   • {error}")
+        if len(bulk_result["errors"]) > 5:
+            console.print(f"   ... and {len(bulk_result['errors']) - 5} more errors")
+    
+    # Show individual results
+    if bulk_result["results"]:
+        console.print(f"\n📁 [bold]Generated Scaffolds:[/bold]")
+        for result in bulk_result["results"][:3]:
+            if result.get("files"):
+                for file_info in result["files"][:2]:
+                    status = "👀 Would create" if dry_run else "✅ Created"
+                    console.print(f"   {status}: {file_info['path']}")
+        if len(bulk_result["results"]) > 3:
+            console.print(f"   ... and {len(bulk_result['results']) - 3} more results")
+
+
+def _display_batch_results(batch_result: Dict[str, Any], dry_run: bool):
+    """Display batch generation results."""
+    console.print(f"\n📊 [bold]Batch Generation Results[/bold]")
+    
+    # Summary table
+    summary_table = Table(title="Batch Summary")
+    summary_table.add_column("Metric", style="cyan")
+    summary_table.add_column("Value", style="green")
+    
+    summary_table.add_row("Batch File", batch_result["batch_file"])
+    summary_table.add_row("Total Files", str(batch_result["total_files"]))
+    summary_table.add_row("Total Errors", str(batch_result["total_errors"]))
+    summary_table.add_row("Duration", f"{batch_result['total_duration']:.2f}s")
+    
+    console.print(summary_table)
+    
+    # Show generation results
+    if batch_result["generations"]:
+        gen_result = batch_result["generations"]
+        console.print(f"\n📝 [bold]Template Generations:[/bold]")
+        console.print(f"   • Items: {gen_result['total_specs']}")
+        console.print(f"   • Successful: {gen_result['successful']}")
+        console.print(f"   • Failed: {gen_result['failed']}")
+        console.print(f"   • Files: {gen_result['total_files']}")
+    
+    # Show scaffold results
+    if batch_result["scaffolds"]:
+        scaffold_result = batch_result["scaffolds"]
+        console.print(f"\n🏗️ [bold]Scaffolds:[/bold]")
+        console.print(f"   • Projects: {scaffold_result['total_scaffolds']}")
+        console.print(f"   • Successful: {scaffold_result['successful']}")
+        console.print(f"   • Failed: {scaffold_result['failed']}")
+        console.print(f"   • Files: {scaffold_result['total_files']}")
+
+
+def _display_bulk_template_results(bulk_result: Dict[str, Any]):
+    """Display bulk template creation results."""
+    console.print(f"\n📊 [bold]Bulk Template Creation Results[/bold]")
+    
+    # Summary table
+    summary_table = Table(title="Template Creation Summary")
+    summary_table.add_column("Metric", style="cyan")
+    summary_table.add_column("Value", style="green")
+    
+    summary_table.add_row("Total Templates", str(bulk_result["total_templates"]))
+    summary_table.add_row("Successful", str(bulk_result["successful"]))
+    summary_table.add_row("Failed", str(bulk_result["failed"]))
+    summary_table.add_row("Success Rate", f"{bulk_result['success_rate']:.1f}%")
+    summary_table.add_row("Duration", f"{bulk_result['duration']:.2f}s")
+    
+    console.print(summary_table)
+    
+    # Show errors if any
+    if bulk_result["errors"]:
+        console.print(f"\n❌ [bold red]Errors ({len(bulk_result['errors'])}):[/bold red]")
+        for error in bulk_result["errors"][:5]:
+            console.print(f"   • {error}")
+        if len(bulk_result["errors"]) > 5:
+            console.print(f"   ... and {len(bulk_result['errors']) - 5} more errors")
+    
+    # Show individual results
+    if bulk_result["results"]:
+        console.print(f"\n📁 [bold]Created Templates:[/bold]")
+        for result in bulk_result["results"][:3]:
+            if result.get("name"):
+                console.print(f"   ✅ {result['name']} ({result['type']})")
+        if len(bulk_result["results"]) > 3:
+            console.print(f"   ... and {len(bulk_result['results']) - 3} more templates")
+
+
+def _display_bulk_validation_results(validation_result: Dict[str, Any]):
+    """Display bulk validation results."""
+    console.print(f"\n📊 [bold]Bulk Validation Results[/bold]")
+    
+    # Summary table
+    summary_table = Table(title="Validation Summary")
+    summary_table.add_column("Metric", style="cyan")
+    summary_table.add_column("Value", style="green")
+    
+    summary_table.add_row("Total Templates", str(validation_result["total_templates"]))
+    summary_table.add_row("With Issues", str(validation_result["templates_with_issues"]))
+    summary_table.add_row("Total Issues", str(validation_result["total_issues"]))
+    summary_table.add_row("Fixed Issues", str(validation_result["fixed_issues"]))
+    summary_table.add_row("Success Rate", f"{validation_result['success_rate']:.1f}%")
+    summary_table.add_row("Duration", f"{validation_result['duration']:.2f}s")
+    
+    console.print(summary_table)
+    
+    # Show validation results
+    if validation_result["results"]:
+        console.print(f"\n🔍 [bold]Template Validation Details:[/bold]")
+        for result in validation_result["results"][:5]:
+            if result.get("issue_count", 0) > 0:
+                console.print(f"   ⚠️  {result['template']}: {result['issue_count']} issues")
+            else:
+                console.print(f"   ✅ {result['template']}: No issues")
+        if len(validation_result["results"]) > 5:
+            console.print(f"   ... and {len(validation_result['results']) - 5} more templates") 

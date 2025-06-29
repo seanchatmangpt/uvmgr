@@ -1,0 +1,122 @@
+# Template Specifications for Weaver Forge Bulk Creation
+# This file defines multiple templates to be created in bulk
+
+- name: react-hook
+  type: custom
+  description: "Custom React hook template with TypeScript support"
+  parameters:
+    typescript: true
+    testing: true
+    documentation: true
+
+- name: redux-slice
+  type: custom
+  description: "Redux toolkit slice template with async thunks"
+  parameters:
+    typescript: true
+    async_thunks: true
+    devtools: true
+
+- name: graphql-resolver
+  type: api
+  description: "GraphQL resolver template with validation"
+  parameters:
+    framework: apollo
+    validation: true
+    authentication: true
+
+- name: docker-service
+  type: workflow
+  description: "Docker service template with multi-stage builds"
+  parameters:
+    multi_stage: true
+    health_check: true
+    volumes: true
+
+- name: jest-test
+  type: test
+  description: "Jest test template with mocking utilities"
+  parameters:
+    framework: jest
+    mocking: true
+    coverage: true
+
+- name: storybook-component
+  type: documentation
+  description: "Storybook component template with stories"
+  parameters:
+    framework: storybook
+    stories: true
+    controls: true
+
+- name: express-middleware
+  type: api
+  description: "Express middleware template with error handling"
+  parameters:
+    framework: express
+    error_handling: true
+    validation: true
+
+- name: python-class
+  type: custom
+  description: "Python class template with type hints"
+  parameters:
+    type_hints: true
+    docstrings: true
+    testing: true
+
+- name: github-action
+  type: workflow
+  description: "GitHub Action template with CI/CD"
+  parameters:
+    platform: github
+    ci_cd: true
+    testing: true
+
+- name: terraform-module
+  type: workflow
+  description: "Terraform module template with variables"
+  parameters:
+    platform: terraform
+    variables: true
+    outputs: true
+
+- name: kubernetes-deployment
+  type: workflow
+  description: "Kubernetes deployment template with services"
+  parameters:
+    platform: kubernetes
+    services: true
+    ingress: true
+
+- name: webpack-config
+  type: custom
+  description: "Webpack configuration template"
+  parameters:
+    bundler: webpack
+    optimization: true
+    dev_server: true
+
+- name: eslint-config
+  type: custom
+  description: "ESLint configuration template"
+  parameters:
+    linter: eslint
+    typescript: true
+    react: true
+
+- name: postgres-migration
+  type: api
+  description: "PostgreSQL migration template"
+  parameters:
+    database: postgres
+    up_down: true
+    validation: true
+
+- name: redis-cache
+  type: api
+  description: "Redis cache service template"
+  parameters:
+    cache: redis
+    clustering: true
+    persistence: true 

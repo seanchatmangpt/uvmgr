@@ -157,8 +157,9 @@ def init_workspace(
                     enable_8020=enable_8020
                 )
                 
-                if not result.success:
-                    console.print(f"[red]❌ Workspace initialization failed: {result.error}[/red]")
+                # WorkspaceInfo doesn't have success attribute, check if path exists
+                if not result.path.exists():
+                    console.print(f"[red]❌ Workspace initialization failed: path not created[/red]")
                     raise typer.Exit(1)
                 
                 # Weaver Forge integration
@@ -180,7 +181,12 @@ def init_workspace(
             console.print("[green]✅ Terraform workspace initialized successfully[/green]")
             
             # Display workspace info
-            _display_workspace_info(result.workspace_info)
+            # Convert dataclass to dict for display
+            from dataclasses import asdict
+            workspace_dict = asdict(result)
+            # Update key names to match expected format
+            workspace_dict['8020_enabled'] = workspace_dict.pop('enable_8020', False)
+            _display_workspace_info(workspace_dict)
             
             add_span_event("terraform.workspace.initialized", {
                 "workspace_path": str(workspace_path),

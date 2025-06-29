@@ -1,0 +1,52 @@
+{
+  "validation_type": "end_to_end_external",
+  "timestamp": "2025-06-29T03:28:35.260965Z",
+  "uvmgr_version": "uvmgr 0.0.0",
+  "projects": [
+    {
+      "project": "uvmgr",
+      "path": "/Users/sac/dev/uvmgr",
+      "timestamp": "2025-06-29T03:28:33.963781Z",
+      "tests": {
+        "deps": {
+          "status": "passed",
+          "command": "uvmgr deps list"
+        },
+        "lint": {
+          "status": "failed",
+          "command": "uvmgr lint check",
+          "error": "$ ruff check .\n\u274c Ruff violations found\nwarning: `PGH002` has been remapped to `G010`.\nwarning: The top-level linter settings are deprecated in favour of their counterparts in the `lint` section. Pleas"
+        },
+        "cache": {
+          "status": "failed",
+          "command": "uvmgr cache info",
+          "error": "Usage: uvmgr cache [OPTIONS] COMMAND [ARGS]...\nTry 'uvmgr cache --help' for help.\n\u256d\u2500 Error \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256e\n\u2502 No such command 'info'.            "
+        },
+        "otel": {
+          "status": "passed",
+          "command": "uvmgr otel validate"
+        },
+        "build": {
+          "status": "ready",
+          "note": "build config found"
+        }
+      },
+      "summary": {
+        "total_tests": 4,
+        "passed_tests": 2,
+        "success_rate": 50.0
+      },
+      "status": "PARTIAL"
+    },
+    {
+      "status": "NOT_FOUND",
+      "project": "flask"
+    }
+  ],
+  "summary": {
+    "total_projects": 2,
+    "passed_projects": 0,
+    "partial_projects": 1,
+    "failed_projects": 1
+  }
+}

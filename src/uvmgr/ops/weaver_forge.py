@@ -1482,4 +1482,449 @@ def _get_weaver_forge_metrics() -> Dict[str, Any]:
         "average_generation_time": 0.0,
         "most_used_template": "component",
         "templates_created": 0,
-    } 
+    }
+
+
+def generate_bulk_from_templates(
+    generation_specs: List[Dict[str, Any]],
+    output_path: Optional[Path] = None,
+    parallel: bool = False,
+    dry_run: bool = False
+) -> Dict[str, Any]:
+    """
+    Generate multiple items from templates in bulk.
+    
+    Args:
+        generation_specs: List of generation specifications
+        output_path: Base output path for all generations
+        parallel: Whether to run generations in parallel
+        dry_run: Show what would be generated without creating files
+        
+    Returns:
+        Bulk generation result with summary and individual results
+    """
+    with span("weaver_forge.bulk_generate", attributes={
+        "specs_count": len(generation_specs),
+        "parallel": parallel,
+        "dry_run": dry_run
+    }) as current_span:
+        
+        start_time = time.time()
+        
+        if output_path is None:
+            output_path = Path.cwd()
+        
+        results = []
+        errors = []
+        total_files = 0
+        
+        if parallel:
+            # Parallel generation using asyncio
+            async def _generate_parallel():
+                tasks = []
+                for spec in generation_specs:
+                    task = asyncio.create_task(_generate_single_async(spec, output_path, dry_run))
+                    tasks.append(task)
+                
+                return await asyncio.gather(*tasks, return_exceptions=True)
+            
+            # Run parallel generation
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                parallel_results = loop.run_until_complete(_generate_parallel())
+                for result in parallel_results:
+                    if isinstance(result, Exception):
+                        errors.append(str(result))
+                    else:
+                        results.append(result)
+                        total_files += len(result.get("files", []))
+            finally:
+                loop.close()
+        else:
+            # Sequential generation
+            for spec in generation_specs:
+                try:
+                    result = generate_from_template(
+                        template_name=spec["template"],
+                        name=spec["name"],
+                        output_path=output_path / spec.get("subdir", ""),
+                        parameters=spec.get("parameters", {}),
+                        interactive=False,
+                        dry_run=dry_run
+                    )
+                    results.append(result)
+                    total_files += len(result.get("files", []))
+                except Exception as e:
+                    error_msg = f"Error generating {spec.get('template', 'unknown')} {spec.get('name', 'unknown')}: {e}"
+                    errors.append(error_msg)
+                    record_exception(e)
+        
+        duration = time.time() - start_time
+        
+        # Calculate success rate
+        success_count = len([r for r in results if r.get("success", False)])
+        success_rate = (success_count / len(generation_specs)) * 100 if generation_specs else 0
+        
+        add_span_event("weaver_forge.bulk_generated", {
+            "total_specs": len(generation_specs),
+            "successful": success_count,
+            "failed": len(errors),
+            "total_files": total_files,
+            "success_rate": success_rate,
+        })
+        
+        return {
+            "total_specs": len(generation_specs),
+            "successful": success_count,
+            "failed": len(errors),
+            "success_rate": success_rate,
+            "total_files": total_files,
+            "duration": duration,
+            "results": results,
+            "errors": errors,
+            "parallel": parallel,
+            "dry_run": dry_run
+        }
+
+
+async def _generate_single_async(spec: Dict[str, Any], output_path: Path, dry_run: bool) -> Dict[str, Any]:
+    """Generate a single item asynchronously."""
+    return generate_from_template(
+        template_name=spec["template"],
+        name=spec["name"],
+        output_path=output_path / spec.get("subdir", ""),
+        parameters=spec.get("parameters", {}),
+        interactive=False,
+        dry_run=dry_run
+    )
+
+
+def generate_bulk_scaffolds(
+    scaffold_specs: List[Dict[str, Any]],
+    output_path: Optional[Path] = None,
+    parallel: bool = False,
+    dry_run: bool = False
+) -> Dict[str, Any]:
+    """
+    Generate multiple project scaffolds in bulk.
+    
+    Args:
+        scaffold_specs: List of scaffold specifications
+        output_path: Base output path for all scaffolds
+        parallel: Whether to run scaffold generation in parallel
+        dry_run: Show what would be generated without creating files
+        
+    Returns:
+        Bulk scaffold generation result
+    """
+    with span("weaver_forge.bulk_scaffold", attributes={
+        "scaffolds_count": len(scaffold_specs),
+        "parallel": parallel,
+        "dry_run": dry_run
+    }) as current_span:
+        
+        start_time = time.time()
+        
+        if output_path is None:
+            output_path = Path.cwd()
+        
+        results = []
+        errors = []
+        total_files = 0
+        
+        for spec in scaffold_specs:
+            try:
+                result = create_scaffold(
+                    scaffold_type=spec["type"],
+                    project_name=spec["name"],
+                    output_path=output_path / spec.get("subdir", spec["name"]),
+                    parameters=spec.get("parameters", {}),
+                    interactive=False
+                )
+                results.append(result)
+                total_files += len(result.get("files", []))
+            except Exception as e:
+                error_msg = f"Error creating scaffold {spec.get('type', 'unknown')} {spec.get('name', 'unknown')}: {e}"
+                errors.append(error_msg)
+                record_exception(e)
+        
+        duration = time.time() - start_time
+        
+        # Calculate success rate
+        success_count = len([r for r in results if r.get("success", False)])
+        success_rate = (success_count / len(scaffold_specs)) * 100 if scaffold_specs else 0
+        
+        add_span_event("weaver_forge.bulk_scaffolded", {
+            "total_scaffolds": len(scaffold_specs),
+            "successful": success_count,
+            "failed": len(errors),
+            "total_files": total_files,
+            "success_rate": success_rate,
+        })
+        
+        return {
+            "total_scaffolds": len(scaffold_specs),
+            "successful": success_count,
+            "failed": len(errors),
+            "success_rate": success_rate,
+            "total_files": total_files,
+            "duration": duration,
+            "results": results,
+            "errors": errors,
+            "parallel": parallel,
+            "dry_run": dry_run
+        }
+
+
+def generate_from_batch_file(
+    batch_file: Path,
+    output_path: Optional[Path] = None,
+    parallel: bool = False,
+    dry_run: bool = False
+) -> Dict[str, Any]:
+    """
+    Generate from a batch specification file (JSON/YAML).
+    
+    Args:
+        batch_file: Path to batch specification file
+        output_path: Base output path for generations
+        parallel: Whether to run generations in parallel
+        dry_run: Show what would be generated without creating files
+        
+    Returns:
+        Batch generation result
+    """
+    with span("weaver_forge.batch_file_generate", attributes={
+        "batch_file": str(batch_file),
+        "parallel": parallel,
+        "dry_run": dry_run
+    }) as current_span:
+        
+        start_time = time.time()
+        
+        if not batch_file.exists():
+            raise WeaverForgeError(f"Batch file not found: {batch_file}")
+        
+        # Load batch specification
+        try:
+            with open(batch_file, 'r') as f:
+                if batch_file.suffix.lower() in ['.yaml', '.yml']:
+                    batch_spec = yaml.safe_load(f)
+                else:
+                    batch_spec = json.load(f)
+        except Exception as e:
+            raise WeaverForgeError(f"Failed to load batch file: {e}")
+        
+        # Extract generation specifications
+        generation_specs = batch_spec.get("generations", [])
+        scaffold_specs = batch_spec.get("scaffolds", [])
+        
+        results = {
+            "batch_file": str(batch_file),
+            "generations": {},
+            "scaffolds": {},
+            "total_duration": 0,
+            "total_files": 0,
+            "total_errors": 0
+        }
+        
+        # Generate from templates
+        if generation_specs:
+            gen_result = generate_bulk_from_templates(
+                generation_specs=generation_specs,
+                output_path=output_path,
+                parallel=parallel,
+                dry_run=dry_run
+            )
+            results["generations"] = gen_result
+            results["total_files"] += gen_result.get("total_files", 0)
+            results["total_errors"] += len(gen_result.get("errors", []))
+        
+        # Generate scaffolds
+        if scaffold_specs:
+            scaffold_result = generate_bulk_scaffolds(
+                scaffold_specs=scaffold_specs,
+                output_path=output_path,
+                parallel=parallel,
+                dry_run=dry_run
+            )
+            results["scaffolds"] = scaffold_result
+            results["total_files"] += scaffold_result.get("total_files", 0)
+            results["total_errors"] += len(scaffold_result.get("errors", []))
+        
+        results["total_duration"] = time.time() - start_time
+        
+        add_span_event("weaver_forge.batch_file_completed", {
+            "batch_file": str(batch_file),
+            "total_files": results["total_files"],
+            "total_errors": results["total_errors"],
+        })
+        
+        return results
+
+
+def create_bulk_template(
+    template_specs: List[Dict[str, Any]],
+    output_dir: Optional[Path] = None,
+    interactive: bool = False
+) -> Dict[str, Any]:
+    """
+    Create multiple templates in bulk.
+    
+    Args:
+        template_specs: List of template specifications
+        output_dir: Output directory for templates
+        interactive: Whether to use interactive mode
+        
+    Returns:
+        Bulk template creation result
+    """
+    with span("weaver_forge.bulk_create_templates", attributes={
+        "templates_count": len(template_specs),
+        "interactive": interactive
+    }) as current_span:
+        
+        start_time = time.time()
+        
+        if output_dir is None:
+            output_dir = _find_weaver_forge_path() / "templates"
+        
+        results = []
+        errors = []
+        
+        for spec in template_specs:
+            try:
+                result = create_template(
+                    template_name=spec["name"],
+                    template_type=spec["type"],
+                    description=spec.get("description"),
+                    interactive=interactive,
+                    output_dir=output_dir
+                )
+                results.append(result)
+            except Exception as e:
+                error_msg = f"Error creating template {spec.get('name', 'unknown')}: {e}"
+                errors.append(error_msg)
+                record_exception(e)
+        
+        duration = time.time() - start_time
+        
+        # Calculate success rate
+        success_count = len([r for r in results if r.get("name")])
+        success_rate = (success_count / len(template_specs)) * 100 if template_specs else 0
+        
+        add_span_event("weaver_forge.bulk_templates_created", {
+            "total_templates": len(template_specs),
+            "successful": success_count,
+            "failed": len(errors),
+            "success_rate": success_rate,
+        })
+        
+        return {
+            "total_templates": len(template_specs),
+            "successful": success_count,
+            "failed": len(errors),
+            "success_rate": success_rate,
+            "duration": duration,
+            "results": results,
+            "errors": errors
+        }
+
+
+def validate_bulk_templates(
+    template_names: Optional[List[str]] = None,
+    fix_issues: bool = False,
+    output_report: Optional[Path] = None
+) -> Dict[str, Any]:
+    """
+    Validate multiple templates in bulk.
+    
+    Args:
+        template_names: List of template names to validate (None for all)
+        fix_issues: Whether to automatically fix validation issues
+        output_report: Path to output validation report
+        
+    Returns:
+        Bulk validation result
+    """
+    with span("weaver_forge.bulk_validate", attributes={
+        "templates_count": len(template_names) if template_names else "all",
+        "fix_issues": fix_issues
+    }) as current_span:
+        
+        start_time = time.time()
+        
+        weaver_forge_path = _find_weaver_forge_path()
+        templates_path = weaver_forge_path / "templates"
+        
+        if not templates_path.exists():
+            return {
+                "success": False,
+                "error": "Templates directory not found",
+                "duration": time.time() - start_time
+            }
+        
+        # Get templates to validate
+        if template_names:
+            templates_to_validate = [templates_path / name for name in template_names]
+        else:
+            templates_to_validate = [d for d in templates_path.iterdir() if d.is_dir()]
+        
+        results = []
+        total_issues = 0
+        fixed_issues = 0
+        
+        for template_path in templates_to_validate:
+            try:
+                validation_result = _validate_single_template(template_path)
+                results.append({
+                    "template": template_path.name,
+                    "issues": validation_result,
+                    "issue_count": len(validation_result)
+                })
+                total_issues += len(validation_result)
+                
+                # Fix issues if requested
+                if fix_issues and validation_result:
+                    fixed_result = _apply_template_fixes(template_path, validation_result)
+                    fixed_issues += len(fixed_result)
+            except Exception as e:
+                results.append({
+                    "template": template_path.name,
+                    "error": str(e),
+                    "issues": [],
+                    "issue_count": 0
+                })
+        
+        duration = time.time() - start_time
+        
+        # Generate summary
+        summary = {
+            "total_templates": len(templates_to_validate),
+            "templates_with_issues": len([r for r in results if r.get("issue_count", 0) > 0]),
+            "total_issues": total_issues,
+            "fixed_issues": fixed_issues,
+            "success_rate": ((len(templates_to_validate) - len([r for r in results if r.get("error")])) / len(templates_to_validate)) * 100 if templates_to_validate else 0,
+            "duration": duration,
+            "results": results
+        }
+        
+        # Output report if requested
+        if output_report:
+            try:
+                with open(output_report, 'w') as f:
+                    if output_report.suffix.lower() in ['.yaml', '.yml']:
+                        yaml.dump(summary, f, default_flow_style=False)
+                    else:
+                        json.dump(summary, f, indent=2)
+            except Exception as e:
+                summary["report_error"] = str(e)
+        
+        add_span_event("weaver_forge.bulk_validated", {
+            "total_templates": len(templates_to_validate),
+            "total_issues": total_issues,
+            "fixed_issues": fixed_issues,
+        })
+        
+        return summary 
