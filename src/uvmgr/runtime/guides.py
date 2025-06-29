@@ -638,62 +638,8 @@ def _save_pin_config(config: Dict[str, Any], project_only: bool) -> None:
 
 def _fetch_remote_catalog() -> Dict[str, Any]:
     """Fetch catalog from remote source."""
-    # In production, this would make an API call or fetch from a git repo
-    # For now, return a mock catalog
-    return {
-        "guides": [
-            {
-                "name": "claude-commands",
-                "category": "commands",
-                "version": "1.0.0",
-                "description": "Essential Claude command shortcuts and templates",
-                "downloads": 1523,
-                "updated": "2024-01-15",
-                "tags": ["claude", "commands", "productivity"],
-                "url": "https://github.com/tokenbender/agent-guides/tree/main/claude-commands",
-            },
-            {
-                "name": "python-patterns",
-                "category": "patterns",
-                "version": "2.1.0",
-                "description": "Python design patterns and best practices",
-                "downloads": 892,
-                "updated": "2024-01-10",
-                "tags": ["python", "patterns", "best-practices"],
-                "url": "https://github.com/tokenbender/agent-guides/tree/main/python-patterns",
-            },
-            {
-                "name": "weaver-templates",
-                "category": "templates",
-                "version": "1.5.2",
-                "description": "Weaver Forge semantic convention templates",
-                "downloads": 567,
-                "updated": "2024-01-08",
-                "tags": ["weaver", "otel", "templates"],
-                "url": "https://github.com/tokenbender/agent-guides/tree/main/weaver-templates",
-            },
-            {
-                "name": "react-components",
-                "category": "components",
-                "version": "3.0.1",
-                "description": "Reusable React component library",
-                "downloads": 2341,
-                "updated": "2024-01-12",
-                "tags": ["react", "components", "ui"],
-                "url": "https://github.com/tokenbender/agent-guides/tree/main/react-components",
-            },
-            {
-                "name": "testing-strategies",
-                "category": "testing",
-                "version": "1.2.0",
-                "description": "Comprehensive testing strategies and examples",
-                "downloads": 423,
-                "updated": "2024-01-05",
-                "tags": ["testing", "qa", "automation"],
-                "url": "https://github.com/tokenbender/agent-guides/tree/main/testing-strategies",
-            },
-        ],
-    }
+    # Remote catalog fetching not implemented
+    return NotImplemented
 
 
 def _get_cached_guide(name: str, version: str) -> Optional[Dict[str, Any]]:
@@ -737,44 +683,8 @@ def _fetch_guide_info(name: str, version: str) -> Optional[Dict[str, Any]]:
 
 def _download_guide(guide_info: Dict[str, Any], cache_dir: Path, verify: bool) -> Path:
     """Download guide from remote repository."""
-    guide_dir = cache_dir / guide_info["name"] / guide_info["version"]
-    guide_dir.mkdir(parents=True, exist_ok=True)
-    
-    # In production, this would:
-    # 1. Clone or download from the URL
-    # 2. Verify checksums if enabled
-    # 3. Extract to the guide directory
-    
-    # For now, create a mock guide structure
-    readme_content = f"""# {guide_info['name']}
-
-Version: {guide_info['version']}
-Category: {guide_info['category']}
-
-This is a mock guide for demonstration purposes.
-"""
-    
-    (guide_dir / "README.md").write_text(readme_content)
-    
-    # Create guide.json
-    guide_json = {
-        "name": guide_info["name"],
-        "version": guide_info["version"],
-        "description": f"Mock guide for {guide_info['name']}",
-        "category": guide_info["category"],
-        "dependencies": [],
-    }
-    
-    with open(guide_dir / "guide.json", 'w') as f:
-        json.dump(guide_json, f, indent=2)
-    
-    # Create example content based on category
-    if guide_info["category"] == "commands":
-        commands_dir = guide_dir / "commands"
-        commands_dir.mkdir(exist_ok=True)
-        (commands_dir / "example.md").write_text("# Example Command\n\nCommand content here.")
-    
-    return guide_dir
+    # Guide downloading not implemented
+    return NotImplemented
 
 
 def _extract_guide_metadata(guide_path: Path) -> Dict[str, Any]:

@@ -163,20 +163,8 @@ def extract_weaver_data() -> Dict[str, Any]:
     """Extract basic Weaver Forge telemetry data."""
     with span("mermaid.runtime.extract_weaver"):
         try:
-            # This is a placeholder implementation
-            # In a real implementation, this would:
-            # 1. Connect to OTEL collector
-            # 2. Query recent telemetry data
-            # 3. Extract service topology and traces
-            # 4. Format for diagram generation
-            
-            weaver_data = {
-                "services": [
-                    {"name": "uvmgr-cli", "type": "cli", "instances": 1},
-                    {"name": "uvmgr-ops", "type": "library", "instances": 1},
-                    {"name": "uvmgr-runtime", "type": "library", "instances": 1},
-                ],
-                "dependencies": [
+            # Weaver data collection not yet implemented
+            return NotImplemented
                     {"from": "uvmgr-cli", "to": "uvmgr-ops", "type": "calls"},
                     {"from": "uvmgr-ops", "to": "uvmgr-runtime", "type": "calls"},
                 ],
@@ -1717,8 +1705,8 @@ def analyze_diagram_layout(mermaid_code: str) -> Dict[str, Any]:
                 "has_subgraphs": has_subgraphs,
                 "has_styling": has_styling,
                 "has_classes": has_classes,
-                "balance_score": 7.0,  # Placeholder
-                "symmetry_score": 6.5,  # Placeholder
+                "balance_score": None,  # Balance scoring not yet implemented
+                "symmetry_score": None,  # Symmetry scoring not yet implemented
                 "readability_score": layout_score,
                 "recommendations": _generate_layout_recommendations(layout_score, has_subgraphs, has_styling),
             }

@@ -65,23 +65,8 @@ class BpmnWorkflowAgent:
                                        bpmn_file: Path,
                                        inputs: Dict[str, Any] = None,
                                        workflow_id: Optional[str] = None) -> WorkflowExecutionResult:
-        """Mock workflow execution for testing."""
-        workflow_id = workflow_id or f"test_workflow_{uuid.uuid4().hex[:8]}"
-        start_time = time.time()
-        
-        result = WorkflowExecutionResult(
-            workflow_id=workflow_id,
-            status=WorkflowStatus.COMPLETED,
-            start_time=start_time,
-            end_time=time.time(),
-            duration=0.1,
-            tasks_executed=1,
-            tasks_failed=0,
-            outputs={"test": "success"}
-        )
-        
-        self.execution_history.append(result)
-        return result
+        """Execute workflow from BPMN file."""
+        return NotImplemented
 
 
 # Global workflow agent instance

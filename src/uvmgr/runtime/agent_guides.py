@@ -345,31 +345,8 @@ def search_conversations(query: str, limit: int = 10,
                  "search.query": query,
                  "search.limit": limit}):
         
-        # Simplified conversation search
-        # In practice, this would index and search actual conversation data
-        
-        mock_results = []
-        
-        for i in range(min(limit, 5)):  # Generate up to 5 mock results
-            result = SearchResult(
-                conversation_id=f"conv_{i+1}",
-                relevance_score=0.9 - (i * 0.1),
-                snippet=f"Conversation snippet containing '{query}' - result {i+1}",
-                timestamp=f"2024-{6+i:02d}-{15+i:02d}T10:00:00Z",
-                source=source or "claude"
-            )
-            mock_results.append(result)
-        
-        add_span_attributes(**{
-            "search.results_count": len(mock_results),
-            "search.query_length": len(query)
-        })
-        
-        metric_counter("agent_guides.searches")(1, {
-            "source": source or "all"
-        })
-        
-        return mock_results
+        # Conversation search not implemented
+        return NotImplemented
 
 
 @instrument_command("agent_guides_create_command")
