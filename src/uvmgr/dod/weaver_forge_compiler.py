@@ -278,8 +278,7 @@ class WeaverForgeCompiler:
     def _compile_workflow(self, name: str, workflow_def: str) -> BpmnWorkflow:
         """Compile a BPMN workflow for complex DoD validations."""
         # This would integrate with SpiffWorkflow for complex multi-step validations
-        # For now, return a placeholder
-        return BpmnWorkflow(name=name, definition=workflow_def)
+        return NotImplemented
     
     def _register_builtin_validators(self):
         """Register built-in validation functions."""
@@ -309,47 +308,47 @@ class WeaverForgeCompiler:
         """Validate code lint score."""
         # Run linter and extract score
         # This would integrate with ruff, mypy, etc.
-        return 9.8  # Placeholder
+        return NotImplemented
     
     async def _validate_test_coverage(self, project_path: Path) -> float:
         """Validate test coverage percentage."""
         # Run coverage tool and extract percentage
-        return 85.5  # Placeholder
+        return NotImplemented
     
     async def _validate_complexity(self, project_path: Path) -> float:
         """Validate code complexity metrics."""
         # Run complexity analysis
-        return 8.2  # Placeholder
+        return NotImplemented
     
     async def _validate_vulnerabilities(self, project_path: Path) -> int:
         """Validate security vulnerabilities."""
         # Run security scanner
-        return 0  # Placeholder
+        return NotImplemented
     
     async def _validate_secrets(self, project_path: Path) -> int:
         """Validate no secrets in code."""
         # Run secrets scanner
-        return 0  # Placeholder
+        return NotImplemented
     
     async def _validate_api_docs(self, project_path: Path) -> float:
         """Validate API documentation coverage."""
         # Analyze API documentation
-        return 100.0  # Placeholder
+        return NotImplemented
     
     async def _validate_changelog(self, project_path: Path) -> bool:
         """Validate changelog is updated."""
         # Check changelog freshness
-        return True  # Placeholder
+        return NotImplemented
     
     async def _validate_monitoring(self, project_path: Path) -> bool:
         """Validate monitoring is configured."""
         # Check monitoring setup
-        return True  # Placeholder
+        return NotImplemented
     
     async def _validate_alerts(self, project_path: Path) -> bool:
         """Validate alerts are configured."""
         # Check alert configuration
-        return True  # Placeholder
+        return NotImplemented
 
 
 class DoDExoskeleton:
