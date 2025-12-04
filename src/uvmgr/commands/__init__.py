@@ -71,52 +71,36 @@ from typing import Final, List
 __all__: Final[list[str]] = [
     # core working commands
     "deps",
-    "build", 
+    "build",
     "tests",
     "cache",
     "lint",
     "otel",
     "guides",
     "worktree",
-    "infodesign", # Information design with DSPy three-layer architecture
-    "mermaid", # Full Mermaid support with Weaver Forge + DSPy (8020 priority)
-    "dod", # Definition of Done automation with Weaver Forge exoskeleton
-    "docs", # 8020 Documentation automation with multi-layered approach
-    # "mcp", # FastMCP server with DSPy integration for AI-powered analysis - DISABLED: DSPy init issues
-    # "exponential", # Exponential technology capabilities - "The Future Is Faster Than You Think" - DISABLED: testing
-    # "democratize", # Democratization platform - Make AI development accessible to everyone - DISABLED: testing
-    
-    # Other commands disabled temporarily due to Callable type issues
-    # "project",  # Project creation and management
-    # "release",  # Version management and releases
-    # "tool",    # Tool management and installation
-    # "index",   # Package index operations
-    # "exec",    # Command execution utilities
-    # "shell",   # Shell integration commands
-    # "serve",   # MCP server for AI integration
-    # "weaver",  # OpenTelemetry Weaver semantic convention tools
-    # "forge",   # 8020 Weaver Forge automation and development workflows
-    # "history", # Command history tracking
-    # "workspace", # Workspace and environment management
-    # "search",    # Advanced search capabilities (code, deps, files, semantic)
-    # "workflow",  # Workflow orchestration and automation
-    # "knowledge", # AI-powered knowledge management
-    # Already enabled above
-    # "ai",
-    # "claude",  # Claude AI integration
-    # "remote",
-    # "agent",
-    # "spiff_otel",  # SpiffWorkflow OTEL integration
-    # "substrate",  # Substrate project integration
-    # "ap_scheduler",
-    # "actions",
-    # Already enabled above
-    # Already enabled above  
-    # Already enabled above
-    "terraform", # Enterprise Terraform support with 8020 Weaver Forge integration
-    # Already enabled above
-    # "documentation", # Technical writing automation with Spiff and DSPy - 80/20 implementation
-    # "dod", # Definition of Done automation with Weaver Forge exoskeleton
+    "infodesign",
+    "mermaid",
+    "dod",
+    "docs",
+
+    # 80/20 unlocked features - high value implementations
+    "search",       # Advanced search (2000+ lines, fully implemented)
+    "agent",        # BPMN workflow execution (2000+ lines)
+    "spiff_otel",   # SpiffWorkflow OTEL integration (1800+ lines)
+
+    "terraform",
+
+    # Disabled: require external fixes
+    # "mcp",          # FastMCP server - needs DSPy init fix
+    # "serve",        # MCP server - same DSPy issue
+    # "ai",           # Needs serve/mcp working
+    # "exponential",  # Testing only
+    # "democratize",  # Testing only
+
+    # Other disabled commands (lower priority for 80/20)
+    # "project", "release", "tool", "index", "exec", "shell", "weaver", "forge",
+    # "history", "workspace", "workflow", "knowledge", "claude", "remote",
+    # "substrate", "ap_scheduler", "actions",
 ]
 
 _PACKAGE_PREFIX = __name__ + "."
