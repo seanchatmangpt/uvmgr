@@ -47,16 +47,33 @@ def _extra_flags() -> list[str]:
     return flags
 
 
-def call(sub_cmd: str, *, capture: bool = False, cwd: Path | None = None) -> str | None:
+def call(sub_cmd: str | list[str], *, capture: bool = False, cwd: Path | None = None) -> str | None:
     """
     Execute `uv <sub_cmd>` and return stdout if *capture* is True.
 
+    Args:
+        sub_cmd: Command as string (for backward compat) or list (preferred for safety).
+                 Lists are passed directly to subprocess without parsing.
+        capture: If True, return stdout; otherwise return None.
+        cwd: Working directory for the command.
+
     Examples
     --------
-    >>> call("add fastapi ruff")  # doctest: +ELLIPSIS
+    >>> call("pip list", capture=True)  # OK - simple read-only command
+    $ uv pip list
+
+    >>> call(["add", "fastapi", "ruff"])  # Preferred - safe from injection
     $ uv add fastapi ruff
     """
-    cmd = ["uv"] + shlex.split(sub_cmd) + _extra_flags()
+    # Convert to list if string (for backward compatibility with read-only commands)
+    if isinstance(sub_cmd, str):
+        # Only allow string for safe, read-only commands with no user input
+        # New code should use list-based calls
+        cmd = ["uv"] + shlex.split(sub_cmd) + _extra_flags()
+    else:
+        # List-based call - SAFE, no shell parsing
+        cmd = ["uv"] + sub_cmd + _extra_flags()
+
     _log.debug("uv call: %s", cmd)
     with span("uv.call", cmd=" ".join(cmd)):
         return run_logged(cmd, capture=capture, cwd=cwd)
@@ -77,8 +94,12 @@ def add(pkgs: list[str], *, dev: bool = False) -> None:
         add_span_event("uv.add.started", {"packages": pkgs, "dev": dev})
 
         try:
-            flags = "--dev" if dev else ""
-            call(f"add {flags} {' '.join(pkgs)}")
+            # Build command as list - SAFE from injection
+            cmd = ["add"]
+            if dev:
+                cmd.append("--dev")
+            cmd.extend(pkgs)
+            call(cmd)
 
             # Record successful metrics for each package
             duration = time.time() - start_time
@@ -110,7 +131,9 @@ def remove(pkgs: list[str]) -> None:
         add_span_event("uv.remove.started", {"packages": pkgs})
 
         try:
-            call(f"remove {' '.join(pkgs)}")
+            # Build command as list - SAFE from injection
+            cmd = ["remove"] + pkgs
+            call(cmd)
 
             # Record successful metrics for each package
             duration = time.time() - start_time
@@ -134,9 +157,11 @@ def remove(pkgs: list[str]) -> None:
 def upgrade(*, all_pkgs: bool = False, pkgs: list[str] | None = None) -> None:
     with span("uv.upgrade", all=all_pkgs, pkgs=pkgs or []):
         if all_pkgs:
-            call("upgrade --all")
+            call(["upgrade", "--all"])
         elif pkgs:
-            call(f"upgrade {' '.join(pkgs)}")
+            # Build command as list - SAFE from injection
+            cmd = ["upgrade"] + pkgs
+            call(cmd)
 
 
 def list_pkgs() -> str:

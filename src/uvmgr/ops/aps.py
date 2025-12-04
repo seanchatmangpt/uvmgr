@@ -68,10 +68,16 @@ def list_jobs() -> list[str]:
 
 
 def _run_cmd(cmd: str) -> None:
-    """Execute a command string."""
+    """Execute a command string safely using shlex parsing instead of shell=True."""
+    import shlex
     import subprocess
 
-    subprocess.run(cmd, shell=True, check=True)
+    # Parse command string safely - prevents shell injection
+    args = shlex.split(cmd)
+    if not args:
+        return
+
+    subprocess.run(args, check=True)
 
 
 @timed
