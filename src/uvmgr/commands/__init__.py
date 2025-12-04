@@ -82,25 +82,23 @@ __all__: Final[list[str]] = [
     "mermaid",
     "dod",
     "docs",
-
-    # 80/20 unlocked features - high value implementations
-    "search",       # Advanced search (2000+ lines, fully implemented)
-    "agent",        # BPMN workflow execution (2000+ lines)
-    "spiff_otel",   # SpiffWorkflow OTEL integration (1800+ lines)
-
     "terraform",
 
-    # Disabled: require external fixes
-    # "mcp",          # FastMCP server - needs DSPy init fix
-    # "serve",        # MCP server - same DSPy issue
-    # "ai",           # Needs serve/mcp working
-    # "exponential",  # Testing only
-    # "democratize",  # Testing only
+    # Disabled: ML/AI/Workflow features removed
+    # "search",       # Removed: AI semantic search (no longer needed)
+    # "agent",        # Removed: BPMN workflow execution
+    # "spiff_otel",   # Removed: SpiffWorkflow OTEL integration
+    # "mcp",          # Removed: MCP server (needs DSPy, fastmcp)
+    # "serve",        # Removed: MCP server
+    # "ai",           # Removed: AI assistance
+    # "claude",       # Removed: Claude integration
+    # "exponential",  # Removed: Exponential tech (testing only)
+    # "democratize",  # Removed: AI democratization (testing only)
 
-    # Other disabled commands (lower priority for 80/20)
+    # Other disabled commands (lower priority)
     # "project", "release", "tool", "index", "exec", "shell", "weaver", "forge",
-    # "history", "workspace", "workflow", "knowledge", "claude", "remote",
-    # "substrate", "ap_scheduler", "actions",
+    # "history", "workspace", "workflow", "knowledge", "remote", "substrate",
+    # "ap_scheduler", "actions",
 ]
 
 _PACKAGE_PREFIX = __name__ + "."
