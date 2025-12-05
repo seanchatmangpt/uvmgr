@@ -41,6 +41,7 @@ def exe(
         else:
             # Build from entry point - create a temporary entry script
             import tempfile
+            import os
 
             with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
                 f.write("""#!/usr/bin/env python
@@ -51,6 +52,8 @@ if __name__ == "__main__":
     app()
 """)
                 entry_script = f.name
+                # Secure temp file permissions - readable/writable only by owner
+                os.chmod(entry_script, 0o600)
 
             args.append(entry_script)
             args.extend(["--name", name])
@@ -165,8 +168,9 @@ if __name__ == "__main__":
 
                 try:
                     os.unlink(entry_script)
-                except:
-                    pass
+                except OSError as e:
+                    # Log cleanup failure but don't block
+                    _log.warning("Failed to clean up temporary entry script %s: %s", entry_script, e)
 
         # Return path to built executable
         if onefile:

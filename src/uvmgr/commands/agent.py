@@ -85,7 +85,18 @@ from uvmgr.core.instrumentation import add_span_attributes, add_span_event, inst
 from uvmgr.core.semconv import WorkflowAttributes, WorkflowOperations
 from uvmgr.core.telemetry import metric_counter, metric_histogram, span
 from uvmgr.ops import agent as agent_ops
-from uvmgr.runtime.agent.spiff import run_bpmn, validate_bpmn_file, get_workflow_stats
+
+# Lazy imports for SpiffWorkflow (optional dependency)
+def _get_spiff_functions():
+    """Import SpiffWorkflow functions on demand."""
+    try:
+        from uvmgr.runtime.agent.spiff import run_bpmn, validate_bpmn_file, get_workflow_stats
+        return run_bpmn, validate_bpmn_file, get_workflow_stats
+    except ImportError as e:
+        raise ImportError(
+            "SpiffWorkflow is required for agent commands. "
+            "Install it with: pip install spiffworkflow"
+        ) from e
 
 console = Console()
 app = typer.Typer(help="Execute BPMN workflows with Spiff engine")
@@ -106,7 +117,14 @@ def run_bpmn_workflow(
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
 ):
     """Run BPMN workflow file until completion with comprehensive OTEL instrumentation."""
-    
+
+    # Lazy load SpiffWorkflow dependencies
+    try:
+        run_bpmn, validate_bpmn_file, _ = _get_spiff_functions()
+    except ImportError as e:
+        console.print(f"[red]Error: {e}[/red]")
+        raise typer.Exit(1)
+
     with span(
         "agent.workflow.execute",
         **{
@@ -183,7 +201,14 @@ def validate_workflow(
     detailed: bool = typer.Option(False, "--detailed", "-d", help="Show detailed validation results"),
 ):
     """Validate BPMN file structure and syntax."""
-    
+
+    # Lazy load SpiffWorkflow dependencies
+    try:
+        _, validate_bpmn_file, _ = _get_spiff_functions()
+    except ImportError as e:
+        console.print(f"[red]Error: {e}[/red]")
+        raise typer.Exit(1)
+
     with span(
         "agent.workflow.validate",
         **{
@@ -254,7 +279,14 @@ def test_workflow(
     export_results: bool = typer.Option(False, "--export", "-e", help="Export test results"),
 ):
     """Test workflow execution with OTEL validation."""
-    
+
+    # Lazy load SpiffWorkflow dependencies
+    try:
+        run_bpmn, validate_bpmn_file, _ = _get_spiff_functions()
+    except ImportError as e:
+        console.print(f"[red]Error: {e}[/red]")
+        raise typer.Exit(1)
+
     with span(
         "agent.workflow.test",
         **{

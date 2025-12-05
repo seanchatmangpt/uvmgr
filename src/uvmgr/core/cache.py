@@ -93,8 +93,13 @@ def cache_hit(cmd: str) -> bool:
         start_time = time.time()
         h = hash_cmd(cmd)
 
-        # Check cache
-        cache_lines = _RUNS.read_text().splitlines() if _RUNS.exists() else []
+        # Check cache safely (TOCTOU fix: use try-except instead of check-then-use)
+        try:
+            cache_lines = _RUNS.read_text().splitlines()
+        except FileNotFoundError:
+            # Cache file doesn't exist yet - no hits possible
+            cache_lines = []
+
         hit = any(h in line for line in cache_lines)
         duration = time.time() - start_time
 
@@ -128,6 +133,19 @@ def store_result(cmd: str) -> None:
         entry = {"k": h, "ts": time.time()}
 
         try:
+            # Prevent DoS via unbounded cache growth (max 10MB)
+            MAX_CACHE_SIZE = 10 * 1024 * 1024  # 10MB
+            try:
+                current_size = _RUNS.stat().st_size if _RUNS.exists() else 0
+                if current_size > MAX_CACHE_SIZE:
+                    _log.warning("Cache file exceeds maximum size (%d bytes), skipping store", current_size)
+                    metric_counter("cache.stores.skipped")(1)
+                    return
+            except OSError as e:
+                _log.warning("Could not check cache file size: %s", e)
+
+            # Append to cache (safe enough since it's just one line per entry)
+            # In production, consider using fcntl for file locking if multi-process contention is an issue
             _RUNS.write_text(json.dumps(entry) + "\n", mode="a")
             duration = time.time() - start_time
 
@@ -146,7 +164,7 @@ def store_result(cmd: str) -> None:
                 "timestamp": entry["ts"],
             })
 
-        except Exception as e:
+        except (IOError, OSError) as e:
             duration = time.time() - start_time
 
             # Record failure metrics

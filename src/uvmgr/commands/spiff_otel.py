@@ -71,14 +71,46 @@ from rich.table import Table
 from uvmgr.core.instrumentation import instrument_command, add_span_attributes, add_span_event
 from uvmgr.core.semconv import WorkflowAttributes, WorkflowOperations
 from uvmgr.core.telemetry import span, metric_counter, metric_histogram, record_exception
-from uvmgr.runtime.agent.spiff import run_bpmn, validate_bpmn_file
-from uvmgr.ops.external_project_spiff import (
-    discover_external_projects,
-    validate_external_project_with_spiff,
-    batch_validate_external_projects,
-    run_8020_external_project_validation
-)
-from uvmgr.ops.spiff_otel_validation import run_8020_otel_validation
+
+# Lazy imports for SpiffWorkflow and ops (optional dependencies)
+def _get_spiff_functions():
+    """Import SpiffWorkflow functions on demand."""
+    try:
+        from uvmgr.runtime.agent.spiff import run_bpmn, validate_bpmn_file
+        return run_bpmn, validate_bpmn_file
+    except ImportError as e:
+        raise ImportError(
+            "SpiffWorkflow is required for spiff_otel commands. "
+            "Install it with: pip install spiffworkflow"
+        ) from e
+
+def _get_external_project_ops():
+    """Import external project validation functions on demand."""
+    try:
+        from uvmgr.ops.external_project_spiff import (
+            discover_external_projects,
+            validate_external_project_with_spiff,
+            batch_validate_external_projects,
+            run_8020_external_project_validation
+        )
+        return (discover_external_projects, validate_external_project_with_spiff,
+                batch_validate_external_projects, run_8020_external_project_validation)
+    except ImportError as e:
+        raise ImportError(
+            "External project validation module is not available. "
+            "Ensure all dependencies are installed."
+        ) from e
+
+def _get_otel_validation():
+    """Import OTEL validation functions on demand."""
+    try:
+        from uvmgr.ops.spiff_otel_validation import run_8020_otel_validation
+        return run_8020_otel_validation
+    except ImportError as e:
+        raise ImportError(
+            "OTEL validation module is not available. "
+            "Ensure all dependencies are installed."
+        ) from e
 
 app = typer.Typer(help="SpiffWorkflow OTEL validation and testing")
 console = Console()
