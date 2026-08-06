@@ -10,6 +10,60 @@ permissions:
   contents: read
 
 jobs:
+  source-capsule-macos:
+    runs-on: macos-14
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Manufacture exact-head source capsule
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p receipts
+          git archive --format=tar.gz --prefix=uvmgr/ --output=uvmgr-source.tar.gz HEAD
+          shasum -a 256 uvmgr-source.tar.gz | tee receipts/source-capsule.sha256
+          git rev-parse HEAD | tee receipts/head.sha
+          git rev-parse HEAD^{tree} | tee receipts/tree.sha
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: uvmgr-source-capsule-macos
+          path: |
+            uvmgr-source.tar.gz
+            receipts/
+          if-no-files-found: error
+          retention-days: 3
+
+  source-capsule-windows:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Manufacture exact-head source capsule
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force receipts | Out-Null
+          git archive --format=zip --prefix=uvmgr/ --output=uvmgr-source.zip HEAD
+          (Get-FileHash uvmgr-source.zip -Algorithm SHA256).Hash.ToLower() |
+            Set-Content receipts/source-capsule.sha256
+          git rev-parse HEAD | Set-Content receipts/head.sha
+          git rev-parse 'HEAD^{tree}' | Set-Content receipts/tree.sha
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: uvmgr-source-capsule-windows
+          path: |
+            uvmgr-source.zip
+            receipts/
+          if-no-files-found: error
+          retention-days: 3
+
   validate-and-capsule:
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 25
