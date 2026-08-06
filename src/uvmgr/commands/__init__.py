@@ -8,6 +8,8 @@ import sys
 from types import ModuleType
 from typing import Final
 
+from uvmgr.core.command_repairs import install_command_repairs
+
 # Explicit inventory preserves frozen/PyInstaller discovery while pkgutil admits
 # newly added command modules in source checkouts. Every command remains inert
 # until imported by the CLI registry; import does not grant actuation authority.
@@ -74,7 +76,27 @@ LEGACY_COMMANDS: Final[frozenset[str]] = frozenset(
         "tool_backup",
     }
 )
-EXCLUDED_COMMANDS: Final[frozenset[str]] = LEGACY_COMMANDS
+OPTIONAL_COMMANDS: Final[frozenset[str]] = frozenset(
+    {
+        "agent",
+        "agent_guides",
+        "aggregate",
+        "ai",
+        "claude",
+        "democratize",
+        "documentation",
+        "exponential",
+        "mcp",
+        "phd",
+        "search",
+        "serve",
+        "spiff_otel",
+        "substrate",
+    }
+)
+EXCLUDED_COMMANDS: Final[frozenset[str]] = LEGACY_COMMANDS | OPTIONAL_COMMANDS
+
+install_command_repairs()
 
 
 def _discover_source_commands() -> set[str]:

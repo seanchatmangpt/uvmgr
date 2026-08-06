@@ -206,6 +206,39 @@ def inspect_capabilities(
 
         try:
             get_command(command_app)
+        except RuntimeError as exc:
+            if str(exc) == "Could not get a command for this Typer instance":
+                records.append(
+                    _record(
+                        name=name,
+                        standing=CapabilityStanding.PARTIAL_ALIVE,
+                        admitted=True,
+                        imported=True,
+                        command_module=True,
+                        typer_app=True,
+                        operations_module=operations_module,
+                        runtime_module=runtime_module,
+                        detail=(
+                            "Typer application observed but no command is registered; "
+                            "behavior remains unexecuted."
+                        ),
+                    )
+                )
+                continue
+            records.append(
+                _record(
+                    name=name,
+                    standing=CapabilityStanding.BUILD_BROKEN,
+                    admitted=True,
+                    imported=True,
+                    command_module=True,
+                    typer_app=False,
+                    operations_module=operations_module,
+                    runtime_module=runtime_module,
+                    detail=f"Typer construction failed: {type(exc).__name__}: {exc}",
+                )
+            )
+            continue
         except Exception as exc:
             records.append(
                 _record(
