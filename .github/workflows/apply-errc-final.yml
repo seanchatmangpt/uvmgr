@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   apply-validate-publish:
-    runs-on: ubuntu-latest
+    runs-on: macos-14
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
@@ -30,7 +30,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          echo '19d130f19bc73f7e0488517de0b06c52a7231a1ef66afb18d1bba258c4fceb94  .github/patches/uvmgr-final.patch' | sha256sum --check -
+          python - <<'PY'
+          import hashlib
+          from pathlib import Path
+          path = Path('.github/patches/uvmgr-final.patch')
+          actual = hashlib.sha256(path.read_bytes()).hexdigest()
+          expected = '19d130f19bc73f7e0488517de0b06c52a7231a1ef66afb18d1bba258c4fceb94'
+          if actual != expected:
+              raise SystemExit(f'patch identity mismatch: {actual}')
+          PY
           git apply --check .github/patches/uvmgr-final.patch
           git apply .github/patches/uvmgr-final.patch
           git diff --check
@@ -91,5 +99,3 @@ jobs:
           git diff --cached --check
           git commit -m 'fix: finish admitted capability construction'
           git push origin HEAD:agent/errc-modernize-features
-
-# trigger: contents-api
