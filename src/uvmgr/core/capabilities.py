@@ -21,7 +21,7 @@ class CapabilityStanding(StrEnum):
     ALIVE = "ALIVE"
     PARTIAL_ALIVE = "PARTIAL_ALIVE"
     UNSUPPORTED = "UNSUPPORTED"
-    REFUSED = "REFUSED:EXCLUDED_BY_LEAN_CORE"
+    REFUSED = "REFUSED:EXCLUDED_BY_REGISTRY"
     BUILD_BROKEN = "BUILD_BROKEN"
 
 
@@ -120,8 +120,8 @@ def inspect_capabilities(
                     operations_module=operations_module,
                     runtime_module=runtime_module,
                     detail=(
-                        "Deliberately excluded from the lean core; source presence "
-                        "does not grant execution authority."
+                        "Excluded by the command registry; source presence does not "
+                        "grant execution authority."
                     ),
                 )
             )
