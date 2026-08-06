@@ -8,6 +8,7 @@ import os
 from types import ModuleType
 
 import typer
+from typer.main import get_command
 
 from uvmgr.core.instrumentation import instrument_command
 from uvmgr.logging_config import setup_logging
@@ -18,7 +19,7 @@ setup_logging()
 app = typer.Typer(
     add_completion=False,
     rich_markup_mode="rich",
-    help="**uvmgr** – unified Python workflow engine (powered by *uv*).",
+    help="**uvmgr** - unified Python workflow engine (powered by *uv*).",
     context_settings={"allow_extra_args": True},
 )
 COMMAND_LOAD_FAILURES: dict[str, str] = {}
@@ -39,7 +40,7 @@ def _version_callback(value: bool) -> None:
     except importlib.metadata.PackageNotFoundError:
         version = "dev"
     typer.echo(f"uvmgr {version}")
-    raise typer.Exit()
+    raise typer.Exit
 
 
 @app.callback()
@@ -85,9 +86,9 @@ def _unavailable_app(verb: str, error: str) -> typer.Typer:
 
     @unavailable.callback(invoke_without_command=True)
     def show_failure() -> None:
-        """Report the exact enabled-command import failure."""
+        """Report the exact enabled-command construction failure."""
         typer.echo(
-            f"BUILD_BROKEN command={verb} import_error={error}",
+            f"BUILD_BROKEN command={verb} construction_error={error}",
             err=True,
         )
         raise typer.Exit(70)
@@ -102,6 +103,7 @@ for command_name in commands_package.__all__:
         command_app = _find_typer_app(command_module)
         if command_app is None:
             raise ImportError(f"{command_name!r} has no Typer application")
+        get_command(command_app)
     except Exception as exc:
         failure = f"{type(exc).__name__}: {exc}"
         COMMAND_LOAD_FAILURES[command_name] = failure

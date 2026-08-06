@@ -88,9 +88,12 @@ def _discover_source_commands() -> set[str]:
     }
 
 
-__all__: Final[list[str]] = sorted(
-    (set(_CANONICAL_COMMANDS) | _discover_source_commands()) - EXCLUDED_COMMANDS
-)
+__all__: Final[list[str]] = [
+    *sorted(
+        (set(_CANONICAL_COMMANDS) | _discover_source_commands())
+        - EXCLUDED_COMMANDS
+    )
+]
 _PACKAGE_PREFIX = f"{__name__}."
 
 

@@ -1,6 +1,7 @@
 # https://pre-commit.com
 default_install_hook_types: [commit-msg, pre-commit]
 default_stages: [pre-commit, manual]
+exclude: ^\.staging/
 fail_fast: true
 repos:
   - repo: meta

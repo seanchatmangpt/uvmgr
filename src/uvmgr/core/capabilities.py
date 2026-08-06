@@ -11,6 +11,7 @@ from enum import StrEnum
 from types import ModuleType
 
 import typer
+from typer.main import get_command
 
 import uvmgr.commands as commands_package
 
@@ -42,9 +43,15 @@ class CapabilityRecord:
     detail: str
 
 
-def _has_typer_app(module: ModuleType) -> bool:
-    """Return whether a command module exposes a Typer application."""
-    return any(isinstance(value, typer.Typer) for value in vars(module).values())
+def _find_typer_app(module: ModuleType) -> typer.Typer | None:
+    """Return the canonical Typer application exposed by a command module."""
+    candidate = getattr(module, "app", None)
+    if isinstance(candidate, typer.Typer):
+        return candidate
+    return next(
+        (value for value in vars(module).values() if isinstance(value, typer.Typer)),
+        None,
+    )
 
 
 def _module_exists(package: str, name: str) -> bool:
@@ -62,7 +69,7 @@ def discover_command_names() -> tuple[str, ...]:
     return tuple(sorted(names))
 
 
-def _record(
+def _record(  # noqa: PLR0913 - mirrors the evidence schema explicitly
     *,
     name: str,
     standing: CapabilityStanding,
@@ -95,7 +102,7 @@ def inspect_capabilities(
     enabled: Iterable[str] | None = None,
     excluded: Iterable[str] | None = None,
 ) -> tuple[CapabilityRecord, ...]:
-    """Import only admitted commands and classify all physical command surfaces."""
+    """Construct admitted command apps and classify all physical surfaces."""
     enabled_names = set(commands_package.__all__ if enabled is None else enabled)
     excluded_names = set(
         commands_package.EXCLUDED_COMMANDS if excluded is None else excluded
@@ -164,7 +171,7 @@ def inspect_capabilities(
 
         try:
             module = importlib.import_module(f"uvmgr.commands.{name}")
-        except Exception as exc:  # verifier must expose enabled-command failures
+        except Exception as exc:
             records.append(
                 _record(
                     name=name,
@@ -175,13 +182,13 @@ def inspect_capabilities(
                     typer_app=False,
                     operations_module=operations_module,
                     runtime_module=runtime_module,
-                    detail=f"{type(exc).__name__}: {exc}",
+                    detail=f"Import failed: {type(exc).__name__}: {exc}",
                 )
             )
             continue
 
-        typer_app = _has_typer_app(module)
-        if not typer_app:
+        command_app = _find_typer_app(module)
+        if command_app is None:
             records.append(
                 _record(
                     name=name,
@@ -197,13 +204,31 @@ def inspect_capabilities(
             )
             continue
 
+        try:
+            get_command(command_app)
+        except Exception as exc:
+            records.append(
+                _record(
+                    name=name,
+                    standing=CapabilityStanding.BUILD_BROKEN,
+                    admitted=True,
+                    imported=True,
+                    command_module=True,
+                    typer_app=False,
+                    operations_module=operations_module,
+                    runtime_module=runtime_module,
+                    detail=f"Typer construction failed: {type(exc).__name__}: {exc}",
+                )
+            )
+            continue
+
         has_layer_closure = operations_module and runtime_module
         detail = (
-            "Import and Command → Ops → Runtime closure observed; exact behavior "
-            "has not executed."
+            "Import, Typer construction, and Command -> Ops -> Runtime closure "
+            "observed; exact behavior has not executed."
             if has_layer_closure
             else (
-                "Admitted command imports, but dedicated Ops/Runtime closure is "
+                "Admitted command constructs, but dedicated Ops/Runtime closure is "
                 "incomplete and exact behavior has not executed."
             )
         )
