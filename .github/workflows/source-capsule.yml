@@ -1,0 +1,35 @@
+name: Source Capsule
+
+on:
+  push:
+    branches:
+      - agent/errc-modernize-features
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  capsule:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Manufacture exact-head source capsule
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p receipts
+          git archive --format=tar.gz --prefix=uvmgr/ --output=uvmgr-source.tar.gz HEAD
+          sha256sum uvmgr-source.tar.gz | tee receipts/source-capsule.sha256
+          git rev-parse HEAD | tee receipts/head.sha
+          git rev-parse HEAD^{tree} | tee receipts/tree.sha
+      - uses: actions/upload-artifact@v6
+        with:
+          name: uvmgr-source-capsule
+          path: |
+            uvmgr-source.tar.gz
+            receipts/
+          if-no-files-found: error
+          retention-days: 1
