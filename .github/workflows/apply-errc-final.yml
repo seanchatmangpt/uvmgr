@@ -91,3 +91,5 @@ jobs:
           git diff --cached --check
           git commit -m 'fix: finish admitted capability construction'
           git push origin HEAD:agent/errc-modernize-features
+
+# trigger: contents-api
