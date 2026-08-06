@@ -3,11 +3,23 @@
 from __future__ import annotations
 
 import sys
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, Sequence
 
 from uvmgr.runtime.tests import TestExecutionReceipt, execute_test_command
+
+
+@dataclass(frozen=True)
+class TestRunOptions:
+    """uvmgr-owned test execution options."""
+
+    verbose: bool = False
+    parallel: bool = True
+    coverage: bool = True
+    fail_fast: bool = False
+    test_types: tuple[str, ...] = ()
+    markers: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -32,36 +44,34 @@ def build_test_plan(
     passthrough: Iterable[str] = (),
     *,
     working_directory: Path | None = None,
-    verbose: bool = False,
-    parallel: bool = True,
-    coverage: bool = True,
-    fail_fast: bool = False,
-    test_types: Iterable[str] = (),
-    markers: Iterable[str] = (),
+    options: TestRunOptions | None = None,
 ) -> TestRunPlan:
     """Construct an exact pytest argv without interpreting pytest-owned flags."""
-    forwarded = [str(argument) for argument in passthrough]
     selected = [str(selector) for selector in selectors]
+    forwarded = [str(argument) for argument in passthrough]
+    raw_arguments = [*selected, *forwarded]
+    admitted = options or TestRunOptions()
     command = [sys.executable, "-m"]
 
-    if coverage:
+    if admitted.coverage:
         command.extend(["coverage", "run", "--module", "pytest"])
     else:
         command.append("pytest")
 
-    if verbose and not _has_option(forwarded, "-v", "--verbose"):
+    if admitted.verbose and not _has_option(raw_arguments, "-v", "--verbose"):
         command.append("-v")
-    if fail_fast and not _has_option(forwarded, "-x", "--exitfirst"):
+    if admitted.fail_fast and not _has_option(raw_arguments, "-x", "--exitfirst"):
         command.append("-x")
-    if parallel and not _has_option(forwarded, "-n", "--numprocesses"):
+    if admitted.parallel and not _has_option(raw_arguments, "-n", "--numprocesses"):
         command.extend(["-n", "auto"])
 
-    marker_terms = [term for term in [*test_types, *markers] if term]
-    if marker_terms and not _has_option(forwarded, "-m", "--markers"):
+    marker_terms = [
+        term for term in [*admitted.test_types, *admitted.markers] if term
+    ]
+    if marker_terms and not _has_option(raw_arguments, "-m", "--markers"):
         command.extend(["-m", " or ".join(f"({term})" for term in marker_terms)])
 
-    command.extend(selected)
-    command.extend(forwarded)
+    command.extend(raw_arguments)
     return TestRunPlan(
         command=tuple(command),
         working_directory=(working_directory or Path.cwd()).resolve(),

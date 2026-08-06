@@ -1,4 +1,4 @@
-"""Inspect and verify uvmgr capability standing."""
+"""Inspect and structurally verify uvmgr capability standing."""
 
 from __future__ import annotations
 
@@ -33,10 +33,15 @@ def list_capabilities(
     table = Table(title="uvmgr capability standing")
     table.add_column("Capability")
     table.add_column("Standing")
-    table.add_column("Enabled")
+    table.add_column("O/A/E")
     table.add_column("C/O/R")
     table.add_column("Detail")
     for record in records:
+        lifecycle = (
+            f"{int(record.observed)}/"
+            f"{int(record.admitted)}/"
+            f"{int(record.executed)}"
+        )
         closure = (
             f"{int(record.command_module)}/"
             f"{int(record.operations_module)}/"
@@ -45,7 +50,7 @@ def list_capabilities(
         table.add_row(
             record.name,
             record.standing,
-            "yes" if record.enabled else "no",
+            lifecycle,
             closure,
             record.detail,
         )
@@ -59,27 +64,36 @@ def verify_capabilities(
         bool,
         typer.Option(
             "--strict/--no-strict",
-            help="Fail when an enabled capability is not ALIVE.",
+            help="Require admitted commands to import and have C/O/R closure.",
         ),
     ] = False,
 ) -> None:
-    """Verify enabled commands and expose incomplete layer closure."""
+    """Verify imports and structural closure without claiming execution."""
     records = inspect_capabilities()
     broken = [
         record
         for record in records
-        if record.enabled
+        if record.admitted
         and (
             record.standing in {"BUILD_BROKEN", "UNSUPPORTED"}
-            or (strict and record.standing != "ALIVE")
+            or (
+                strict
+                and not (
+                    record.imported
+                    and record.typer_app
+                    and record.operations_module
+                    and record.runtime_module
+                )
+            )
         )
     ]
     typer.echo(
         json.dumps(
             {
-                "enabled": sum(record.enabled for record in records),
+                "admitted": sum(record.admitted for record in records),
+                "executed": sum(record.executed for record in records),
                 "records": capabilities_as_dict(records),
-                "verified": not broken,
+                "structurally_verified": not broken,
             },
             sort_keys=True,
         )

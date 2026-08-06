@@ -63,6 +63,7 @@ def _root(
     ),
 ) -> None:
     """Initialize command context without ambient actuation."""
+    _ = (ctx, json_, version)
 
 
 def _find_typer_app(module: ModuleType) -> typer.Typer | None:
@@ -84,6 +85,7 @@ def _unavailable_app(verb: str, error: str) -> typer.Typer:
 
     @unavailable.callback(invoke_without_command=True)
     def show_failure() -> None:
+        """Report the exact enabled-command import failure."""
         typer.echo(
             f"BUILD_BROKEN command={verb} import_error={error}",
             err=True,

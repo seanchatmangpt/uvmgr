@@ -7,9 +7,9 @@ import json
 import os
 import subprocess
 import time
+from collections.abc import Mapping, Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Mapping, Sequence
 
 
 @dataclass(frozen=True)
@@ -40,7 +40,10 @@ def _write_receipt(
     document = {**payload, "receipt_sha256": digest}
     target = receipt_dir / f"tests-run-{started_ns}.json"
     temporary = target.with_suffix(".json.tmp")
-    temporary.write_text(json.dumps(document, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    temporary.write_text(
+        json.dumps(document, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
     temporary.replace(target)
     return target, digest
 

@@ -10,9 +10,14 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from uvmgr.core.instrumentation import add_span_attributes, add_span_event, instrument_command
+from uvmgr.core.instrumentation import (
+    add_span_attributes,
+    add_span_event,
+    instrument_command,
+)
 from uvmgr.core.testing import TestDiscovery, generate_test_templates
 from uvmgr.ops.tests import (
+    TestRunOptions,
     TestRunPlan,
     build_coverage_report_plan,
     build_test_plan,
@@ -67,7 +72,7 @@ def _execute(plan: TestRunPlan, *, json_output: bool) -> None:
 
 @app.command("run", context_settings=_PASSTHROUGH_CONTEXT)
 @instrument_command("tests_run", track_args=True)
-def run_tests(
+def run_tests(  # noqa: PLR0913
     ctx: typer.Context,
     selectors: Annotated[
         list[str] | None,
@@ -106,12 +111,14 @@ def run_tests(
     plan = build_test_plan(
         selectors or (),
         ctx.args,
-        verbose=verbose,
-        parallel=parallel,
-        coverage=coverage,
-        fail_fast=fail_fast,
-        test_types=test_type or (),
-        markers=marker or (),
+        options=TestRunOptions(
+            verbose=verbose,
+            parallel=parallel,
+            coverage=coverage,
+            fail_fast=fail_fast,
+            test_types=tuple(test_type or ()),
+            markers=tuple(marker or ()),
+        ),
     )
     _execute(plan, json_output=json_output)
 
@@ -180,8 +187,7 @@ def run_coverage(
         build_test_plan(
             selectors or (),
             ctx.args,
-            coverage=True,
-            parallel=False,
+            options=TestRunOptions(coverage=True, parallel=False),
         ),
         json_output=json_output,
     )
@@ -196,10 +202,12 @@ def _ci_plan(selectors: tuple[str, ...]) -> TestRunPlan:
     return build_test_plan(
         selectors,
         ("--tb=short",),
-        verbose=True,
-        parallel=False,
-        coverage=True,
-        fail_fast=True,
+        options=TestRunOptions(
+            verbose=True,
+            parallel=False,
+            coverage=True,
+            fail_fast=True,
+        ),
     )
 
 
