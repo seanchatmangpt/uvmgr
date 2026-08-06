@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   apply-validate-publish:
-    runs-on: macos-14
+    runs-on: windows-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
@@ -27,46 +27,26 @@ jobs:
       - uses: astral-sh/setup-uv@v7
 
       - name: Verify and apply exact patch
-        shell: bash
+        shell: pwsh
         run: |
-          set -euo pipefail
-          python - <<'PY'
-          import hashlib
-          from pathlib import Path
-          path = Path('.github/patches/uvmgr-final.patch')
-          actual = hashlib.sha256(path.read_bytes()).hexdigest()
-          expected = '19d130f19bc73f7e0488517de0b06c52a7231a1ef66afb18d1bba258c4fceb94'
-          if actual != expected:
-              raise SystemExit(f'patch identity mismatch: {actual}')
-          PY
+          $actual = (Get-FileHash .github/patches/uvmgr-final.patch -Algorithm SHA256).Hash.ToLower()
+          $expected = '19d130f19bc73f7e0488517de0b06c52a7231a1ef66afb18d1bba258c4fceb94'
+          if ($actual -ne $expected) { throw "patch identity mismatch: $actual" }
           git apply --check .github/patches/uvmgr-final.patch
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git apply .github/patches/uvmgr-final.patch
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git diff --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Install declared lock closure
         run: uv sync --all-extras --group dev --group ci
 
       - name: Compile repaired surfaces
-        run: |
-          uv run python -m compileall -q \
-            src/uvmgr/commands/__init__.py \
-            src/uvmgr/commands/automation.py \
-            src/uvmgr/commands/performance.py \
-            src/uvmgr/commands/security.py \
-            src/uvmgr/core/capabilities.py \
-            src/uvmgr/ops/tests.py \
-            tests/test_tests_execution.py
+        run: uv run python -m compileall -q src/uvmgr/commands/__init__.py src/uvmgr/commands/automation.py src/uvmgr/commands/performance.py src/uvmgr/commands/security.py src/uvmgr/core/capabilities.py src/uvmgr/ops/tests.py tests/test_tests_execution.py
 
       - name: Check fatal Python diagnostics
-        run: |
-          uv run ruff check --select F,E9 \
-            src/uvmgr/commands/__init__.py \
-            src/uvmgr/commands/automation.py \
-            src/uvmgr/commands/performance.py \
-            src/uvmgr/commands/security.py \
-            src/uvmgr/core/capabilities.py \
-            src/uvmgr/ops/tests.py \
-            tests/test_tests_execution.py
+        run: uv run ruff check --select F,E9 src/uvmgr/commands/__init__.py src/uvmgr/commands/automation.py src/uvmgr/commands/performance.py src/uvmgr/commands/security.py src/uvmgr/core/capabilities.py src/uvmgr/ops/tests.py tests/test_tests_execution.py
 
       - name: Execute receipt and command-construction tests
         run: uv run pytest tests/test_tests_execution.py -v --tb=short
@@ -75,27 +55,23 @@ jobs:
         run: uv run uvmgr tests run tests/test_tests_execution.py -v --tb=short --no-parallel --no-coverage
 
       - name: Verify CLI and admitted capability construction
+        shell: pwsh
         run: |
           uv run uvmgr --version
-          uv run uvmgr --help >/dev/null
+          uv run uvmgr --help | Out-Null
           uv run uvmgr capabilities verify
 
       - name: Commit validated repair and remove transport
-        shell: bash
+        shell: pwsh
         run: |
-          set -euo pipefail
-          rm .github/patches/uvmgr-final.patch .github/workflows/apply-errc-final.yml
+          Remove-Item .github/patches/uvmgr-final.patch, .github/workflows/apply-errc-final.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add \
-            src/uvmgr/commands/__init__.py \
-            src/uvmgr/commands/automation.py \
-            src/uvmgr/commands/performance.py \
-            src/uvmgr/commands/security.py \
-            src/uvmgr/core/capabilities.py \
-            src/uvmgr/ops/tests.py \
-            tests/test_tests_execution.py
-          git add -u .github/patches/uvmgr-final.patch .github/workflows/apply-errc-final.yml
+          git add src/uvmgr/commands/__init__.py src/uvmgr/commands/automation.py src/uvmgr/commands/performance.py src/uvmgr/commands/security.py src/uvmgr/core/capabilities.py src/uvmgr/ops/tests.py tests/test_tests_execution.py
+          git add -u -- .github/patches/uvmgr-final.patch .github/workflows/apply-errc-final.yml
           git diff --cached --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git commit -m 'fix: finish admitted capability construction'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           git push origin HEAD:agent/errc-modernize-features
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
