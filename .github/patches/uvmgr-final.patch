@@ -1,0 +1,256 @@
+diff --git a/src/uvmgr/commands/__init__.py b/src/uvmgr/commands/__init__.py
+index 3ad6e12..90e215a 100644
+--- a/src/uvmgr/commands/__init__.py
++++ b/src/uvmgr/commands/__init__.py
+@@ -74,7 +74,25 @@ LEGACY_COMMANDS: Final[frozenset[str]] = frozenset(
+         "tool_backup",
+     }
+ )
+-EXCLUDED_COMMANDS: Final[frozenset[str]] = LEGACY_COMMANDS
++OPTIONAL_COMMANDS: Final[frozenset[str]] = frozenset(
++    {
++        "agent",
++        "agent_guides",
++        "aggregate",
++        "ai",
++        "claude",
++        "democratize",
++        "documentation",
++        "exponential",
++        "mcp",
++        "phd",
++        "search",
++        "serve",
++        "spiff_otel",
++        "substrate",
++    }
++)
++EXCLUDED_COMMANDS: Final[frozenset[str]] = LEGACY_COMMANDS | OPTIONAL_COMMANDS
+ 
+ 
+ def _discover_source_commands() -> set[str]:
+diff --git a/src/uvmgr/commands/automation.py b/src/uvmgr/commands/automation.py
+index 7006002..a18f0e8 100644
+--- a/src/uvmgr/commands/automation.py
++++ b/src/uvmgr/commands/automation.py
+@@ -182,13 +182,10 @@ def show_status(
+                 typer.echo(f"   {timestamp} {event.event_type.value}: {event.source}")
+ 
+ 
+-@app.command("rules")
+-def rules_commands():
+-    """Automation rules management."""
+-    pass
++rules_app = typer.Typer(help="Automation rules management.")
+ 
+ 
+-@rules_commands.command("list")
++@rules_app.command("list")
+ @instrument_command("automation_rules_list", track_args=True)
+ def list_rules(
+     enabled_only: bool = typer.Option(False, "--enabled-only", help="Show only enabled rules"),
+@@ -252,7 +249,7 @@ def list_rules(
+             typer.echo(f"   📁 Files: {', '.join(rule.file_patterns)}")
+ 
+ 
+-@rules_commands.command("create")
++@rules_app.command("create")
+ @instrument_command("automation_rules_create", track_args=True)
+ def create_rule(
+     name: str = typer.Argument(..., help="Rule name"),
+@@ -319,7 +316,7 @@ def create_rule(
+         typer.echo(f"   💻 Command: {command}")
+ 
+ 
+-@rules_commands.command("enable")
++@rules_app.command("enable")
+ @instrument_command("automation_rules_enable", track_args=True)
+ def enable_rule(
+     rule_id: str = typer.Argument(..., help="Rule ID to enable")
+@@ -343,7 +340,7 @@ def enable_rule(
+     typer.echo(f"✅ Enabled rule: {colour(rule.name, 'green')}")
+ 
+ 
+-@rules_commands.command("disable")
++@rules_app.command("disable")
+ @instrument_command("automation_rules_disable", track_args=True)
+ def disable_rule(
+     rule_id: str = typer.Argument(..., help="Rule ID to disable")
+@@ -551,4 +548,4 @@ def trigger_event(
+ 
+ 
+ # Add subcommands
+-app.add_typer(rules_commands, name="rules")
+\ No newline at end of file
++app.add_typer(rules_app, name="rules")
+diff --git a/src/uvmgr/commands/performance.py b/src/uvmgr/commands/performance.py
+index ea5e2d8..54b6bbc 100644
+--- a/src/uvmgr/commands/performance.py
++++ b/src/uvmgr/commands/performance.py
+@@ -23,7 +23,7 @@ console = Console()
+ 
+ 
+ @app.command("profile")
+-@instrument_command
++@instrument_command("performance_profile", track_args=True)
+ def profile_project(
+     path: Optional[Path] = typer.Option(None, "--path", "-p", help="Project path to profile"),
+     target: str = typer.Option("all", "--target", "-t", help="Profile target (all, deps, tests, build, startup)"),
+@@ -80,7 +80,7 @@ def profile_project(
+ 
+ 
+ @app.command("benchmark")
+-@instrument_command
++@instrument_command("performance_benchmark", track_args=True)
+ def benchmark_commands(
+     commands: str = typer.Option("deps,tests,build", "--commands", help="Commands to benchmark (comma-separated)"),
+     iterations: int = typer.Option(3, "--iterations", "-i", help="Number of benchmark iterations"),
+@@ -149,7 +149,7 @@ def benchmark_commands(
+ 
+ 
+ @app.command("optimize")
+-@instrument_command
++@instrument_command("performance_optimize", track_args=True)
+ def optimize_project(
+     path: Optional[Path] = typer.Option(None, "--path", "-p", help="Project path"),
+     target: str = typer.Option("cache", "--target", "-t", help="Optimization target (cache, deps, config)"),
+@@ -197,7 +197,7 @@ def optimize_project(
+ 
+ 
+ @app.command("monitor")
+-@instrument_command
++@instrument_command("performance_monitor", track_args=True)
+ def monitor_performance(
+     duration: int = typer.Option(60, "--duration", "-d", help="Monitoring duration in seconds"),
+     interval: int = typer.Option(5, "--interval", "-i", help="Monitoring interval in seconds"),
+diff --git a/src/uvmgr/commands/security.py b/src/uvmgr/commands/security.py
+index 2a24016..908bb34 100644
+--- a/src/uvmgr/commands/security.py
++++ b/src/uvmgr/commands/security.py
+@@ -20,7 +20,7 @@ console = Console()
+ 
+ 
+ @app.command("scan")
+-@instrument_command
++@instrument_command("security_scan", track_args=True)
+ def scan_vulnerabilities(
+     path: Optional[Path] = typer.Option(None, "--path", "-p", help="Project path to scan"),
+     output_format: str = typer.Option("table", "--format", "-f", help="Output format (table, json, sarif)"),
+@@ -97,7 +97,7 @@ def scan_vulnerabilities(
+ 
+ 
+ @app.command("audit")
+-@instrument_command  
++@instrument_command("security_audit", track_args=True)
+ def audit_dependencies(
+     path: Optional[Path] = typer.Option(None, "--path", "-p", help="Project path"),
+     output_format: str = typer.Option("table", "--format", "-f", help="Output format"),
+@@ -143,7 +143,7 @@ def audit_dependencies(
+ 
+ 
+ @app.command("secrets")
+-@instrument_command
++@instrument_command("security_secrets", track_args=True)
+ def scan_secrets(
+     path: Optional[Path] = typer.Option(None, "--path", "-p", help="Project path"),
+     patterns_file: Optional[Path] = typer.Option(None, "--patterns", help="Custom secret patterns file"),
+@@ -186,7 +186,7 @@ def scan_secrets(
+ 
+ 
+ @app.command("config")
+-@instrument_command
++@instrument_command("security_config", track_args=True)
+ def check_security_config(
+     path: Optional[Path] = typer.Option(None, "--path", "-p", help="Project path"),
+ ) -> None:
+diff --git a/src/uvmgr/core/capabilities.py b/src/uvmgr/core/capabilities.py
+index 4783dfa..4d85882 100644
+--- a/src/uvmgr/core/capabilities.py
++++ b/src/uvmgr/core/capabilities.py
+@@ -206,6 +206,39 @@ def inspect_capabilities(
+ 
+         try:
+             get_command(command_app)
++        except RuntimeError as exc:
++            if str(exc) == "Could not get a command for this Typer instance":
++                records.append(
++                    _record(
++                        name=name,
++                        standing=CapabilityStanding.PARTIAL_ALIVE,
++                        admitted=True,
++                        imported=True,
++                        command_module=True,
++                        typer_app=True,
++                        operations_module=operations_module,
++                        runtime_module=runtime_module,
++                        detail=(
++                            "Typer application observed but no command is registered; "
++                            "behavior remains unexecuted."
++                        ),
++                    )
++                )
++                continue
++            records.append(
++                _record(
++                    name=name,
++                    standing=CapabilityStanding.BUILD_BROKEN,
++                    admitted=True,
++                    imported=True,
++                    command_module=True,
++                    typer_app=False,
++                    operations_module=operations_module,
++                    runtime_module=runtime_module,
++                    detail=f"Typer construction failed: {type(exc).__name__}: {exc}",
++                )
++            )
++            continue
+         except Exception as exc:
+             records.append(
+                 _record(
+diff --git a/src/uvmgr/ops/tests.py b/src/uvmgr/ops/tests.py
+index 50906cc..37aad87 100644
+--- a/src/uvmgr/ops/tests.py
++++ b/src/uvmgr/ops/tests.py
+@@ -28,6 +28,8 @@ from uvmgr.runtime.tests import (
+ class TestRunOptions:
+     """uvmgr-owned test execution options."""
+ 
++    __test__ = False
++
+     verbose: bool = False
+     parallel: bool = True
+     coverage: bool = True
+diff --git a/tests/test_tests_execution.py b/tests/test_tests_execution.py
+index 8fbf9cd..b606d72 100644
+--- a/tests/test_tests_execution.py
++++ b/tests/test_tests_execution.py
+@@ -2,6 +2,7 @@
+ 
+ from __future__ import annotations
+ 
++import importlib
+ import json
+ import sys
+ from pathlib import Path
+@@ -9,6 +10,7 @@ from types import ModuleType
+ 
+ import pytest
+ import typer
++from typer.main import get_command
+ 
+ import uvmgr.core.capabilities as capability_module
+ import uvmgr.ops.tests as test_operations
+@@ -227,3 +229,13 @@ def test_structural_closure_does_not_claim_alive(
+     assert record.imported
+     assert record.typer_app
+     assert not record.executed
++
++
++@pytest.mark.parametrize("command_name", ["automation", "performance", "security"])
++def test_repaired_command_groups_construct(command_name: str) -> None:
++    """Repaired admitted command groups must compile into Click commands."""
++    module = importlib.import_module(f"uvmgr.commands.{command_name}")
++
++    command = get_command(module.app)
++
++    assert getattr(command, "commands", {})
