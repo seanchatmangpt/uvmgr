@@ -5,17 +5,17 @@ on:
     branches: [main]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   compile-lock:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Checkout exact subject
+      - name: Checkout exact PR branch
         uses: actions/checkout@v6
         with:
-          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.ref }}
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -31,9 +31,31 @@ jobs:
       - name: Prove lock closure
         run: uv lock --check
 
-      - name: Upload compiled lock
+      - name: Manufacture lock receipt
+        run: |
+          sha256sum uv.lock | tee uv.lock.sha256
+          git diff --stat -- uv.lock
+
+      - name: Commit exact generated lock
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- uv.lock; then
+            echo "uv.lock already synchronized"
+            exit 0
+          fi
+          git add uv.lock
+          git -c user.name='github-actions[bot]' \
+              -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+              commit -m 'deps: synchronize uv lock'
+          git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
+
+      - name: Upload compiled lock receipt
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: compiled-uv-lock-${{ github.sha }}
-          path: uv.lock
+          path: |
+            uv.lock
+            uv.lock.sha256
           if-no-files-found: error
