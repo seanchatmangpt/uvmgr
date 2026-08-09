@@ -1,0 +1,39 @@
+name: Lock Repair Compiler
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  compile-lock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact subject
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Compile dependency lock
+        run: uv lock
+
+      - name: Prove lock closure
+        run: uv lock --check
+
+      - name: Upload compiled lock
+        uses: actions/upload-artifact@v6
+        with:
+          name: compiled-uv-lock-${{ github.sha }}
+          path: uv.lock
+          if-no-files-found: error
