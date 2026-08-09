@@ -1,5 +1,6 @@
 name: CI
 
+# Canonical reversible validation rail; publication authority lives in Release.
 on:
   pull_request:
     branches: [main]
