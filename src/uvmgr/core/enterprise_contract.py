@@ -14,6 +14,8 @@ from typing import Any
 
 _ACTION_RE = re.compile(r"^\s*-\s*uses:\s*([^@\s]+)@([^\s#]+)", re.MULTILINE)
 _FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
+_CI_SUBJECT_EXPRESSION = "SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}"
+_CI_SUBJECT_REF = "ref: ${{ env.SUBJECT_SHA }}"
 
 
 def _read_text(root: Path, relative_path: str) -> str:
@@ -52,6 +54,45 @@ def _verify_action_pins(root: Path) -> list[str]:
             for action, ref in _ACTION_RE.findall(text)
             if not action.startswith("./") and not _FULL_SHA_RE.fullmatch(ref)
         )
+    return errors
+
+
+def _verify_ci_exact_subject(root: Path) -> list[str]:
+    """Require every CI checkout and receipt to bind the exact triggering subject."""
+    path = root / ".github" / "workflows" / "ci.yml"
+    text = path.read_text(encoding="utf-8")
+    errors: list[str] = []
+
+    if _CI_SUBJECT_EXPRESSION not in text:
+        errors.append("EA-CI-SUBJECT: CI does not derive an explicit exact subject SHA")
+
+    checkout_count = text.count("uses: actions/checkout@")
+    subject_ref_count = text.count(_CI_SUBJECT_REF)
+    if checkout_count != subject_ref_count:
+        errors.append(
+            "EA-CI-SUBJECT: every checkout must bind SUBJECT_SHA "
+            f"(checkouts={checkout_count}, bound={subject_ref_count})"
+        )
+
+    if "${GITHUB_SHA}" in text:
+        errors.append("EA-CI-SUBJECT: CI artifact execution still references synthetic GITHUB_SHA")
+
+    if text.count("github.sha") != 1:
+        errors.append(
+            "EA-CI-SUBJECT: github.sha may appear only as the non-PR fallback in SUBJECT_SHA"
+        )
+
+    required_receipt_fragments = (
+        'test "$(git rev-parse HEAD)" = "${SUBJECT_SHA}"',
+        "enterprise-validation-${{ env.SUBJECT_SHA }}",
+        "uvmgr-dogfood-${{ env.SUBJECT_SHA }}",
+        'printf \'%s\\n\' "${SUBJECT_SHA}" | tee receipts/subject.sha',
+    )
+    errors.extend(
+        f"EA-CI-SUBJECT: CI missing exact-subject receipt fragment: {fragment}"
+        for fragment in required_receipt_fragments
+        if fragment not in text
+    )
     return errors
 
 
@@ -122,6 +163,7 @@ def verify_repository(root: Path) -> tuple[str, ...]:
     errors = [
         *_verify_required_files(root, policy),
         *_verify_action_pins(root),
+        *_verify_ci_exact_subject(root),
         *_verify_text_controls(root, policy),
         *_verify_section_controls(root, policy),
     ]
