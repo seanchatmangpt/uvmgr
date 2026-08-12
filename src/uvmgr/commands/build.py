@@ -280,24 +280,6 @@ def dogfood(
         name=name,
         onefile=True,
         clean=True,
-        hidden_imports=[
-            "uvmgr.commands.agent",
-            "uvmgr.commands.ai",
-            "uvmgr.commands.ap_scheduler",
-            "uvmgr.commands.build",
-            "uvmgr.commands.cache",
-            "uvmgr.commands.deps",
-            "uvmgr.commands.exec",
-            "uvmgr.commands.index",
-            "uvmgr.commands.lint",
-            "uvmgr.commands.project",
-            "uvmgr.commands.release",
-            "uvmgr.commands.remote",
-            "uvmgr.commands.serve",
-            "uvmgr.commands.shell",
-            "uvmgr.commands.tests",
-            "uvmgr.commands.tool",
-        ],
         exclude_modules=[
             "matplotlib",
             "numpy",
@@ -322,3 +304,5 @@ def dogfood(
                 colour("✔ executable test passed", "green")
             else:
                 colour(f"✗ executable test failed: {payload['test_result']['error']}", "red")
+    if test and not payload["test_result"]["success"]:
+        raise typer.Exit(1)
