@@ -10,6 +10,7 @@ import tempfile
 from pathlib import Path
 
 from uvmgr.core.command_registry import admitted_command_names as resolve_admitted_commands
+from uvmgr.core.command_repairs import repaired_command_module_names
 from uvmgr.core.process import run_logged
 from uvmgr.core.telemetry import span
 
@@ -76,6 +77,15 @@ def _default_hidden_imports() -> tuple[str, ...]:
     return tuple(dict.fromkeys((*_BASE_HIDDEN_IMPORTS, *_admitted_layer_imports())))
 
 
+def _command_repair_data_files() -> tuple[tuple[Path, str], ...]:
+    """Return source files required by the identity-checked command repair loader."""
+    command_dir = Path(__file__).parent.parent / "commands"
+    return tuple(
+        (command_dir / f"{fullname.rpartition('.')[2]}.py", "uvmgr/commands")
+        for fullname in repaired_command_module_names()
+    )
+
+
 def _create_entry_script() -> str:
     """Create the bounded PyInstaller entry script and return its path."""
     with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as file_handle:
@@ -119,6 +129,8 @@ def _pyinstaller_args(  # noqa: PLR0913
     for imp in _default_hidden_imports():
         if imp not in hidden_imports:
             args.extend(["--hidden-import", imp])
+    for source, destination in _command_repair_data_files():
+        args.extend(["--add-data", f"{source}{os.pathsep}{destination}"])
     return args, entry_script
 
 
@@ -203,6 +215,10 @@ def generate_spec(  # noqa: PLR0913
         all_hidden_imports = list(
             dict.fromkeys((*_default_hidden_imports(), *hidden_imports))
         )
+        repair_datas = [
+            (str(source), destination)
+            for source, destination in _command_repair_data_files()
+        ]
 
         entry_script_content = """#!/usr/bin/env python
 from uvmgr.cli import app
@@ -228,7 +244,7 @@ a = Analysis(
     [entry_file],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas={repair_datas!r},
     hiddenimports={all_hidden_imports!r},
     hookspath=[],
     hooksconfig={{}},

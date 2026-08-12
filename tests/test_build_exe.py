@@ -80,6 +80,17 @@ class TestBuildExe:
         assert "a.datas," in content
         assert result == spec_file
 
+    def test_command_repair_sources_are_bundled(self):
+        """Frozen builds must carry exact source consumed by the repair loader."""
+        data_files = build_rt._command_repair_data_files()
+        observed = {(source.name, destination) for source, destination in data_files}
+        assert observed == {
+            ("automation.py", "uvmgr/commands"),
+            ("performance.py", "uvmgr/commands"),
+            ("security.py", "uvmgr/commands"),
+        }
+        assert all(source.is_file() for source, _destination in data_files)
+
     def test_frozen_import_closure_contains_every_admitted_command(self):
         """The frozen graph must be projected from the canonical command registry."""
         hidden_imports = set(build_rt._default_hidden_imports())

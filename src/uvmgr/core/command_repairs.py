@@ -85,6 +85,11 @@ _REWRITES: Final[dict[str, tuple[SourceRewrite, ...]]] = {
 }
 
 
+def repaired_command_module_names() -> tuple[str, ...]:
+    """Return modules whose exact source is required by the repair loader."""
+    return tuple(_REWRITES)
+
+
 def _rewrite_source(fullname: str, source: str) -> str:
     """Apply all admitted rewrites and refuse source drift."""
     for rewrite in _REWRITES[fullname]:
