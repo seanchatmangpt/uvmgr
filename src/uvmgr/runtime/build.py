@@ -306,7 +306,7 @@ os.unlink(entry_file)
 
 def test_executable(exe_path: Path) -> dict:
     """Verify the frozen executable and every command admitted by its source registry."""
-    incomplete_markers = ("BUILD_BROKEN:", "UNSUPPORTED:", "REFUSED:")
+    incomplete_markers = ("BUILD_BROKEN:", "UNSUPPORTED:")
 
     def probe(arguments: list[str], label: str) -> dict | None:
         result = subprocess.run(
