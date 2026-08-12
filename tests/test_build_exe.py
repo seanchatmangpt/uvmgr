@@ -105,7 +105,7 @@ class TestBuildExe:
         assert "spiffworkflow" not in hidden_imports
 
     def test_test_executable(self, mocker):
-        """Test executable verification covers every admitted command."""
+        """Test executable verification covers every admitted CLI route."""
         mock_subprocess = mocker.patch("subprocess.run")
         mock_span = mocker.patch("uvmgr.runtime.build.span")
         mock_span.return_value.__enter__ = MagicMock()
@@ -124,6 +124,15 @@ class TestBuildExe:
         assert "admitted_commands" in result["tests_passed"]
         assert "capabilities_verify" in result["tests_passed"]
         assert mock_subprocess.call_count == len(commands_package.__all__) + 3
+
+        observed_argv = [call.args[0] for call in mock_subprocess.call_args_list]
+        assert ["/path/to/exe", "ap-scheduler", "--help"] in observed_argv
+        assert ["/path/to/exe", "weaver-forge", "--help"] in observed_argv
+        assert ["/path/to/exe", "ap_scheduler", "--help"] not in observed_argv
+        assert ["/path/to/exe", "weaver_forge", "--help"] not in observed_argv
+        assert {"module": "ap_scheduler", "cli": "ap-scheduler"} in result[
+            "command_routes"
+        ]
 
     def test_test_executable_allows_typed_refusal_in_capability_ledger(self, mocker):
         """Typed refusal is admissible evidence, not executable corruption."""

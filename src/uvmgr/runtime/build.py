@@ -9,7 +9,10 @@ import sys
 import tempfile
 from pathlib import Path
 
-from uvmgr.core.command_registry import admitted_command_names as resolve_admitted_commands
+from uvmgr.core.command_registry import (
+    admitted_command_names as resolve_admitted_commands,
+    command_cli_name,
+)
 from uvmgr.core.command_repairs import repaired_command_module_names
 from uvmgr.core.process import run_logged
 from uvmgr.core.telemetry import span
@@ -353,10 +356,14 @@ def _probe_executable(exe_path: Path, arguments: list[str], label: str) -> dict 
 def test_executable(exe_path: Path) -> dict:
     """Verify the frozen executable and every command admitted by its source registry."""
     commands_tested = list(_admitted_command_names())
+    command_routes = [(command, command_cli_name(command)) for command in commands_tested]
     probes = [
         (["--version"], "Version check"),
         (["--help"], "Help check"),
-        *[([command, "--help"], f"Admitted command {command!r}") for command in commands_tested],
+        *[
+            ([cli_name, "--help"], f"Admitted command {module_name!r} as {cli_name!r}")
+            for module_name, cli_name in command_routes
+        ],
         (["capabilities", "verify"], "Frozen capability verification"),
     ]
     try:
@@ -378,6 +385,10 @@ def test_executable(exe_path: Path) -> dict:
             "capabilities_verify",
         ],
         "commands_tested": commands_tested,
+        "command_routes": [
+            {"module": module_name, "cli": cli_name}
+            for module_name, cli_name in command_routes
+        ],
         "command_count": len(commands_tested),
         "executable": str(exe_path),
     }

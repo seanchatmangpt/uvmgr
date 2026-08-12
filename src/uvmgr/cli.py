@@ -10,6 +10,7 @@ from types import ModuleType
 import typer
 from typer.main import get_command
 
+from uvmgr.core.command_registry import command_cli_name
 from uvmgr.core.instrumentation import instrument_command
 from uvmgr.logging_config import setup_logging
 
@@ -109,7 +110,7 @@ for command_name in commands_package.__all__:
         COMMAND_LOAD_FAILURES[command_name] = failure
         command_app = _unavailable_app(command_name, failure)
 
-    app.add_typer(command_app, name=command_name.replace("_", "-"))
+    app.add_typer(command_app, name=command_cli_name(command_name))
 
 
 if __name__ == "__main__":

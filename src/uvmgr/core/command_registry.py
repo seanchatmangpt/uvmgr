@@ -87,3 +87,8 @@ EXCLUDED_COMMANDS: Final[frozenset[str]] = LEGACY_COMMANDS | OPTIONAL_COMMANDS
 def admitted_command_names(discovered: Iterable[str] = ()) -> tuple[str, ...]:
     """Return the deterministic command set admitted by canonical policy."""
     return tuple(sorted((set(CANONICAL_COMMANDS) | set(discovered)) - EXCLUDED_COMMANDS))
+
+
+def command_cli_name(module_name: str) -> str:
+    """Project a Python command-module identity into its canonical CLI verb."""
+    return module_name.replace("_", "-")
