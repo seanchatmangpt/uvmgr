@@ -19,9 +19,9 @@ from uvmgr.runtime.tests import (
     execute_command_checks,
     execute_pytest,
     execute_test_command,
-    generate_coverage_report as runtime_generate_coverage_report,
-    validate_test_environment as runtime_validate_test_environment,
 )
+from uvmgr.runtime.tests import generate_coverage_report as runtime_generate_coverage_report
+from uvmgr.runtime.tests import validate_test_environment as runtime_validate_test_environment
 
 
 @dataclass(frozen=True)
@@ -167,7 +167,7 @@ def _uvmgr_command(*arguments: str) -> tuple[str, ...]:
     return (sys.executable, "-m", "uvmgr.cli", *arguments)
 
 
-def build_ci_plan(  # noqa: C901, PLR0912, PLR0913, PLR0915
+def build_ci_plan(
     mode: str,
     *,
     runner: str = "native",
