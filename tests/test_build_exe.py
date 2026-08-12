@@ -5,7 +5,10 @@ import sys
 from unittest.mock import MagicMock, patch
 
 import pytest
+from typer.testing import CliRunner
 
+import uvmgr.commands as commands_package
+from uvmgr.commands import build as build_commands
 from uvmgr.ops import build as build_ops
 from uvmgr.runtime import build as build_rt
 
@@ -88,40 +91,94 @@ class TestBuildExe:
         assert "a.datas," in content
         assert result == spec_file
 
+    def test_frozen_import_closure_contains_every_admitted_command(self):
+        """The frozen graph must be projected from the canonical command registry."""
+        hidden_imports = set(build_rt._default_hidden_imports())
+        assert all(
+            f"uvmgr.commands.{command}" in hidden_imports
+            for command in commands_package.__all__
+        )
+        assert "uvmgr.commands.claude" not in hidden_imports
+        assert "ember_ai" not in hidden_imports
+        assert "spiffworkflow" not in hidden_imports
+
     def test_test_executable(self, mocker):
-        """Test executable testing functionality."""
+        """Test executable verification covers every admitted command."""
         mock_subprocess = mocker.patch("subprocess.run")
         mock_span = mocker.patch("uvmgr.runtime.build.span")
         mock_span.return_value.__enter__ = MagicMock()
         mock_span.return_value.__exit__ = MagicMock()
-
-        # Mock successful runs
-        mock_subprocess.return_value = MagicMock(returncode=0, stderr="")
+        mock_subprocess.return_value = MagicMock(
+            returncode=0,
+            stdout="healthy",
+            stderr="",
+        )
 
         result = build_rt.test_executable(pathlib.Path("/path/to/exe"))
 
         assert result["success"] is True
-        assert "version" in result["tests_passed"]
-        assert "help" in result["tests_passed"]
-        assert "commands" in result["tests_passed"]
-
-        # Check subprocess was called 3 times
-        assert mock_subprocess.call_count == 3
+        assert result["command_count"] == len(commands_package.__all__)
+        assert result["commands_tested"] == list(commands_package.__all__)
+        assert "admitted_commands" in result["tests_passed"]
+        assert "capabilities_verify" in result["tests_passed"]
+        assert mock_subprocess.call_count == len(commands_package.__all__) + 3
 
     def test_test_executable_failure(self, mocker):
-        """Test executable testing with failure."""
+        """Test executable verification fails on a non-zero process exit."""
         mock_subprocess = mocker.patch("subprocess.run")
         mock_span = mocker.patch("uvmgr.runtime.build.span")
         mock_span.return_value.__enter__ = MagicMock()
         mock_span.return_value.__exit__ = MagicMock()
-
-        # Mock failed run
-        mock_subprocess.return_value = MagicMock(returncode=1, stderr="Error message")
+        mock_subprocess.return_value = MagicMock(
+            returncode=1,
+            stdout="",
+            stderr="Error message",
+        )
 
         result = build_rt.test_executable(pathlib.Path("/path/to/exe"))
 
         assert result["success"] is False
-        assert "Version check failed" in result["error"]
+        assert "Version check failed with exit 1" in result["error"]
+
+    def test_test_executable_rejects_exit_zero_build_broken_placeholder(self, mocker):
+        """An exit-zero placeholder must not manufacture false executable health."""
+        mock_subprocess = mocker.patch("subprocess.run")
+        mock_span = mocker.patch("uvmgr.runtime.build.span")
+        mock_span.return_value.__enter__ = MagicMock()
+        mock_span.return_value.__exit__ = MagicMock()
+        mock_subprocess.side_effect = [
+            MagicMock(returncode=0, stdout="uvmgr 0.0.0", stderr=""),
+            MagicMock(returncode=0, stdout="help", stderr=""),
+            MagicMock(
+                returncode=0,
+                stdout="BUILD_BROKEN: enabled command failed to load",
+                stderr="",
+            ),
+        ]
+
+        result = build_rt.test_executable(pathlib.Path("/path/to/exe"))
+
+        assert result["success"] is False
+        assert "exposed incomplete standing BUILD_BROKEN:" in result["error"]
+
+    def test_dogfood_command_fails_closed_when_self_test_fails(self, mocker):
+        """Dogfood must propagate failed verification as a non-zero CLI result."""
+        mocker.patch(
+            "uvmgr.commands.build.build_ops.exe",
+            return_value={"output_file": "dist/uvmgr"},
+        )
+        mocker.patch(
+            "uvmgr.commands.build.build_ops.test_executable",
+            return_value={"success": False, "error": "BUILD_BROKEN"},
+        )
+
+        result = CliRunner().invoke(
+            build_commands.app,
+            ["dogfood", "--no-platform", "--test"],
+        )
+
+        assert result.exit_code == 1
+        assert "executable test failed: BUILD_BROKEN" in result.output
 
     def test_ops_exe(self, mocker):
         """Test ops layer exe function."""
