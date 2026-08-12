@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "standing": "evidence_required",
+  "required_files": [
+    ".github/CODEOWNERS",
+    ".github/workflows/ci.yml",
+    ".github/workflows/deploy.yml",
+    ".dod/enterprise.yaml",
+    "Dockerfile",
+    "LICENSE",
+    "SECURITY.md",
+    "docs/architecture/enterprise-architecture.md",
+    "docs/operations/release-and-recovery.md",
+    "docs/security/threat-model.md"
+  ],
+  "text_controls": [
+    {
+      "id": "EA-CI-001",
+      "path": ".github/workflows/ci.yml",
+      "required": [
+        "permissions:\n  contents: read",
+        "persist-credentials: false",
+        "uv sync --frozen",
+        "uv lock --check",
+        "python -m uvmgr.core.enterprise_contract",
+        "docker build --target app"
+      ],
+      "forbidden": [
+        "ruff check --fix",
+        "uv lock --upgrade",
+        "git push"
+      ]
+    },
+    {
+      "id": "EA-REL-001",
+      "path": ".github/workflows/deploy.yml",
+      "required": [
+        "- \"v*.*.*\"",
+        "python -m uvmgr.core.enterprise_contract",
+        "uv run pip-audit",
+        "platforms: linux/amd64,linux/arm64",
+        "provenance: mode=max",
+        "sbom: true",
+        "persist-credentials: false"
+      ],
+      "forbidden": [
+        "- production\n"
+      ]
+    },
+    {
+      "id": "EA-DOD-001",
+      "path": ".dod/enterprise.yaml",
+      "required": [
+        "enforcement: \"evidence\"",
+        "repository_contract: \"enterprise/controls.json\"",
+        "zero_unreceipted_actuation"
+      ],
+      "forbidden": [
+        "auto_fix: true",
+        "learning_mode:",
+        "auto_tune: true"
+      ]
+    }
+  ],
+  "section_controls": [
+    {
+      "id": "EA-CTR-001",
+      "path": "Dockerfile",
+      "start": "FROM python:3.12-slim AS app",
+      "required": [
+        "COPY --from=build",
+        "USER 10001:10001",
+        "ENTRYPOINT [\"/opt/uvmgr/bin/uvmgr\"]"
+      ],
+      "forbidden": [
+        "apt-get",
+        "build-essential",
+        "sudo",
+        "gcc",
+        "g++"
+      ]
+    }
+  ],
+  "external_controls": [
+    {
+      "id": "EA-EXT-001",
+      "name": "main branch protection and required status checks"
+    },
+    {
+      "id": "EA-EXT-002",
+      "name": "production environment approvers and deployment protection rules"
+    },
+    {
+      "id": "EA-EXT-003",
+      "name": "private vulnerability reporting and enterprise incident-routing ownership"
+    },
+    {
+      "id": "EA-EXT-004",
+      "name": "commercial support, indemnity, and customer licensing terms"
+    }
+  ]
+}

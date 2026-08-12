@@ -28,17 +28,17 @@ jobs:
     timeout-minutes: 25
     steps:
       - name: Checkout exact subject
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
         with:
           enable-cache: true
           cache-dependency-glob: |
@@ -54,7 +54,10 @@ jobs:
       - name: Compile admitted source
         run: uv run python -m compileall -q src/uvmgr
 
-      - name: Lint repaired boundary without mutation
+      - name: Verify enterprise repository contract
+        run: uv run python -m uvmgr.core.enterprise_contract
+
+      - name: Lint repaired and governance boundaries without mutation
         run: |
           uv run ruff check --no-fix \
             src/uvmgr/cli.py \
@@ -65,11 +68,13 @@ jobs:
             src/uvmgr/core/capabilities.py \
             src/uvmgr/core/command_registry.py \
             src/uvmgr/core/command_repairs.py \
+            src/uvmgr/core/enterprise_contract.py \
             src/uvmgr/ops/tests.py \
             src/uvmgr/runtime/build.py \
             src/uvmgr/runtime/tests.py \
             tests/test_build_exe.py \
             tests/test_command_repairs.py \
+            tests/test_enterprise_contract.py \
             tests/test_tests_execution.py
 
       - name: Execute admitted behavioral boundary
@@ -80,6 +85,7 @@ jobs:
             tests/test_cli.py \
             tests/test_import.py \
             tests/test_build_exe.py \
+            tests/test_enterprise_contract.py \
             -v --tb=short
 
       - name: Replay uvmgr test boundary
@@ -115,14 +121,85 @@ jobs:
 
       - name: Upload validation receipt
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
-          name: errc-validation-${{ github.sha }}
+          name: enterprise-validation-${{ github.sha }}
           path: |
             uvmgr-source.tar.gz
             receipts/
             reports/receipts/
           if-no-files-found: error
+
+  compatibility:
+    name: Python ${{ matrix.python-version }} compatibility
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.13", "3.14"]
+    steps:
+      - name: Checkout exact subject
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: |
+            pyproject.toml
+            uv.lock
+
+      - name: Admit compatibility closure
+        run: uv sync --frozen --all-extras --group dev --group ci
+
+      - name: Compile compatibility subject
+        run: uv run python -m compileall -q src/uvmgr
+
+      - name: Execute compatibility smoke
+        run: >-
+          uv run pytest
+          tests/test_import.py
+          tests/test_cli.py
+          tests/test_enterprise_contract.py
+          -v --tb=short
+
+  container:
+    name: Hardened container
+    if: github.event_name != 'schedule'
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout exact subject
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - name: Build runtime image without publishing
+        run: docker build --target app --tag "uvmgr-ci:${GITHUB_SHA}" .
+
+      - name: Execute runtime image
+        run: |
+          set -euo pipefail
+          docker run --rm "uvmgr-ci:${GITHUB_SHA}" --version
+          docker run --rm "uvmgr-ci:${GITHUB_SHA}" --help >/dev/null
+
+      - name: Verify runtime privilege and toolchain boundary
+        run: |
+          set -euo pipefail
+          docker run --rm --entrypoint sh "uvmgr-ci:${GITHUB_SHA}" -c 'test "$(id -u)" = "10001"'
+          docker run --rm --entrypoint sh "uvmgr-ci:${GITHUB_SHA}" -c '! command -v sudo'
+          docker run --rm --entrypoint sh "uvmgr-ci:${GITHUB_SHA}" -c '! command -v gcc'
+          docker run --rm --entrypoint sh "uvmgr-ci:${GITHUB_SHA}" -c '! command -v g++'
 
   executable:
     name: Dogfood executable
@@ -132,17 +209,17 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout exact subject
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
         with:
           enable-cache: true
           cache-dependency-glob: |
@@ -168,7 +245,7 @@ jobs:
           "$executable" --help >/dev/null
 
       - name: Upload executable
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: uvmgr-dogfood-${{ github.sha }}
           path: dist/
@@ -184,17 +261,17 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout exact subject
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
         with:
           enable-cache: true
           cache-dependency-glob: |

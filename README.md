@@ -88,6 +88,25 @@ The separation is deliberate:
 
 New command surfaces should preserve this layering rather than adding ambient execution to the command layer.
 
+## Enterprise control plane
+
+Repository-observable enterprise controls are declared in `enterprise/controls.json` and are
+verified by code rather than prose:
+
+```bash
+uv run python -m uvmgr.core.enterprise_contract
+```
+
+The verifier checks required governance artifacts, immutable GitHub Action pins, non-mutating CI,
+release admission semantics, and the hardened runtime-container boundary. Organization-level
+controls such as branch protection and production approvers remain explicit external controls and
+are not promoted to `ALIVE` by repository-local inspection.
+
+Production release is separated from pull-request validation. A semantic-version tag enters the
+production GitHub Environment; manual publication is restricted to non-production channels.
+Published OCI images are multi-architecture and include SBOM/provenance attestations plus an
+immutable digest receipt.
+
 ## Testing and replay
 
 The test command forwards pytest-owned selectors and flags through a receipted Command → Ops → Runtime path.
@@ -102,7 +121,10 @@ uv run uvmgr tests ci verify --skip-build
 
 Execution receipts are written under `reports/receipts/`. They bind the executed argv, process result, and receipt digest so a successful test invocation can be distinguished from test discovery or configuration inspection.
 
-The canonical pull-request CI also checks the frozen lock, compilation, a bounded non-mutating Ruff surface, behavioral tests, `uvmgr` replay, capability admission, and a standalone PyInstaller dogfood executable.
+The canonical pull-request CI checks the frozen lock, compilation, immutable workflow dependencies,
+the enterprise contract, a bounded non-mutating Ruff surface, behavioral tests, current Python
+compatibility, `uvmgr` replay, capability admission, a hardened non-root container, and a standalone
+PyInstaller dogfood executable.
 
 ## Standalone executable
 
@@ -127,6 +149,7 @@ Useful narrow gates:
 ```bash
 uv lock --check
 uv run python -m compileall -q src/uvmgr
+uv run python -m uvmgr.core.enterprise_contract
 uv run pytest tests/test_build_exe.py -v --tb=short
 uv run uvmgr capabilities verify
 ```
@@ -141,13 +164,17 @@ Before adding a command:
 
 ## Documentation
 
+- [Enterprise architecture](docs/architecture/enterprise-architecture.md)
+- [Threat model](docs/security/threat-model.md)
+- [Release, rollback, and recovery](docs/operations/release-and-recovery.md)
+- [Security policy](SECURITY.md)
 - [Architecture and contributor doctrine](CLAUDE.md)
 - [Tutorials](docs/tutorials/)
 - [How-to guides](docs/how-to/)
 - [Explanations](docs/explanation/)
 - [Reference](docs/reference/)
 
-Documentation is descriptive; executable standing comes from the registry, tests, receipts, and exact-subject CI.
+Documentation is descriptive; executable standing comes from the registry, tests, receipts, enterprise contract, and exact-subject CI.
 
 ## License
 
