@@ -113,7 +113,7 @@ def _discover_source_commands() -> set[str]:
 # The registry is intentionally derived from installed/source modules; every
 # element is a module-name string by construction even though Ruff cannot prove
 # that statically for the special __all__ variable.
-__all__: Final[list[str]] = sorted(  # noqa: PLE0604
+__all__: Final[list[str]] = sorted(  # noqa: PLE0605
     (set(_CANONICAL_COMMANDS) | _discover_source_commands()) - EXCLUDED_COMMANDS
 )
 _PACKAGE_PREFIX = f"{__name__}."
