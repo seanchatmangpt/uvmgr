@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/github/license/seanchatmangpt/uvmgr.svg)](LICENSE)
 [![CI](https://img.shields.io/github/actions/workflow/status/seanchatmangpt/uvmgr/ci.yml)](https://github.com/seanchatmangpt/uvmgr/actions/workflows/ci.yml)
-[![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/python-3.12--3.13-blue.svg)](https://www.python.org/)
 
 `uvmgr` is a Python development-workflow CLI built around `uv`. It provides dependency, test, build, lint, automation, observability, workspace, infrastructure, and related development capabilities behind an explicit command-admission boundary.
 
@@ -60,6 +60,16 @@ The standing vocabulary includes:
 - `REFUSED:EXCLUDED_BY_REGISTRY` — source may exist, but the registry intentionally withholds execution authority.
 
 Inspection is not execution. `capabilities verify` proves structural admission; behavioral commands and CI provide execution evidence.
+
+## Certified runtime envelope
+
+The supported Python runtime is intentionally bounded to **3.12.x–3.13.x**. Packaging metadata,
+the lockfile, and CI encode the same envelope (`>=3.12,<3.14`). Python 3.11 is outside the
+certified source-syntax boundary, and Python 3.14 is refused until the locked native dependency
+chain supports it. Unsupported runtimes are not treated as best-effort enterprise support.
+
+Canonical CI executes Python 3.12.13 and a Python 3.13.14 compatibility rail using the same
+frozen lock. The `uv` toolchain itself is pinned to 0.12.3 in validation and release workflows.
 
 ## Architecture
 
@@ -122,8 +132,8 @@ uv run uvmgr tests ci verify --skip-build
 Execution receipts are written under `reports/receipts/`. They bind the executed argv, process result, and receipt digest so a successful test invocation can be distinguished from test discovery or configuration inspection.
 
 The canonical pull-request CI checks the frozen lock, compilation, immutable workflow dependencies,
-the enterprise contract, a bounded non-mutating Ruff surface, behavioral tests, current Python
-compatibility, `uvmgr` replay, capability admission, a hardened non-root container, and a standalone
+the enterprise contract, a bounded non-mutating Ruff surface, behavioral tests, the certified Python 3.12–3.13
+compatibility envelope, `uvmgr` replay, capability admission, a hardened non-root container, and a standalone
 PyInstaller dogfood executable.
 
 ## Standalone executable

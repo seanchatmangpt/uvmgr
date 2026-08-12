@@ -1,0 +1,80 @@
+name: One-shot lock admission migration
+
+on:
+  push:
+    branches:
+      - agent/errc-modernize-features
+    paths:
+      - pyproject.toml
+      - .github/workflows/one-shot-lock-admission.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: one-shot-lock-admission
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    name: Rewrite lock admission header and self-remove
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout migration subject with bounded write authority
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 2
+
+      - name: Verify exact migration parent and scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "92e157715fb7467350d9a7ba9611a9e251d47a3e"
+          test "$(git branch --show-current)" = "agent/errc-modernize-features"
+          grep -F 'requires-python = ">=3.12,<3.14"' pyproject.toml
+          grep -F 'requires-python = ">=3.11, <4.0"' uv.lock
+
+      - name: Pin migration uv toolchain
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+        with:
+          version: "0.12.3"
+          enable-cache: false
+
+      - name: Rewrite exactly one lock admission header
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("uv.lock")
+          old = 'requires-python = ">=3.11, <4.0"'
+          new = 'requires-python = ">=3.12, <3.14"'
+          text = path.read_text(encoding="utf-8")
+          if text.count(old) != 1:
+              raise SystemExit(f"REFUSED: expected exactly one old lock header, observed {text.count(old)}")
+          path.write_text(text.replace(old, new, 1), encoding="utf-8")
+          PY
+          git rm .github/workflows/one-shot-lock-admission.yml
+
+      - name: Verify migration diff and lock closure
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git diff --name-only | sort | tr '\n' ' ')" = ".github/workflows/one-shot-lock-admission.yml uv.lock "
+          test "$(git diff --numstat uv.lock | awk '{print $1 ":" $2}')" = "1:1"
+          uv lock --check
+
+      - name: Commit receipt-bearing migration and relinquish authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          before="$(git rev-parse HEAD)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add uv.lock .github/workflows/one-shot-lock-admission.yml
+          git commit -m "chore: admit certified Python runtime envelope"
+          after="$(git rev-parse HEAD)"
+          printf 'migration_before=%s\nmigration_after=%s\n' "$before" "$after"
+          git push origin HEAD:agent/errc-modernize-features

@@ -11,6 +11,7 @@
     "SECURITY.md",
     "docs/architecture/enterprise-architecture.md",
     "docs/operations/release-and-recovery.md",
+    "docs/operations/support-matrix.md",
     "docs/security/threat-model.md"
   ],
   "text_controls": [
@@ -23,7 +24,10 @@
         "uv sync --frozen",
         "uv lock --check",
         "python -m uvmgr.core.enterprise_contract",
-        "docker build --target app"
+        "docker build --target app",
+        "PYTHON_VERSION: \"3.12.13\"",
+        "python-version: [\"3.13.14\"]",
+        "version: \"0.12.3\""
       ],
       "forbidden": [
         "ruff check --fix",
@@ -41,7 +45,9 @@
         "platforms: linux/amd64,linux/arm64",
         "provenance: mode=max",
         "sbom: true",
-        "persist-credentials: false"
+        "persist-credentials: false",
+        "PYTHON_VERSION: \"3.12.13\"",
+        "version: \"0.12.3\""
       ],
       "forbidden": [
         "- production\n"
@@ -60,6 +66,37 @@
         "learning_mode:",
         "auto_tune: true"
       ]
+    },
+    {
+      "id": "EA-SUP-001",
+      "path": "pyproject.toml",
+      "required": [
+        "requires-python = \">=3.12,<3.14\""
+      ],
+      "forbidden": [
+        "requires-python = \">=3.11,<4.0\""
+      ]
+    },
+    {
+      "id": "EA-SUP-002",
+      "path": "uv.lock",
+      "required": [
+        "requires-python = \">=3.12, <3.14\""
+      ],
+      "forbidden": [
+        "requires-python = \">=3.11, <4.0\""
+      ]
+    },
+    {
+      "id": "EA-SUP-003",
+      "path": "docs/operations/support-matrix.md",
+      "required": [
+        "CPython 3.12.x",
+        "CPython 3.13.x",
+        "REFUSED",
+        "`>=3.12,<3.14`"
+      ],
+      "forbidden": []
     }
   ],
   "section_controls": [

@@ -18,12 +18,14 @@ principles:
   - "policy_and_evidence_are_separate"
   - "external_controls_are_never_fabricated"
   - "production_publication_requires_immutable_identity"
+  - "support_claims_require_exact_runtime_evidence"
 
 control_plane:
   repository_contract: "enterprise/controls.json"
   verifier: "python -m uvmgr.core.enterprise_contract"
   ci_workflow: ".github/workflows/ci.yml"
   release_workflow: ".github/workflows/deploy.yml"
+  support_matrix: "docs/operations/support-matrix.md"
 
 controls:
   source_integrity:

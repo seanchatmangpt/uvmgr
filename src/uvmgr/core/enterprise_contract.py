@@ -12,36 +12,32 @@ import re
 from pathlib import Path
 from typing import Any
 
-_ACTION_RE = re.compile(r"^\s*uses:\s*([^@\s]+)@([^\s#]+)", re.MULTILINE)
+_ACTION_RE = re.compile(r"^\s*-\s*uses:\s*([^@\s]+)@([^\s#]+)", re.MULTILINE)
 _FULL_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 
 
 def _read_text(root: Path, relative_path: str) -> str:
     """Read a repository file using UTF-8."""
-
     return (root / relative_path).read_text(encoding="utf-8")
 
 
 def _load_policy(root: Path) -> dict[str, Any]:
     """Load the machine-readable enterprise control contract."""
-
     policy_path = root / "enterprise" / "controls.json"
     return json.loads(policy_path.read_text(encoding="utf-8"))
 
 
 def _verify_required_files(root: Path, policy: dict[str, Any]) -> list[str]:
     """Return missing required-file failures."""
-
-    errors: list[str] = []
-    for relative_path in policy["required_files"]:
-        if not (root / relative_path).is_file():
-            errors.append(f"EA-FILE: missing required file: {relative_path}")
-    return errors
+    return [
+        f"EA-FILE: missing required file: {relative_path}"
+        for relative_path in policy["required_files"]
+        if not (root / relative_path).is_file()
+    ]
 
 
 def _verify_action_pins(root: Path) -> list[str]:
     """Require every third-party GitHub Action to use an immutable commit SHA."""
-
     errors: list[str] = []
     workflow_dir = root / ".github" / "workflows"
     workflow_paths = sorted(
@@ -50,37 +46,35 @@ def _verify_action_pins(root: Path) -> list[str]:
     )
     for workflow_path in workflow_paths:
         text = workflow_path.read_text(encoding="utf-8")
-        for action, ref in _ACTION_RE.findall(text):
-            if action.startswith("./"):
-                continue
-            if not _FULL_SHA_RE.fullmatch(ref):
-                relative = workflow_path.relative_to(root).as_posix()
-                errors.append(f"EA-ACTION-PIN: {relative}: {action}@{ref} is mutable")
+        relative = workflow_path.relative_to(root).as_posix()
+        errors.extend(
+            f"EA-ACTION-PIN: {relative}: {action}@{ref} is mutable"
+            for action, ref in _ACTION_RE.findall(text)
+            if not action.startswith("./") and not _FULL_SHA_RE.fullmatch(ref)
+        )
     return errors
 
 
 def _verify_text_controls(root: Path, policy: dict[str, Any]) -> list[str]:
     """Evaluate declarative whole-file text controls."""
-
     errors: list[str] = []
     for control in policy["text_controls"]:
         text = _read_text(root, control["path"])
-        for fragment in control.get("required", []):
-            if fragment not in text:
-                errors.append(
-                    f"{control['id']}: {control['path']} missing required fragment: {fragment}"
-                )
-        for fragment in control.get("forbidden", []):
-            if fragment in text:
-                errors.append(
-                    f"{control['id']}: {control['path']} contains forbidden fragment: {fragment}"
-                )
+        errors.extend(
+            f"{control['id']}: {control['path']} missing required fragment: {fragment}"
+            for fragment in control.get("required", [])
+            if fragment not in text
+        )
+        errors.extend(
+            f"{control['id']}: {control['path']} contains forbidden fragment: {fragment}"
+            for fragment in control.get("forbidden", [])
+            if fragment in text
+        )
     return errors
 
 
 def _section(text: str, start: str) -> str | None:
     """Return the Dockerfile-like section beginning at start."""
-
     index = text.find(start)
     if index < 0:
         return None
@@ -93,7 +87,6 @@ def _section(text: str, start: str) -> str | None:
 
 def _verify_section_controls(root: Path, policy: dict[str, Any]) -> list[str]:
     """Evaluate controls scoped to one declarative file section."""
-
     errors: list[str] = []
     for control in policy["section_controls"]:
         text = _read_text(root, control["path"])
@@ -103,16 +96,16 @@ def _verify_section_controls(root: Path, policy: dict[str, Any]) -> list[str]:
                 f"{control['id']}: {control['path']} missing section: {control['start']}"
             )
             continue
-        for fragment in control.get("required", []):
-            if fragment not in section:
-                errors.append(
-                    f"{control['id']}: {control['path']} section missing: {fragment}"
-                )
-        for fragment in control.get("forbidden", []):
-            if fragment in section:
-                errors.append(
-                    f"{control['id']}: {control['path']} section contains forbidden: {fragment}"
-                )
+        errors.extend(
+            f"{control['id']}: {control['path']} section missing: {fragment}"
+            for fragment in control.get("required", [])
+            if fragment not in section
+        )
+        errors.extend(
+            f"{control['id']}: {control['path']} section contains forbidden: {fragment}"
+            for fragment in control.get("forbidden", [])
+            if fragment in section
+        )
     return errors
 
 
@@ -124,7 +117,6 @@ def verify_repository(root: Path) -> tuple[str, ...]:
     tuple[str, ...]
         Empty when every locally provable control is satisfied.
     """
-
     root = root.resolve()
     policy = _load_policy(root)
     errors = [
@@ -138,7 +130,6 @@ def verify_repository(root: Path) -> tuple[str, ...]:
 
 def main() -> int:
     """Run the enterprise verifier against the current checkout."""
-
     root = Path.cwd()
     errors = verify_repository(root)
     if errors:
