@@ -15,7 +15,8 @@ from uvmgr.core.instrumentation import (
     add_span_event,
     instrument_command,
 )
-from uvmgr.core.testing import TestDiscovery, generate_test_templates as make_test_templates
+from uvmgr.core.testing import TestDiscovery
+from uvmgr.core.testing import generate_test_templates as make_test_templates
 from uvmgr.ops.tests import (
     CIPipelineResult,
     TestRunOptions,
