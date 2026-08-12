@@ -1,10 +1,58 @@
 from __future__ import annotations
 
+import importlib.util
 import sys
 from pathlib import Path
 
 from uvmgr.core.process import run_logged
 from uvmgr.core.telemetry import span
+
+
+_BASE_HIDDEN_IMPORTS = (
+    "uvmgr.commands",
+    "uvmgr.ops",
+    "uvmgr.runtime",
+    "uvmgr.core",
+    "uvmgr.mcp",
+    "uvmgr.core.cache",
+    "uvmgr.core.clipboard",
+    "uvmgr.core.concurrency",
+    "uvmgr.core.config",
+    "uvmgr.core.fs",
+    "uvmgr.core.history",
+    "uvmgr.core.instrumentation",
+    "uvmgr.core.lint",
+    "uvmgr.core.metrics",
+    "uvmgr.core.paths",
+    "uvmgr.core.process",
+    "uvmgr.core.semconv",
+    "uvmgr.core.shell",
+    "uvmgr.core.telemetry",
+    "uvmgr.core.venv",
+    "uvmgr.core.workspace",
+    "typer",
+    "rich",
+    "fastapi",
+    "apscheduler",
+)
+
+
+def _admitted_layer_imports() -> tuple[str, ...]:
+    """Project the canonical command registry into frozen import closure."""
+    import uvmgr.commands as commands_package
+
+    modules: list[str] = []
+    for name in commands_package.__all__:
+        for package in ("uvmgr.commands", "uvmgr.ops", "uvmgr.runtime"):
+            module = f"{package}.{name}"
+            if importlib.util.find_spec(module) is not None:
+                modules.append(module)
+    return tuple(modules)
+
+
+def _default_hidden_imports() -> tuple[str, ...]:
+    """Return deterministic PyInstaller closure for every admitted command."""
+    return tuple(dict.fromkeys((*_BASE_HIDDEN_IMPORTS, *_admitted_layer_imports())))
 
 
 def dist(outdir: Path | None = None) -> None:
@@ -75,65 +123,8 @@ if __name__ == "__main__":
             for mod in exclude_modules:
                 args.extend(["--exclude-module", mod])
 
-            # Add common hidden imports for uvmgr
-            default_hidden_imports = [
-                "uvmgr.commands",
-                "uvmgr.ops", 
-                "uvmgr.runtime",
-                "uvmgr.core",
-                "uvmgr.mcp",
-                # Explicit command modules for dynamic loading
-                "uvmgr.commands.deps",
-                "uvmgr.commands.tests", 
-                "uvmgr.commands.build",
-                "uvmgr.commands.tool",
-                "uvmgr.commands.serve",
-                "uvmgr.commands.lint",
-                "uvmgr.commands.ai",
-                "uvmgr.commands.cache", 
-                "uvmgr.commands.exec",
-                "uvmgr.commands.shell",
-                "uvmgr.commands.index",
-                "uvmgr.commands.release",
-                "uvmgr.commands.remote",
-                "uvmgr.commands.ap_scheduler",
-                "uvmgr.commands.history",
-                "uvmgr.commands.weaver",
-                "uvmgr.commands.search",
-                "uvmgr.commands.claude",
-                "uvmgr.commands.forge",
-                "uvmgr.commands.agent",
-                "uvmgr.commands.otel",
-                "uvmgr.commands.workflow",
-                "uvmgr.commands.spiff_otel",
-                "uvmgr.commands.project",
-                # Core submodules for dynamic loading
-                "uvmgr.core.cache",
-                "uvmgr.core.clipboard",
-                "uvmgr.core.concurrency",
-                "uvmgr.core.config",
-                "uvmgr.core.fs",
-                "uvmgr.core.history",
-                "uvmgr.core.instrumentation",
-                "uvmgr.core.lint",
-                "uvmgr.core.metrics",
-                "uvmgr.core.paths",
-                "uvmgr.core.process",
-                "uvmgr.core.semconv",
-                "uvmgr.core.shell",
-                "uvmgr.core.telemetry",
-                "uvmgr.core.venv",
-                "uvmgr.core.workspace",
-                # External libraries
-                "typer",
-                "rich", 
-                "fastapi",
-                "dspy",
-                "ember_ai",
-                "spiffworkflow",
-                "apscheduler",
-            ]
-            for imp in default_hidden_imports:
+            # Freeze the same command graph admitted by the runtime registry.
+            for imp in _default_hidden_imports():
                 if imp not in hidden_imports:
                     args.extend(["--hidden-import", imp])
 
@@ -193,20 +184,9 @@ def generate_spec(
     """Generate PyInstaller spec file."""
     with span("build.generate_spec"):
         # Build default hidden imports list
-        all_hidden_imports = [
-            "uvmgr.commands",
-            "uvmgr.ops",
-            "uvmgr.runtime",
-            "uvmgr.core",
-            "uvmgr.mcp",
-            "typer",
-            "rich",
-            "fastapi",
-            "dspy",
-            "ember_ai",
-            "spiffworkflow",
-            "apscheduler",
-        ] + hidden_imports
+        all_hidden_imports = list(
+            dict.fromkeys((*_default_hidden_imports(), *hidden_imports))
+        )
 
         # Create entry script content
         entry_script_content = """#!/usr/bin/env python
@@ -323,43 +303,70 @@ os.unlink(entry_file)
 
 
 def test_executable(exe_path: Path) -> dict:
-    """Test the built executable by running basic commands."""
+    """Verify the frozen executable and every command admitted by its source registry."""
     import subprocess
+
+    import uvmgr.commands as commands_package
+
+    incomplete_markers = ("BUILD_BROKEN:", "UNSUPPORTED:", "REFUSED:")
+
+    def probe(arguments: list[str], label: str) -> dict | None:
+        result = subprocess.run(
+            [str(exe_path), *arguments],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            check=False,
+        )
+        output = f"{result.stdout}\n{result.stderr}"
+        if result.returncode != 0:
+            return {
+                "success": False,
+                "error": f"{label} failed with exit {result.returncode}: {output.strip()}",
+            }
+        marker = next((item for item in incomplete_markers if item in output), None)
+        if marker is not None:
+            return {
+                "success": False,
+                "error": f"{label} exposed incomplete standing {marker}: {output.strip()}",
+            }
+        return None
 
     with span("build.test_executable"):
         try:
-            # Test 1: Check version
-            result = subprocess.run(
-                [str(exe_path), "--version"],
-                capture_output=True,
-                text=True,
-                timeout=10,
-                check=False,
-            )
-            if result.returncode != 0:
-                return {"success": False, "error": f"Version check failed: {result.stderr}"}
+            failure = probe(["--version"], "Version check")
+            if failure is not None:
+                return failure
 
-            # Test 2: Check help
-            result = subprocess.run(
-                [str(exe_path), "--help"], capture_output=True, text=True, timeout=10, check=False
-            )
-            if result.returncode != 0:
-                return {"success": False, "error": f"Help check failed: {result.stderr}"}
+            failure = probe(["--help"], "Help check")
+            if failure is not None:
+                return failure
 
-            # Test 3: List commands
-            result = subprocess.run(
-                [str(exe_path)], capture_output=True, text=True, timeout=10, check=False
-            )
-            if result.returncode != 0:
-                return {"success": False, "error": f"Command listing failed: {result.stderr}"}
+            commands_tested: list[str] = []
+            for command in commands_package.__all__:
+                failure = probe([command, "--help"], f"Admitted command {command!r}")
+                if failure is not None:
+                    return failure
+                commands_tested.append(command)
+
+            failure = probe(["capabilities", "verify"], "Frozen capability verification")
+            if failure is not None:
+                return failure
 
             return {
                 "success": True,
-                "tests_passed": ["version", "help", "commands"],
+                "tests_passed": [
+                    "version",
+                    "help",
+                    "admitted_commands",
+                    "capabilities_verify",
+                ],
+                "commands_tested": commands_tested,
+                "command_count": len(commands_tested),
                 "executable": str(exe_path),
             }
 
         except subprocess.TimeoutExpired:
-            return {"success": False, "error": "Executable timed out"}
+            return {"success": False, "error": "Executable probe timed out"}
         except Exception as e:
             return {"success": False, "error": str(e)}
