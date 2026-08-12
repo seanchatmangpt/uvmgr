@@ -9,10 +9,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from uvmgr.core.command_registry import (
-    admitted_command_names as resolve_admitted_commands,
-    command_cli_name,
-)
+from uvmgr.core import command_registry
 from uvmgr.core.command_repairs import repaired_command_module_names
 from uvmgr.core.process import run_logged
 from uvmgr.core.telemetry import span
@@ -61,7 +58,7 @@ def _discover_command_sources() -> set[str]:
 
 def _admitted_command_names() -> tuple[str, ...]:
     """Resolve the command ontology against the current source projection."""
-    return resolve_admitted_commands(_discover_command_sources())
+    return command_registry.admitted_command_names(_discover_command_sources())
 
 
 def _admitted_layer_imports() -> tuple[str, ...]:
@@ -356,7 +353,9 @@ def _probe_executable(exe_path: Path, arguments: list[str], label: str) -> dict 
 def test_executable(exe_path: Path) -> dict:
     """Verify the frozen executable and every command admitted by its source registry."""
     commands_tested = list(_admitted_command_names())
-    command_routes = [(command, command_cli_name(command)) for command in commands_tested]
+    command_routes = [
+        (command, command_registry.command_cli_name(command)) for command in commands_tested
+    ]
     probes = [
         (["--version"], "Version check"),
         (["--help"], "Help check"),
