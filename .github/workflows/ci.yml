@@ -19,6 +19,7 @@ concurrency:
 
 env:
   PYTHON_VERSION: "3.12.13"
+  SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 
 jobs:
   validate:
@@ -30,7 +31,12 @@ jobs:
       - name: Checkout exact subject
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
+          ref: ${{ env.SUBJECT_SHA }}
           persist-credentials: false
+
+      - name: Verify exact checkout identity
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "${SUBJECT_SHA}"
 
       - name: Set up Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
@@ -110,11 +116,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${SUBJECT_SHA}"
           mkdir -p receipts reports/receipts
           git archive --format=tar.gz --prefix=uvmgr/ --output=uvmgr-source.tar.gz HEAD
           sha256sum uvmgr-source.tar.gz | tee receipts/source-capsule.sha256
           git rev-parse HEAD | tee receipts/head.sha
           git rev-parse HEAD^{tree} | tee receipts/tree.sha
+          printf '%s\n' "${SUBJECT_SHA}" | tee receipts/subject.sha
           find reports/receipts -maxdepth 1 -type f -print0 \
             | sort -z \
             | xargs -0 -r sha256sum \
@@ -124,7 +132,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
-          name: enterprise-validation-${{ github.sha }}
+          name: enterprise-validation-${{ env.SUBJECT_SHA }}
           path: |
             uvmgr-source.tar.gz
             receipts/
@@ -144,7 +152,12 @@ jobs:
       - name: Checkout exact subject
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
+          ref: ${{ env.SUBJECT_SHA }}
           persist-credentials: false
+
+      - name: Verify exact checkout identity
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "${SUBJECT_SHA}"
 
       - name: Set up Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
@@ -184,24 +197,29 @@ jobs:
       - name: Checkout exact subject
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
+          ref: ${{ env.SUBJECT_SHA }}
           persist-credentials: false
 
+      - name: Verify exact checkout identity
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "${SUBJECT_SHA}"
+
       - name: Build runtime image without publishing
-        run: docker build --target app --tag "uvmgr-ci:${GITHUB_SHA}" .
+        run: docker build --target app --tag "uvmgr-ci:${SUBJECT_SHA}" .
 
       - name: Execute runtime image
         run: |
           set -euo pipefail
-          docker run --rm "uvmgr-ci:${GITHUB_SHA}" --version
-          docker run --rm "uvmgr-ci:${GITHUB_SHA}" --help >/dev/null
+          docker run --rm "uvmgr-ci:${SUBJECT_SHA}" --version
+          docker run --rm "uvmgr-ci:${SUBJECT_SHA}" --help >/dev/null
 
       - name: Verify runtime privilege and toolchain boundary
         run: |
           set -euo pipefail
-          docker run --rm --entrypoint sh "uvmgr-ci:${GITHUB_SHA}" -c 'test "$(id -u)" = "10001"'
-          docker run --rm --entrypoint sh "uvmgr-ci:${GITHUB_SHA}" -c '! command -v sudo'
-          docker run --rm --entrypoint sh "uvmgr-ci:${GITHUB_SHA}" -c '! command -v gcc'
-          docker run --rm --entrypoint sh "uvmgr-ci:${GITHUB_SHA}" -c '! command -v g++'
+          docker run --rm --entrypoint sh "uvmgr-ci:${SUBJECT_SHA}" -c 'test "$(id -u)" = "10001"'
+          docker run --rm --entrypoint sh "uvmgr-ci:${SUBJECT_SHA}" -c '! command -v sudo'
+          docker run --rm --entrypoint sh "uvmgr-ci:${SUBJECT_SHA}" -c '! command -v gcc'
+          docker run --rm --entrypoint sh "uvmgr-ci:${SUBJECT_SHA}" -c '! command -v g++'
 
   executable:
     name: Dogfood executable
@@ -213,7 +231,12 @@ jobs:
       - name: Checkout exact subject
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
+          ref: ${{ env.SUBJECT_SHA }}
           persist-credentials: false
+
+      - name: Verify exact checkout identity
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "${SUBJECT_SHA}"
 
       - name: Set up Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
@@ -250,7 +273,7 @@ jobs:
       - name: Upload executable
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
-          name: uvmgr-dogfood-${{ github.sha }}
+          name: uvmgr-dogfood-${{ env.SUBJECT_SHA }}
           path: dist/
           if-no-files-found: error
 
@@ -266,7 +289,12 @@ jobs:
       - name: Checkout exact subject
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
+          ref: ${{ env.SUBJECT_SHA }}
           persist-credentials: false
+
+      - name: Verify exact checkout identity
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "${SUBJECT_SHA}"
 
       - name: Set up Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
