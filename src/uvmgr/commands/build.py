@@ -27,20 +27,20 @@ Build Types
 ----------
 - **Wheel/SDist**: Standard Python package distributions
 - **Executable**: Standalone executables for distribution
-- **Spec Files**: Customizable build configurations
+- **Spec Files**: Customizable PyInstaller build configurations
 - **Self-Build**: Recursive builds for uvmgr itself
 
 Examples
 --------
     >>> # Build package distribution
     >>> uvmgr build dist --upload
-    >>> 
+    >>>
     >>> # Build standalone executable
     >>> uvmgr build exe --name my-app --onefile
-    >>> 
+    >>>
     >>> # Generate spec file
     >>> uvmgr build spec --outfile custom.spec
-    >>> 
+    >>>
     >>> # Self-build uvmgr
     >>> uvmgr build dogfood --version --test
 
@@ -51,6 +51,8 @@ See Also
 """
 
 import pathlib
+import platform
+import tomllib
 
 import typer
 
@@ -70,7 +72,6 @@ def dist(
     upload: bool = typer.Option(False, "--upload", help="Twine upload after build"),
 ):
     """Build Python wheel and source distribution."""
-    # Track build operation
     add_span_attributes(
         **{
             BuildAttributes.OPERATION: "dist",
@@ -96,7 +97,6 @@ def wheel(
     upload: bool = typer.Option(False, "--upload", help="Twine upload after build"),
 ):
     """Build Python wheel (alias for dist command)."""
-    # Track build operation with wheel alias
     add_span_attributes(
         **{
             BuildAttributes.OPERATION: "wheel",
@@ -123,7 +123,6 @@ def sdist(
     upload: bool = typer.Option(False, "--upload", help="Twine upload after build"),
 ):
     """Build Python source distribution."""
-    # Track build operation with sdist
     add_span_attributes(
         **{
             BuildAttributes.OPERATION: "sdist",
@@ -143,7 +142,7 @@ def sdist(
 
 @app.command()
 @instrument_command("build_exe", track_args=True)
-def exe(
+def exe(  # noqa: PLR0913
     ctx: typer.Context,
     outdir: pathlib.Path = typer.Option(None, "--outdir", "-o", file_okay=False),
     name: str = typer.Option("uvmgr", "--name", "-n", help="Executable name"),
@@ -162,7 +161,6 @@ def exe(
     debug: bool = typer.Option(False, "--debug", "-d", help="Debug build process"),
 ):
     """Build standalone executable using PyInstaller."""
-    # Track exe build
     add_span_attributes(
         **{
             BuildAttributes.OPERATION: "exe",
@@ -191,7 +189,7 @@ def exe(
 
 @app.command()
 @instrument_command("build_spec", track_args=True)
-def spec(
+def spec(  # noqa: PLR0913
     ctx: typer.Context,
     outfile: pathlib.Path = typer.Option("uvmgr.spec", "--outfile", "-o", help="Output spec file"),
     name: str = typer.Option("uvmgr", "--name", "-n", help="Executable name"),
@@ -205,7 +203,6 @@ def spec(
     ),
 ):
     """Generate PyInstaller spec file for customization."""
-    # Track spec generation
     add_span_attributes(
         **{
             BuildAttributes.OPERATION: "spec",
@@ -243,7 +240,6 @@ def dogfood(
     This command builds uvmgr as a standalone executable using PyInstaller,
     demonstrating that uvmgr can package itself.
     """
-    # Track dogfood build (self-build)
     add_span_attributes(
         **{
             BuildAttributes.TYPE: "exe",
@@ -254,19 +250,14 @@ def dogfood(
         }
     )
     add_span_event("build.dogfood.started", {"recursive": True})
-    import platform
 
-    # Build executable name
     name = "uvmgr"
     if version:
-        # Get version from pyproject.toml or default
         try:
-            import tomllib
-
             with open("pyproject.toml", "rb") as f:
                 pyproject = tomllib.load(f)
                 pkg_version = pyproject.get("project", {}).get("version", "0.0.0")
-        except:
+        except (OSError, tomllib.TOMLDecodeError, TypeError, AttributeError):
             pkg_version = "0.0.0"
         name += f"-{pkg_version}"
     if platform_suffix:
@@ -274,7 +265,6 @@ def dogfood(
         machine = platform.machine().lower()
         name += f"-{system}-{machine}"
 
-    # Build the executable
     payload = build_ops.exe(
         outdir=outdir,
         name=name,
@@ -291,7 +281,6 @@ def dogfood(
     )
 
     if test:
-        # Test the built executable
         test_result = build_ops.test_executable(pathlib.Path(payload["output_file"]))
         payload["test_result"] = test_result
 

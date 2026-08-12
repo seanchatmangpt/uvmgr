@@ -1,12 +1,17 @@
 from __future__ import annotations
 
-import importlib.util
+import logging
+import os
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
+from uvmgr.core.command_registry import admitted_command_names as resolve_admitted_commands
 from uvmgr.core.process import run_logged
 from uvmgr.core.telemetry import span
 
+_LOGGER = logging.getLogger(__name__)
 
 _BASE_HIDDEN_IMPORTS = (
     "uvmgr.commands",
@@ -37,16 +42,31 @@ _BASE_HIDDEN_IMPORTS = (
 )
 
 
-def _admitted_layer_imports() -> tuple[str, ...]:
-    """Project the canonical command registry into frozen import closure."""
-    import uvmgr.commands as commands_package
+def _discover_command_sources() -> set[str]:
+    """Discover physical command modules without importing the command layer."""
+    command_dir = Path(__file__).parent.parent / "commands"
+    return {
+        path.stem
+        for path in command_dir.glob("*.py")
+        if path.stem != "__init__"
+        and not path.stem.startswith("_")
+        and not path.stem.endswith("_backup")
+    }
 
+
+def _admitted_command_names() -> tuple[str, ...]:
+    """Resolve the command ontology against the current source projection."""
+    return resolve_admitted_commands(_discover_command_sources())
+
+
+def _admitted_layer_imports() -> tuple[str, ...]:
+    """Project admitted commands into frozen Command/Ops/Runtime module closure."""
+    source_root = Path(__file__).parent.parent
     modules: list[str] = []
-    for name in commands_package.__all__:
-        for package in ("uvmgr.commands", "uvmgr.ops", "uvmgr.runtime"):
-            module = f"{package}.{name}"
-            if importlib.util.find_spec(module) is not None:
-                modules.append(module)
+    for name in _admitted_command_names():
+        for package in ("commands", "ops", "runtime"):
+            if (source_root / package / f"{name}.py").is_file():
+                modules.append(f"uvmgr.{package}.{name}")
     return tuple(modules)
 
 
@@ -56,6 +76,7 @@ def _default_hidden_imports() -> tuple[str, ...]:
 
 
 def dist(outdir: Path | None = None) -> None:
+    """Build wheel and source distributions."""
     args = ["python", "-m", "build"]
     if outdir:
         args += ["--outdir", str(outdir)]
@@ -64,33 +85,31 @@ def dist(outdir: Path | None = None) -> None:
 
 
 def upload(dist_dir: Path = Path("dist")) -> None:
+    """Upload manufactured distributions with Twine."""
     with span("build.upload"):
         run_logged(["twine", "upload", str(dist_dir / "*")])
 
 
-def exe(
+def exe(  # noqa: PLR0913
     outdir: Path | None = None,
     name: str = "uvmgr",
     onefile: bool = True,
     clean: bool = True,
     spec_file: Path | None = None,
     icon: Path | None = None,
-    hidden_imports: list[str] = [],
-    exclude_modules: list[str] = [],
+    hidden_imports: list[str] | None = None,
+    exclude_modules: list[str] | None = None,
     debug: bool = False,
 ) -> Path:
     """Build executable using PyInstaller."""
+    hidden_imports = hidden_imports or []
+    exclude_modules = exclude_modules or []
     with span("build.exe"):
         args = ["pyinstaller"]
 
-        # If spec file provided, use it
         if spec_file:
             args.append(str(spec_file))
         else:
-            # Build from entry point - create a temporary entry script
-            import tempfile
-            import os
-
             with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
                 f.write("""#!/usr/bin/env python
 import sys
@@ -100,7 +119,6 @@ if __name__ == "__main__":
     app()
 """)
                 entry_script = f.name
-                # Secure temp file permissions - readable/writable only by owner
                 os.chmod(entry_script, 0o600)
 
             args.append(entry_script)
@@ -115,15 +133,12 @@ if __name__ == "__main__":
             if icon:
                 args.extend(["--icon", str(icon)])
 
-            # Add hidden imports
             for imp in hidden_imports:
                 args.extend(["--hidden-import", imp])
 
-            # Add exclude modules
             for mod in exclude_modules:
                 args.extend(["--exclude-module", mod])
 
-            # Freeze the same command graph admitted by the runtime registry.
             for imp in _default_hidden_imports():
                 if imp not in hidden_imports:
                     args.extend(["--hidden-import", imp])
@@ -136,34 +151,23 @@ if __name__ == "__main__":
         if debug:
             args.append("--debug=all")
 
-        # Add data files for MCP resources
         mcp_resources = Path(__file__).parent.parent / "mcp" / "resources.py"
         if mcp_resources.exists():
             args.extend(["--add-data", f"{mcp_resources}:uvmgr/mcp"])
 
-        # Add litellm data files
-        try:
-            import litellm
-            litellm_path = Path(litellm.__file__).parent
-            for data_file in litellm_path.glob("*.json"):
-                args.extend(["--add-data", f"{data_file}:litellm"])
-        except ImportError:
-            pass  # litellm not available
-
         try:
             run_logged(args)
         finally:
-            # Clean up temporary entry script
             if not spec_file and "entry_script" in locals():
-                import os
-
                 try:
                     os.unlink(entry_script)
-                except OSError as e:
-                    # Log cleanup failure but don't block
-                    _log.warning("Failed to clean up temporary entry script %s: %s", entry_script, e)
+                except OSError as exc:
+                    _LOGGER.warning(
+                        "Failed to clean up temporary entry script %s: %s",
+                        entry_script,
+                        exc,
+                    )
 
-        # Return path to built executable
         if onefile:
             if sys.platform == "win32":
                 return outdir / f"{name}.exe"
@@ -173,22 +177,22 @@ if __name__ == "__main__":
         return outdir / name / name
 
 
-def generate_spec(
+def generate_spec(  # noqa: PLR0913
     outfile: Path,
     name: str = "uvmgr",
     onefile: bool = True,
     icon: Path | None = None,
-    hidden_imports: list[str] = [],
-    exclude_modules: list[str] = [],
+    hidden_imports: list[str] | None = None,
+    exclude_modules: list[str] | None = None,
 ) -> Path:
     """Generate PyInstaller spec file."""
+    hidden_imports = hidden_imports or []
+    exclude_modules = exclude_modules or []
     with span("build.generate_spec"):
-        # Build default hidden imports list
         all_hidden_imports = list(
             dict.fromkeys((*_default_hidden_imports(), *hidden_imports))
         )
 
-        # Create entry script content
         entry_script_content = """#!/usr/bin/env python
 import sys
 from uvmgr.cli import app
@@ -197,7 +201,6 @@ if __name__ == "__main__":
     app()
 """
 
-        # Generate spec file content
         spec_content = f'''# -*- mode: python ; coding: utf-8 -*-
 # Generated by uvmgr for PyInstaller
 
@@ -297,17 +300,12 @@ coll = COLLECT(
 os.unlink(entry_file)
 """
 
-        # Write spec file
         outfile.write_text(spec_content)
         return outfile
 
 
 def test_executable(exe_path: Path) -> dict:
     """Verify the frozen executable and every command admitted by its source registry."""
-    import subprocess
-
-    import uvmgr.commands as commands_package
-
     incomplete_markers = ("BUILD_BROKEN:", "UNSUPPORTED:", "REFUSED:")
 
     def probe(arguments: list[str], label: str) -> dict | None:
@@ -343,7 +341,7 @@ def test_executable(exe_path: Path) -> dict:
                 return failure
 
             commands_tested: list[str] = []
-            for command in commands_package.__all__:
+            for command in _admitted_command_names():
                 failure = probe([command, "--help"], f"Admitted command {command!r}")
                 if failure is not None:
                     return failure
@@ -368,5 +366,5 @@ def test_executable(exe_path: Path) -> dict:
 
         except subprocess.TimeoutExpired:
             return {"success": False, "error": "Executable probe timed out"}
-        except Exception as e:
-            return {"success": False, "error": str(e)}
+        except Exception as exc:
+            return {"success": False, "error": str(exc)}

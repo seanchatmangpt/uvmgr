@@ -9,93 +9,15 @@ from types import ModuleType
 from typing import Final
 
 from uvmgr.core.command_repairs import install_command_repairs
-
-# Explicit inventory preserves frozen/PyInstaller discovery while pkgutil admits
-# newly added command modules in source checkouts. Every command remains inert
-# until imported by the CLI registry; import does not grant actuation authority.
-_CANONICAL_COMMANDS: Final[tuple[str, ...]] = (
-    "actions",
-    "agent",
-    "agent_guides",
-    "aggregate",
-    "ai",
-    "ap_scheduler",
-    "automation",
-    "build",
-    "cache",
-    "capabilities",
-    "cicd",
-    "claude",
-    "container",
-    "democratize",
-    "deps",
-    "docs",
-    "documentation",
-    "dod",
-    "exec",
-    "explore",
-    "exponential",
-    "forge",
-    "guides",
-    "history",
-    "index",
-    "infodesign",
-    "knowledge",
-    "lint",
-    "mermaid",
-    "multilang",
-    "orchestrate",
-    "otel",
-    "performance",
-    "phd",
-    "plugins",
-    "project",
-    "release",
-    "remote",
-    "search",
-    "security",
-    "serve",
-    "shell",
-    "spiff_otel",
-    "substrate",
-    "terraform",
-    "tests",
-    "tool",
-    "tools",
-    "validation",
-    "weaver",
-    "weaver_forge",
-    "workflow",
-    "workspace",
-    "worktree",
+from uvmgr.core.command_registry import (
+    EXCLUDED_COMMANDS,
+    LEGACY_COMMANDS,
+    OPTIONAL_COMMANDS,
+    admitted_command_names,
 )
 
-LEGACY_COMMANDS: Final[frozenset[str]] = frozenset(
-    {
-        "dod_backup",
-        "tool_backup",
-    }
-)
-OPTIONAL_COMMANDS: Final[frozenset[str]] = frozenset(
-    {
-        "agent",
-        "agent_guides",
-        "aggregate",
-        "ai",
-        "claude",
-        "democratize",
-        "documentation",
-        "exponential",
-        "mcp",
-        "phd",
-        "search",
-        "serve",
-        "spiff_otel",
-        "substrate",
-    }
-)
-EXCLUDED_COMMANDS: Final[frozenset[str]] = LEGACY_COMMANDS | OPTIONAL_COMMANDS
-
+# Source discovery extends the canonical ontology reversibly. Source presence
+# alone never grants authority when the name is explicitly excluded.
 install_command_repairs()
 
 
@@ -113,8 +35,8 @@ def _discover_source_commands() -> set[str]:
 # The registry is intentionally derived from installed/source modules; every
 # element is a module-name string by construction even though Ruff cannot prove
 # that statically for the special __all__ variable.
-__all__: Final[list[str]] = sorted(  # noqa: PLE0605
-    (set(_CANONICAL_COMMANDS) | _discover_source_commands()) - EXCLUDED_COMMANDS
+__all__: Final[list[str]] = list(  # noqa: PLE0605
+    admitted_command_names(_discover_source_commands())
 )
 _PACKAGE_PREFIX = f"{__name__}."
 

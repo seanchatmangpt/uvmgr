@@ -63,6 +63,7 @@ jobs:
             src/uvmgr/commands/tests.py \
             src/uvmgr/commands/capabilities.py \
             src/uvmgr/core/capabilities.py \
+            src/uvmgr/core/command_registry.py \
             src/uvmgr/core/command_repairs.py \
             src/uvmgr/ops/tests.py \
             src/uvmgr/runtime/build.py \

@@ -4,7 +4,6 @@ import pathlib
 import sys
 from unittest.mock import MagicMock, patch
 
-import pytest
 from typer.testing import CliRunner
 
 import uvmgr.commands as commands_package
@@ -23,20 +22,16 @@ class TestBuildExe:
         mock_span.return_value.__enter__ = MagicMock()
         mock_span.return_value.__exit__ = MagicMock()
 
-        # Call exe function
         result = build_rt.exe(name="test-app")
 
-        # Check that pyinstaller was called
         mock_run.assert_called_once()
         args = mock_run.call_args[0][0]
         assert args[0] == "pyinstaller"
-        # Check that a temp file was passed (not -m)
         assert args[1].endswith(".py")
         assert "--name" in args
         assert "test-app" in args
         assert "--onefile" in args
 
-        # Check return path
         if sys.platform == "win32":
             assert result == pathlib.Path("dist/test-app.exe")
         else:
@@ -50,14 +45,12 @@ class TestBuildExe:
         mock_span.return_value.__exit__ = MagicMock()
 
         spec_file = pathlib.Path("custom.spec")
-        result = build_rt.exe(spec_file=spec_file)
+        build_rt.exe(spec_file=spec_file)
 
-        # Check that pyinstaller was called with spec file
         mock_run.assert_called_once()
         args = mock_run.call_args[0][0]
         assert args[0] == "pyinstaller"
         assert args[1] == "custom.spec"
-        # May include additional data files
 
     def test_generate_spec(self, tmp_path):
         """Test spec file generation."""
@@ -75,16 +68,12 @@ class TestBuildExe:
                 exclude_modules=["exclude1"],
             )
 
-        # Check spec file was created
         assert spec_file.exists()
         content = spec_file.read_text()
-
-        # Check content
         assert "name='test-app'" in content
         assert "'module1'" in content
         assert "'module2'" in content
         assert "'exclude1'" in content
-        # For onefile mode, check that the EXE contains all components
         assert "a.scripts," in content
         assert "a.binaries," in content
         assert "a.zipfiles," in content
@@ -94,6 +83,7 @@ class TestBuildExe:
     def test_frozen_import_closure_contains_every_admitted_command(self):
         """The frozen graph must be projected from the canonical command registry."""
         hidden_imports = set(build_rt._default_hidden_imports())
+        assert build_rt._admitted_command_names() == tuple(commands_package.__all__)
         assert all(
             f"uvmgr.commands.{command}" in hidden_imports
             for command in commands_package.__all__
@@ -190,7 +180,6 @@ class TestBuildExe:
         assert result["output_file"] == "dist/uvmgr"
         assert result["name"] == "uvmgr"
         assert result["type"] == "onefile"
-
         mock_rt_exe.assert_called_once()
 
     def test_ops_generate_spec(self, mocker):
@@ -198,10 +187,7 @@ class TestBuildExe:
         mock_rt_spec = mocker.patch("uvmgr.runtime.build.generate_spec")
         mock_rt_spec.return_value = pathlib.Path("uvmgr.spec")
 
-        result = build_ops.generate_spec(
-            outfile=pathlib.Path("uvmgr.spec"),
-            name="uvmgr"
-        )
+        result = build_ops.generate_spec(outfile=pathlib.Path("uvmgr.spec"), name="uvmgr")
 
         assert result["spec_file"] == "uvmgr.spec"
         mock_rt_spec.assert_called_once()
