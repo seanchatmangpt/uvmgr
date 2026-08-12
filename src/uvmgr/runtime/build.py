@@ -1,3 +1,5 @@
+"""Runtime manufacture and verification for distributions and executables."""
+
 from __future__ import annotations
 
 import logging
@@ -61,17 +63,71 @@ def _admitted_command_names() -> tuple[str, ...]:
 def _admitted_layer_imports() -> tuple[str, ...]:
     """Project admitted commands into frozen Command/Ops/Runtime module closure."""
     source_root = Path(__file__).parent.parent
-    modules: list[str] = []
-    for name in _admitted_command_names():
-        for package in ("commands", "ops", "runtime"):
-            if (source_root / package / f"{name}.py").is_file():
-                modules.append(f"uvmgr.{package}.{name}")
-    return tuple(modules)
+    return tuple(
+        f"uvmgr.{package}.{name}"
+        for name in _admitted_command_names()
+        for package in ("commands", "ops", "runtime")
+        if (source_root / package / f"{name}.py").is_file()
+    )
 
 
 def _default_hidden_imports() -> tuple[str, ...]:
     """Return deterministic PyInstaller closure for every admitted command."""
     return tuple(dict.fromkeys((*_BASE_HIDDEN_IMPORTS, *_admitted_layer_imports())))
+
+
+def _create_entry_script() -> str:
+    """Create the bounded PyInstaller entry script and return its path."""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as file_handle:
+        file_handle.write("""#!/usr/bin/env python
+from uvmgr.cli import app
+
+if __name__ == "__main__":
+    app()
+""")
+        entry_script = file_handle.name
+    os.chmod(entry_script, 0o600)
+    return entry_script
+
+
+def _pyinstaller_args(  # noqa: PLR0913
+    *,
+    name: str,
+    onefile: bool,
+    clean: bool,
+    spec_file: Path | None,
+    icon: Path | None,
+    hidden_imports: list[str],
+    exclude_modules: list[str],
+) -> tuple[list[str], str | None]:
+    """Construct deterministic PyInstaller argv and optional temporary entry path."""
+    if spec_file is not None:
+        return ["pyinstaller", str(spec_file)], None
+
+    entry_script = _create_entry_script()
+    args = ["pyinstaller", entry_script, "--name", name]
+    if onefile:
+        args.append("--onefile")
+    if clean:
+        args.append("--clean")
+    if icon:
+        args.extend(["--icon", str(icon)])
+    for imp in hidden_imports:
+        args.extend(["--hidden-import", imp])
+    for module in exclude_modules:
+        args.extend(["--exclude-module", module])
+    for imp in _default_hidden_imports():
+        if imp not in hidden_imports:
+            args.extend(["--hidden-import", imp])
+    return args, entry_script
+
+
+def _executable_output_path(outdir: Path, *, name: str, onefile: bool) -> Path:
+    """Return the platform-specific path manufactured by PyInstaller."""
+    suffix = ".exe" if sys.platform == "win32" else ""
+    if onefile:
+        return outdir / f"{name}{suffix}"
+    return outdir / name / f"{name}{suffix}"
 
 
 def dist(outdir: Path | None = None) -> None:
@@ -101,59 +157,26 @@ def exe(  # noqa: PLR0913
     debug: bool = False,
 ) -> Path:
     """Build executable using PyInstaller."""
-    hidden_imports = hidden_imports or []
-    exclude_modules = exclude_modules or []
+    output_directory = outdir or Path("dist")
+    args, entry_script = _pyinstaller_args(
+        name=name,
+        onefile=onefile,
+        clean=clean,
+        spec_file=spec_file,
+        icon=icon,
+        hidden_imports=hidden_imports or [],
+        exclude_modules=exclude_modules or [],
+    )
+    if outdir is not None:
+        args.extend(["--distpath", str(outdir)])
+    if debug:
+        args.append("--debug=all")
+
     with span("build.exe"):
-        args = ["pyinstaller"]
-
-        if spec_file:
-            args.append(str(spec_file))
-        else:
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-                f.write("""#!/usr/bin/env python
-import sys
-from uvmgr.cli import app
-
-if __name__ == "__main__":
-    app()
-""")
-                entry_script = f.name
-                os.chmod(entry_script, 0o600)
-
-            args.append(entry_script)
-            args.extend(["--name", name])
-
-            if onefile:
-                args.append("--onefile")
-
-            if clean:
-                args.append("--clean")
-
-            if icon:
-                args.extend(["--icon", str(icon)])
-
-            for imp in hidden_imports:
-                args.extend(["--hidden-import", imp])
-
-            for mod in exclude_modules:
-                args.extend(["--exclude-module", mod])
-
-            for imp in _default_hidden_imports():
-                if imp not in hidden_imports:
-                    args.extend(["--hidden-import", imp])
-
-        if outdir:
-            args.extend(["--distpath", str(outdir)])
-        else:
-            outdir = Path("dist")
-
-        if debug:
-            args.append("--debug=all")
-
         try:
             run_logged(args)
         finally:
-            if not spec_file and "entry_script" in locals():
+            if entry_script is not None:
                 try:
                     os.unlink(entry_script)
                 except OSError as exc:
@@ -162,14 +185,7 @@ if __name__ == "__main__":
                         entry_script,
                         exc,
                     )
-
-        if onefile:
-            if sys.platform == "win32":
-                return outdir / f"{name}.exe"
-            return outdir / name
-        if sys.platform == "win32":
-            return outdir / name / f"{name}.exe"
-        return outdir / name / name
+    return _executable_output_path(output_directory, name=name, onefile=onefile)
 
 
 def generate_spec(  # noqa: PLR0913
@@ -189,7 +205,6 @@ def generate_spec(  # noqa: PLR0913
         )
 
         entry_script_content = """#!/usr/bin/env python
-import sys
 from uvmgr.cli import app
 
 if __name__ == "__main__":
@@ -199,10 +214,8 @@ if __name__ == "__main__":
         spec_content = f'''# -*- mode: python ; coding: utf-8 -*-
 # Generated by uvmgr for PyInstaller
 
-# Entry script content
 entry_script = """{entry_script_content}"""
 
-# Write entry script
 import tempfile
 import os
 entry_file = tempfile.mktemp(suffix='.py')
@@ -289,7 +302,6 @@ coll = COLLECT(
     name='{name}',
 )
 
-# Cleanup entry file after build
 os.unlink(entry_file)
 """
 
@@ -297,67 +309,59 @@ os.unlink(entry_file)
         return outfile
 
 
+def _probe_executable(exe_path: Path, arguments: list[str], label: str) -> dict | None:
+    """Execute one frozen-binary probe and classify structural failure."""
+    result = subprocess.run(
+        [str(exe_path), *arguments],
+        capture_output=True,
+        text=True,
+        timeout=15,
+        check=False,
+    )
+    output = f"{result.stdout}\n{result.stderr}"
+    if result.returncode != 0:
+        return {
+            "success": False,
+            "error": f"{label} failed with exit {result.returncode}: {output.strip()}",
+        }
+    incomplete_markers = ("BUILD_BROKEN:", "UNSUPPORTED:")
+    marker = next((item for item in incomplete_markers if item in output), None)
+    if marker is not None:
+        return {
+            "success": False,
+            "error": f"{label} exposed incomplete standing {marker}: {output.strip()}",
+        }
+    return None
+
+
 def test_executable(exe_path: Path) -> dict:
     """Verify the frozen executable and every command admitted by its source registry."""
-    incomplete_markers = ("BUILD_BROKEN:", "UNSUPPORTED:")
-
-    def probe(arguments: list[str], label: str) -> dict | None:
-        result = subprocess.run(
-            [str(exe_path), *arguments],
-            capture_output=True,
-            text=True,
-            timeout=15,
-            check=False,
-        )
-        output = f"{result.stdout}\n{result.stderr}"
-        if result.returncode != 0:
-            return {
-                "success": False,
-                "error": f"{label} failed with exit {result.returncode}: {output.strip()}",
-            }
-        marker = next((item for item in incomplete_markers if item in output), None)
-        if marker is not None:
-            return {
-                "success": False,
-                "error": f"{label} exposed incomplete standing {marker}: {output.strip()}",
-            }
-        return None
-
-    with span("build.test_executable"):
-        try:
-            failure = probe(["--version"], "Version check")
+    commands_tested = list(_admitted_command_names())
+    probes = [
+        (["--version"], "Version check"),
+        (["--help"], "Help check"),
+        *[([command, "--help"], f"Admitted command {command!r}") for command in commands_tested],
+        (["capabilities", "verify"], "Frozen capability verification"),
+    ]
+    try:
+        for arguments, label in probes:
+            failure = _probe_executable(exe_path, arguments, label)
             if failure is not None:
                 return failure
+    except subprocess.TimeoutExpired:
+        return {"success": False, "error": "Executable probe timed out"}
+    except Exception as exc:
+        return {"success": False, "error": str(exc)}
 
-            failure = probe(["--help"], "Help check")
-            if failure is not None:
-                return failure
-
-            commands_tested: list[str] = []
-            for command in _admitted_command_names():
-                failure = probe([command, "--help"], f"Admitted command {command!r}")
-                if failure is not None:
-                    return failure
-                commands_tested.append(command)
-
-            failure = probe(["capabilities", "verify"], "Frozen capability verification")
-            if failure is not None:
-                return failure
-
-            return {
-                "success": True,
-                "tests_passed": [
-                    "version",
-                    "help",
-                    "admitted_commands",
-                    "capabilities_verify",
-                ],
-                "commands_tested": commands_tested,
-                "command_count": len(commands_tested),
-                "executable": str(exe_path),
-            }
-
-        except subprocess.TimeoutExpired:
-            return {"success": False, "error": "Executable probe timed out"}
-        except Exception as exc:
-            return {"success": False, "error": str(exc)}
+    return {
+        "success": True,
+        "tests_passed": [
+            "version",
+            "help",
+            "admitted_commands",
+            "capabilities_verify",
+        ],
+        "commands_tested": commands_tested,
+        "command_count": len(commands_tested),
+        "executable": str(exe_path),
+    }

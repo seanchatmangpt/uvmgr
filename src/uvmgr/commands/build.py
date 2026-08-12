@@ -1,58 +1,13 @@
-"""
-uvmgr.commands.build - Package and Executable Building
-====================================================
+"""Build package distributions and standalone executables.
 
-Build wheel, source distributions, and standalone executables.
-
-This module provides CLI commands for building Python packages and standalone
-executables using various build tools including uv, PyInstaller, and other
-packaging utilities.
-
-Key Features
------------
-• **Package Building**: Wheel and source distribution creation
-• **Executable Building**: Standalone executables with PyInstaller
-• **Spec Generation**: Customizable PyInstaller spec files
-• **Self-Building**: Dogfood builds for uvmgr itself
-• **Telemetry Integration**: Full OpenTelemetry instrumentation
-
-Available Commands
------------------
-- **dist**: Build Python wheel and source distribution
-- **exe**: Build standalone executable using PyInstaller
-- **spec**: Generate PyInstaller spec file for customization
-- **dogfood**: Build uvmgr executable (self-build demonstration)
-
-Build Types
-----------
-- **Wheel/SDist**: Standard Python package distributions
-- **Executable**: Standalone executables for distribution
-- **Spec Files**: Customizable PyInstaller build configurations
-- **Self-Build**: Recursive builds for uvmgr itself
-
-Examples
---------
-    >>> # Build package distribution
-    >>> uvmgr build dist --upload
-    >>>
-    >>> # Build standalone executable
-    >>> uvmgr build exe --name my-app --onefile
-    >>>
-    >>> # Generate spec file
-    >>> uvmgr build spec --outfile custom.spec
-    >>>
-    >>> # Self-build uvmgr
-    >>> uvmgr build dogfood --version --test
-
-See Also
---------
-- :mod:`uvmgr.ops.build` : Build operations
-- :mod:`uvmgr.core.telemetry` : Telemetry and observability
+The build command surface delegates package and PyInstaller manufacture to the
+Ops and Runtime layers while preserving CLI telemetry and typed exit behavior.
 """
 
 import pathlib
 import platform
 import tomllib
+from typing import Annotated, Final
 
 import typer
 
@@ -62,14 +17,21 @@ from uvmgr.core.shell import colour, dump_json
 from uvmgr.ops import build as build_ops
 
 app = typer.Typer(help="Build wheel + sdist")
+_DEFAULT_SPEC_FILE: Final = pathlib.Path("uvmgr.spec")
 
 
 @app.command()
 @instrument_command("build_dist", track_args=True)
 def dist(
     ctx: typer.Context,
-    outdir: pathlib.Path = typer.Option(None, "--outdir", "-o", file_okay=False),
-    upload: bool = typer.Option(False, "--upload", help="Twine upload after build"),
+    outdir: Annotated[
+        pathlib.Path | None,
+        typer.Option("--outdir", "-o", file_okay=False),
+    ] = None,
+    upload: Annotated[
+        bool,
+        typer.Option("--upload", help="Twine upload after build"),
+    ] = False,
 ):
     """Build Python wheel and source distribution."""
     add_span_attributes(
@@ -93,10 +55,16 @@ def dist(
 @instrument_command("build_wheel", track_args=True)
 def wheel(
     ctx: typer.Context,
-    outdir: pathlib.Path = typer.Option(None, "--outdir", "-o", file_okay=False),
-    upload: bool = typer.Option(False, "--upload", help="Twine upload after build"),
+    outdir: Annotated[
+        pathlib.Path | None,
+        typer.Option("--outdir", "-o", file_okay=False),
+    ] = None,
+    upload: Annotated[
+        bool,
+        typer.Option("--upload", help="Twine upload after build"),
+    ] = False,
 ):
-    """Build Python wheel (alias for dist command)."""
+    """Build Python wheel as an alias for the distribution command."""
     add_span_attributes(
         **{
             BuildAttributes.OPERATION: "wheel",
@@ -119,8 +87,14 @@ def wheel(
 @instrument_command("build_sdist", track_args=True)
 def sdist(
     ctx: typer.Context,
-    outdir: pathlib.Path = typer.Option(None, "--outdir", "-o", file_okay=False),
-    upload: bool = typer.Option(False, "--upload", help="Twine upload after build"),
+    outdir: Annotated[
+        pathlib.Path | None,
+        typer.Option("--outdir", "-o", file_okay=False),
+    ] = None,
+    upload: Annotated[
+        bool,
+        typer.Option("--upload", help="Twine upload after build"),
+    ] = False,
 ):
     """Build Python source distribution."""
     add_span_attributes(
@@ -144,21 +118,42 @@ def sdist(
 @instrument_command("build_exe", track_args=True)
 def exe(  # noqa: PLR0913
     ctx: typer.Context,
-    outdir: pathlib.Path = typer.Option(None, "--outdir", "-o", file_okay=False),
-    name: str = typer.Option("uvmgr", "--name", "-n", help="Executable name"),
-    onefile: bool = typer.Option(True, "--onefile/--onedir", help="Build single file"),
-    clean: bool = typer.Option(True, "--clean/--no-clean", help="Clean build dirs"),
-    spec_file: pathlib.Path | None = typer.Option(
-        None, "--spec", "-s", help="Use existing spec file"
-    ),
-    icon: pathlib.Path | None = typer.Option(None, "--icon", "-i", help="Icon file"),
-    hidden_imports: list[str] | None = typer.Option(
-        None, "--hidden-import", "-H", help="Hidden imports"
-    ),
-    exclude_modules: list[str] | None = typer.Option(
-        None, "--exclude", "-X", help="Exclude modules"
-    ),
-    debug: bool = typer.Option(False, "--debug", "-d", help="Debug build process"),
+    outdir: Annotated[
+        pathlib.Path | None,
+        typer.Option("--outdir", "-o", file_okay=False),
+    ] = None,
+    name: Annotated[
+        str,
+        typer.Option("--name", "-n", help="Executable name"),
+    ] = "uvmgr",
+    onefile: Annotated[
+        bool,
+        typer.Option("--onefile/--onedir", help="Build single file"),
+    ] = True,
+    clean: Annotated[
+        bool,
+        typer.Option("--clean/--no-clean", help="Clean build dirs"),
+    ] = True,
+    spec_file: Annotated[
+        pathlib.Path | None,
+        typer.Option("--spec", "-s", help="Use existing spec file"),
+    ] = None,
+    icon: Annotated[
+        pathlib.Path | None,
+        typer.Option("--icon", "-i", help="Icon file"),
+    ] = None,
+    hidden_imports: Annotated[
+        list[str] | None,
+        typer.Option("--hidden-import", "-H", help="Hidden imports"),
+    ] = None,
+    exclude_modules: Annotated[
+        list[str] | None,
+        typer.Option("--exclude", "-X", help="Exclude modules"),
+    ] = None,
+    debug: Annotated[
+        bool,
+        typer.Option("--debug", "-d", help="Debug build process"),
+    ] = False,
 ):
     """Build standalone executable using PyInstaller."""
     add_span_attributes(
@@ -191,16 +186,30 @@ def exe(  # noqa: PLR0913
 @instrument_command("build_spec", track_args=True)
 def spec(  # noqa: PLR0913
     ctx: typer.Context,
-    outfile: pathlib.Path = typer.Option("uvmgr.spec", "--outfile", "-o", help="Output spec file"),
-    name: str = typer.Option("uvmgr", "--name", "-n", help="Executable name"),
-    onefile: bool = typer.Option(True, "--onefile/--onedir", help="Build single file"),
-    icon: pathlib.Path | None = typer.Option(None, "--icon", "-i", help="Icon file"),
-    hidden_imports: list[str] | None = typer.Option(
-        None, "--hidden-import", "-H", help="Hidden imports"
-    ),
-    exclude_modules: list[str] | None = typer.Option(
-        None, "--exclude", "-X", help="Exclude modules"
-    ),
+    outfile: Annotated[
+        pathlib.Path,
+        typer.Option("--outfile", "-o", help="Output spec file"),
+    ] = _DEFAULT_SPEC_FILE,
+    name: Annotated[
+        str,
+        typer.Option("--name", "-n", help="Executable name"),
+    ] = "uvmgr",
+    onefile: Annotated[
+        bool,
+        typer.Option("--onefile/--onedir", help="Build single file"),
+    ] = True,
+    icon: Annotated[
+        pathlib.Path | None,
+        typer.Option("--icon", "-i", help="Icon file"),
+    ] = None,
+    hidden_imports: Annotated[
+        list[str] | None,
+        typer.Option("--hidden-import", "-H", help="Hidden imports"),
+    ] = None,
+    exclude_modules: Annotated[
+        list[str] | None,
+        typer.Option("--exclude", "-X", help="Exclude modules"),
+    ] = None,
 ):
     """Generate PyInstaller spec file for customization."""
     add_span_attributes(
@@ -228,18 +237,24 @@ def spec(  # noqa: PLR0913
 @instrument_command("build_dogfood", track_args=True)
 def dogfood(
     ctx: typer.Context,
-    outdir: pathlib.Path = typer.Option(None, "--outdir", "-o", file_okay=False),
-    version: bool = typer.Option(False, "--version", "-v", help="Include version in name"),
-    platform_suffix: bool = typer.Option(
-        True, "--platform/--no-platform", help="Add platform suffix"
-    ),
-    test: bool = typer.Option(True, "--test/--no-test", help="Test built executable"),
+    outdir: Annotated[
+        pathlib.Path | None,
+        typer.Option("--outdir", "-o", file_okay=False),
+    ] = None,
+    version: Annotated[
+        bool,
+        typer.Option("--version", "-v", help="Include version in name"),
+    ] = False,
+    platform_suffix: Annotated[
+        bool,
+        typer.Option("--platform/--no-platform", help="Add platform suffix"),
+    ] = True,
+    test: Annotated[
+        bool,
+        typer.Option("--test/--no-test", help="Test built executable"),
+    ] = True,
 ):
-    """Build uvmgr executable (eat own dog food).
-
-    This command builds uvmgr as a standalone executable using PyInstaller,
-    demonstrating that uvmgr can package itself.
-    """
+    """Build and optionally verify a standalone uvmgr executable."""
     add_span_attributes(
         **{
             BuildAttributes.TYPE: "exe",
@@ -254,8 +269,8 @@ def dogfood(
     name = "uvmgr"
     if version:
         try:
-            with open("pyproject.toml", "rb") as f:
-                pyproject = tomllib.load(f)
+            with open("pyproject.toml", "rb") as file_handle:
+                pyproject = tomllib.load(file_handle)
                 pkg_version = pyproject.get("project", {}).get("version", "0.0.0")
         except (OSError, tomllib.TOMLDecodeError, TypeError, AttributeError):
             pkg_version = "0.0.0"

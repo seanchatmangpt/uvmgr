@@ -8,16 +8,14 @@ import sys
 from types import ModuleType
 from typing import Final
 
-from uvmgr.core.command_repairs import install_command_repairs
 from uvmgr.core.command_registry import (
-    EXCLUDED_COMMANDS,
-    LEGACY_COMMANDS,
-    OPTIONAL_COMMANDS,
+    EXCLUDED_COMMANDS as EXCLUDED_COMMANDS,
+    LEGACY_COMMANDS as LEGACY_COMMANDS,
+    OPTIONAL_COMMANDS as OPTIONAL_COMMANDS,
     admitted_command_names,
 )
+from uvmgr.core.command_repairs import install_command_repairs
 
-# Source discovery extends the canonical ontology reversibly. Source presence
-# alone never grants authority when the name is explicitly excluded.
 install_command_repairs()
 
 
@@ -32,12 +30,7 @@ def _discover_source_commands() -> set[str]:
     }
 
 
-# The registry is intentionally derived from installed/source modules; every
-# element is a module-name string by construction even though Ruff cannot prove
-# that statically for the special __all__ variable.
-__all__: Final[list[str]] = list(  # noqa: PLE0605
-    admitted_command_names(_discover_source_commands())
-)
+__all__: Final[list[str]] = list(admitted_command_names(_discover_source_commands()))
 _PACKAGE_PREFIX = f"{__name__}."
 
 
