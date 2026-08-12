@@ -8,13 +8,12 @@ import sys
 from types import ModuleType
 from typing import Final
 
-from uvmgr.core.command_registry import (
-    EXCLUDED_COMMANDS as EXCLUDED_COMMANDS,
-    LEGACY_COMMANDS as LEGACY_COMMANDS,
-    OPTIONAL_COMMANDS as OPTIONAL_COMMANDS,
-    admitted_command_names,
-)
+from uvmgr.core import command_registry
 from uvmgr.core.command_repairs import install_command_repairs
+
+EXCLUDED_COMMANDS = command_registry.EXCLUDED_COMMANDS
+LEGACY_COMMANDS = command_registry.LEGACY_COMMANDS
+OPTIONAL_COMMANDS = command_registry.OPTIONAL_COMMANDS
 
 install_command_repairs()
 
@@ -30,7 +29,9 @@ def _discover_source_commands() -> set[str]:
     }
 
 
-__all__: Final[list[str]] = list(admitted_command_names(_discover_source_commands()))
+__all__: Final[list[str]] = list(
+    command_registry.admitted_command_names(_discover_source_commands())
+)
 _PACKAGE_PREFIX = f"{__name__}."
 
 
