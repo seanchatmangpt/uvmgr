@@ -18,7 +18,6 @@ _BASE_HIDDEN_IMPORTS = (
     "uvmgr.ops",
     "uvmgr.runtime",
     "uvmgr.core",
-    "uvmgr.mcp",
     "uvmgr.core.cache",
     "uvmgr.core.clipboard",
     "uvmgr.core.concurrency",
@@ -151,10 +150,6 @@ if __name__ == "__main__":
         if debug:
             args.append("--debug=all")
 
-        mcp_resources = Path(__file__).parent.parent / "mcp" / "resources.py"
-        if mcp_resources.exists():
-            args.extend(["--add-data", f"{mcp_resources}:uvmgr/mcp"])
-
         try:
             run_logged(args)
         finally:
@@ -220,9 +215,7 @@ a = Analysis(
     [entry_file],
     pathex=[],
     binaries=[],
-    datas=[
-        ('src/uvmgr/mcp/resources.py', 'uvmgr/mcp'),
-    ],
+    datas=[],
     hiddenimports={all_hidden_imports!r},
     hookspath=[],
     hooksconfig={{}},

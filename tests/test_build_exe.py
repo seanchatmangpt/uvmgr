@@ -89,6 +89,7 @@ class TestBuildExe:
             for command in commands_package.__all__
         )
         assert "uvmgr.commands.claude" not in hidden_imports
+        assert "uvmgr.mcp" not in hidden_imports
         assert "ember_ai" not in hidden_imports
         assert "spiffworkflow" not in hidden_imports
 
