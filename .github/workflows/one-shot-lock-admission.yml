@@ -30,7 +30,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "92e157715fb7467350d9a7ba9611a9e251d47a3e"
+          test "$(git rev-parse HEAD^)" = "8f9e3c631949a411c4d57d7dd38c05900b317dec"
           test "$(git branch --show-current)" = "agent/errc-modernize-features"
           grep -F 'requires-python = ">=3.12,<3.14"' pyproject.toml
           grep -F 'requires-python = ">=3.11, <4.0"' uv.lock
@@ -62,8 +62,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git diff --name-only | sort | tr '\n' ' ')" = ".github/workflows/one-shot-lock-admission.yml uv.lock "
-          test "$(git diff --numstat uv.lock | awk '{print $1 ":" $2}')" = "1:1"
+          test "$(git diff HEAD --name-only | sort | tr '\n' ' ')" = ".github/workflows/one-shot-lock-admission.yml uv.lock "
+          test "$(git diff HEAD --numstat uv.lock | awk '{print $1 ":" $2}')" = "1:1"
           uv lock --check
 
       - name: Commit receipt-bearing migration and relinquish authority
@@ -73,7 +73,7 @@ jobs:
           before="$(git rev-parse HEAD)"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add uv.lock .github/workflows/one-shot-lock-admission.yml
+          git add uv.lock
           git commit -m "chore: admit certified Python runtime envelope"
           after="$(git rev-parse HEAD)"
           printf 'migration_before=%s\nmigration_after=%s\n' "$before" "$after"
