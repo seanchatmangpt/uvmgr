@@ -59,12 +59,15 @@ jobs:
           uv run ruff check --no-fix \
             src/uvmgr/cli.py \
             src/uvmgr/commands/__init__.py \
+            src/uvmgr/commands/build.py \
             src/uvmgr/commands/tests.py \
             src/uvmgr/commands/capabilities.py \
             src/uvmgr/core/capabilities.py \
             src/uvmgr/core/command_repairs.py \
             src/uvmgr/ops/tests.py \
+            src/uvmgr/runtime/build.py \
             src/uvmgr/runtime/tests.py \
+            tests/test_build_exe.py \
             tests/test_command_repairs.py \
             tests/test_tests_execution.py
 
