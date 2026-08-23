@@ -72,7 +72,7 @@ def test_ci_exact_subject_binding_is_admitted(tmp_path: Path) -> None:
         "  - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803\n"
         "    with:\n"
         "      ref: ${{ env.SUBJECT_SHA }}\n"
-        "  - run: test \"$(git rev-parse HEAD)\" = \"${SUBJECT_SHA}\"\n"
+        '  - run: test "$(git rev-parse HEAD)" = "${SUBJECT_SHA}"\n'
         "  - run: printf '%s\\n' \"${SUBJECT_SHA}\" | tee receipts/subject.sha\n"
         "  - name: enterprise-validation-${{ env.SUBJECT_SHA }}\n"
         "  - name: uvmgr-dogfood-${{ env.SUBJECT_SHA }}\n",
