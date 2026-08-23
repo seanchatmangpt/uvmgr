@@ -8,7 +8,7 @@ version = "0.0.0"
 description = "A DX wrapper around the uv package and project manager."
 readme = "README.md"
 authors = [{ name = "Sean Chatman", email = "info@chatmangpt.com" }]
-requires-python = ">=3.11,<4.0"
+requires-python = ">=3.12,<3.14"
 dependencies = [
   "apscheduler>=3.11.0",
   "fastapi>=0.115.12",
@@ -149,6 +149,7 @@ show_error_context = true
 warn_unreachable = true
 
 [tool.pytest.ini_options] # https://docs.pytest.org/en/latest/reference/reference.html#ini-options-ref
+asyncio_default_fixture_loop_scope = "function"
 addopts = "--color=yes --exitfirst --failed-first --verbosity=2 --junitxml=reports/pytest.xml"
 testpaths = ["src", "tests"]
 xfail_strict = true

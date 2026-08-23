@@ -1,0 +1,13 @@
+# Repository ownership is explicit so GitHub branch protection can require
+# review from the accountable owner for critical delivery surfaces.
+* @seanchatmangpt
+
+/.github/ @seanchatmangpt
+/.dod/ @seanchatmangpt
+/enterprise/ @seanchatmangpt
+/src/uvmgr/core/ @seanchatmangpt
+/src/uvmgr/runtime/ @seanchatmangpt
+/Dockerfile @seanchatmangpt
+/pyproject.toml @seanchatmangpt
+/uv.lock @seanchatmangpt
+/SECURITY.md @seanchatmangpt

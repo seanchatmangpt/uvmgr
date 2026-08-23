@@ -1,453 +1,433 @@
-"""
-Test execution runtime implementation.
-
-This module handles the actual execution of test frameworks (pytest, coverage)
-at the runtime layer. It manages subprocess calls and file I/O operations
-for test execution and reporting.
-"""
+"""Receipted runtime boundary for test and CI process execution."""
 
 from __future__ import annotations
 
+import hashlib
 import json
+import os
+import shutil
 import subprocess
-import tempfile
+import sys
+import time
+import xml.etree.ElementTree as ET
+from collections.abc import Iterable, Mapping, Sequence
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from uvmgr.core.instrumentation import span
-from uvmgr.core.process import run_logged
+_MAX_CAPTURE_CHARS = 16_384
+_TIMEOUT_EXIT_CODE = 124
+_MISSING_EXECUTABLE_EXIT_CODE = 127
 
 
-def execute_pytest(
+@dataclass(frozen=True)
+class TestExecutionReceipt:
+    """Observed consequence of one process actuation."""
+
+    command: tuple[str, ...]
+    working_directory: str
+    exit_code: int
+    outcome: str
+    started_ns: int
+    duration_ms: float
+    timed_out: bool
+    error: str | None
+    stdout: str
+    stderr: str
+    receipt_path: str
+    receipt_sha256: str
+
+
+@dataclass(frozen=True)
+class CommandCheck:
+    """One named CI command with an explicit failure policy."""
+
+    description: str
+    command: tuple[str, ...]
+    required: bool = True
+
+
+@dataclass(frozen=True)
+class CommandCheckResult:
+    """Receipted result for one named CI command."""
+
+    description: str
+    required: bool
+    receipt: TestExecutionReceipt
+
+
+def _bounded_output(value: str | bytes | None) -> str:
+    """Convert captured output to bounded UTF-8 text."""
+    if value is None:
+        return ""
+    text = value.decode(errors="replace") if isinstance(value, bytes) else value
+    if len(text) <= _MAX_CAPTURE_CHARS:
+        return text
+    return text[:_MAX_CAPTURE_CHARS] + "\n...[truncated]"
+
+
+def _write_receipt(
+    payload: dict[str, object],
+    *,
+    receipt_dir: Path,
+    started_ns: int,
+) -> tuple[Path, str]:
+    """Write a canonical JSON receipt atomically and return its identity."""
+    receipt_dir.mkdir(parents=True, exist_ok=True)
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+    digest = hashlib.sha256(canonical).hexdigest()
+    document = {**payload, "receipt_sha256": digest}
+    target = receipt_dir / f"tests-run-{started_ns}.json"
+    temporary = target.with_suffix(".json.tmp")
+    temporary.write_text(
+        json.dumps(document, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    temporary.replace(target)
+    return target, digest
+
+
+def execute_test_command(  # noqa: PLR0913
+    command: Sequence[str],
+    *,
+    cwd: Path | None = None,
+    receipt_dir: Path | None = None,
+    env: Mapping[str, str] | None = None,
+    timeout: float | None = None,
+    capture_output: bool = False,
+) -> TestExecutionReceipt:
+    """Execute exact argv and emit a receipt for every observed consequence."""
+    argv = tuple(str(part) for part in command)
+    if not argv:
+        raise ValueError("test command must not be empty")
+
+    working_directory = (cwd or Path.cwd()).resolve()
+    receipts = receipt_dir or working_directory / "reports" / "receipts"
+    started_ns = time.time_ns()
+    started = time.perf_counter()
+    exit_code = _MISSING_EXECUTABLE_EXIT_CODE
+    timed_out = False
+    error: str | None = None
+    stdout = ""
+    stderr = ""
+    outcome = "UNSUPPORTED"
+
+    try:
+        completed = subprocess.run(
+            list(argv),
+            cwd=working_directory,
+            env=dict(os.environ) | dict(env or {}),
+            check=False,
+            capture_output=capture_output,
+            text=capture_output,
+            timeout=timeout,
+        )
+        exit_code = completed.returncode
+        stdout = _bounded_output(completed.stdout)
+        stderr = _bounded_output(completed.stderr)
+        outcome = "ALIVE" if exit_code == 0 else "BUILD_BROKEN"
+    except subprocess.TimeoutExpired as exc:
+        exit_code = _TIMEOUT_EXIT_CODE
+        timed_out = True
+        stdout = _bounded_output(exc.stdout)
+        stderr = _bounded_output(exc.stderr)
+        error = f"TimeoutExpired: exceeded {timeout} seconds"
+        outcome = "BLOCKED"
+    except OSError as exc:
+        error = f"{type(exc).__name__}: {exc}"
+
+    duration_ms = (time.perf_counter() - started) * 1000
+    payload: dict[str, object] = {
+        "command": list(argv),
+        "working_directory": str(working_directory),
+        "exit_code": exit_code,
+        "outcome": outcome,
+        "started_ns": started_ns,
+        "duration_ms": round(duration_ms, 3),
+        "timed_out": timed_out,
+        "error": error,
+        "stdout": stdout,
+        "stderr": stderr,
+    }
+    receipt_path, receipt_sha256 = _write_receipt(
+        payload,
+        receipt_dir=receipts,
+        started_ns=started_ns,
+    )
+    return TestExecutionReceipt(
+        command=argv,
+        working_directory=str(working_directory),
+        exit_code=exit_code,
+        outcome=outcome,
+        started_ns=started_ns,
+        duration_ms=duration_ms,
+        timed_out=timed_out,
+        error=error,
+        stdout=stdout,
+        stderr=stderr,
+        receipt_path=str(receipt_path),
+        receipt_sha256=receipt_sha256,
+    )
+
+
+def execute_command_checks(
+    checks: Iterable[CommandCheck],
+    *,
+    cwd: Path | None = None,
+    receipt_dir: Path | None = None,
+    timeout: float | None = None,
+) -> tuple[CommandCheckResult, ...]:
+    """Execute named checks in order and receipt every attempt."""
+    results: list[CommandCheckResult] = []
+    for check in checks:
+        receipt = execute_test_command(
+            check.command,
+            cwd=cwd,
+            receipt_dir=receipt_dir,
+            timeout=timeout,
+            capture_output=True,
+        )
+        results.append(
+            CommandCheckResult(
+                description=check.description,
+                required=check.required,
+                receipt=receipt,
+            )
+        )
+    return tuple(results)
+
+
+def receipt_as_dict(receipt: TestExecutionReceipt) -> dict[str, object]:
+    """Return a JSON-compatible representation of a receipt."""
+    return asdict(receipt)
+
+
+def command_check_result_as_dict(result: CommandCheckResult) -> dict[str, object]:
+    """Return a JSON-compatible representation of a CI check result."""
+    return {
+        "description": result.description,
+        "required": result.required,
+        "receipt": receipt_as_dict(result.receipt),
+    }
+
+
+def discover_test_files(
+    path: Path | None = None,
+    pattern: str = "test_*.py",
+) -> dict[str, Any]:
+    """Discover and classify test files without importing or executing them."""
+    search_path = (path or Path.cwd()).resolve()
+    test_files = sorted(file for file in search_path.rglob(pattern) if file.is_file())
+    test_types: dict[str, list[str]] = {
+        "unit": [],
+        "integration": [],
+        "e2e": [],
+    }
+    for test_file in test_files:
+        relative = test_file.relative_to(search_path)
+        path_text = relative.as_posix()
+        if "e2e" in path_text:
+            test_types["e2e"].append(str(test_file))
+        elif "integration" in path_text:
+            test_types["integration"].append(str(test_file))
+        else:
+            test_types["unit"].append(str(test_file))
+    return {
+        "test_files": [str(file) for file in test_files],
+        "test_types": test_types,
+        "total_files": len(test_files),
+    }
+
+
+def cleanup_test_artifacts(root: Path) -> tuple[str, ...]:
+    """Remove only known CI artifacts located under the admitted project root."""
+    admitted_root = root.resolve()
+    removed: list[str] = []
+    file_names = {
+        "ci-test.spec",
+        "test-ci-build.spec",
+        "test-ci.spec",
+        "uvmgr-demo.spec",
+    }
+    for file_name in sorted(file_names):
+        candidate = (admitted_root / file_name).resolve()
+        if candidate.parent == admitted_root and candidate.is_file():
+            candidate.unlink()
+            removed.append(str(candidate))
+    for directory_name in ("build", "dist"):
+        candidate = (admitted_root / directory_name).resolve()
+        if candidate.parent == admitted_root and candidate.is_dir():
+            shutil.rmtree(candidate)
+            removed.append(str(candidate))
+    return tuple(removed)
+
+
+def _parse_junit_report(path: Path) -> dict[str, int]:
+    """Parse pytest JUnit summary when the configured report exists."""
+    if not path.is_file():
+        return {"total": 0, "passed": 0, "failed": 0, "skipped": 0, "errors": 0}
+    try:
+        root = ET.parse(path).getroot()
+    except (ET.ParseError, OSError):
+        return {"total": 0, "passed": 0, "failed": 0, "skipped": 0, "errors": 0}
+    suites = [root] if root.tag == "testsuite" else list(root.iter("testsuite"))
+    total = sum(int(suite.attrib.get("tests", 0)) for suite in suites)
+    failed = sum(int(suite.attrib.get("failures", 0)) for suite in suites)
+    errors = sum(int(suite.attrib.get("errors", 0)) for suite in suites)
+    skipped = sum(int(suite.attrib.get("skipped", 0)) for suite in suites)
+    return {
+        "total": total,
+        "passed": max(total - failed - errors - skipped, 0),
+        "failed": failed,
+        "skipped": skipped,
+        "errors": errors,
+    }
+
+
+def _coverage_percentage(path: Path) -> float:
+    """Read the overall percentage from a coverage JSON report."""
+    if not path.is_file():
+        return 0.0
+    try:
+        document = json.loads(path.read_text(encoding="utf-8"))
+        return float(document.get("totals", {}).get("percent_covered", 0.0))
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        return 0.0
+
+
+def execute_pytest(  # noqa: PLR0913
     verbose: bool = False,
     parallel: bool = True,
     coverage: bool = True,
     fail_fast: bool = False,
-    test_types: Optional[List[str]] = None,
-    markers: Optional[List[str]] = None,
-    generate_report: bool = True
-) -> Dict[str, Any]:
-    """
-    Execute pytest with specified options.
-    
-    Parameters
-    ----------
-    verbose : bool
-        Whether to run tests verbosely
-    parallel : bool
-        Whether to run tests in parallel
-    coverage : bool
-        Whether to collect coverage data
-    fail_fast : bool
-        Whether to stop on first failure
-    test_types : Optional[List[str]]
-        Test types to run
-    markers : Optional[List[str]]
-        Test markers to run
-    generate_report : bool
-        Whether to generate comprehensive report
-        
-    Returns
-    -------
-    Dict[str, Any]
-        Test execution results
-    """
-    with span("runtime.pytest.execute"):
-        cmd = ["python", "-m", "pytest"]
-        
-        if verbose:
-            cmd.append("-v")
-        else:
-            cmd.append("-q")
-            
-        if parallel:
-            # Try to use pytest-xdist if available
-            try:
-                import subprocess
-                result = subprocess.run(
-                    ["python", "-c", "import xdist"],
-                    capture_output=True,
-                    check=True
-                )
-                cmd.extend(["-n", "auto"])
-            except subprocess.CalledProcessError:
-                # xdist not available, continue without parallel execution
-                pass
-                
-        if fail_fast:
-            cmd.append("-x")
-            
-        if coverage:
-            cmd.extend(["--cov=src", "--cov-report=html", "--cov-report=xml", "--cov-report=term"])
-            
-        if markers:
-            for marker in markers:
-                cmd.extend(["-m", marker])
-                
-        # Add JSON report for parsing results
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
-            json_report_path = f.name
-            
-        cmd.extend(["--json-report", f"--json-report-file={json_report_path}"])
-        
-        try:
-            # Execute pytest
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=300  # 5 minute timeout
-            )
-            
-            # Parse JSON report if available
-            test_results = _parse_pytest_json_report(json_report_path)
-            
-            # Parse coverage if collected
-            coverage_results = {}
-            if coverage:
-                coverage_results = _parse_coverage_report()
-                
-            return {
-                "success": result.returncode == 0,
-                "exit_code": result.returncode,
-                "stdout": result.stdout,
-                "stderr": result.stderr,
-                "total_tests": test_results.get("total", 0),
-                "passed": test_results.get("passed", 0),
-                "failed": test_results.get("failed", 0),
-                "skipped": test_results.get("skipped", 0),
-                "coverage": coverage_results,
-                "test_results": test_results
-            }
-            
-        except subprocess.TimeoutExpired:
-            return {
-                "success": False,
-                "error": "Test execution timed out",
-                "timeout": True
-            }
-        except Exception as e:
-            return {
-                "success": False,
-                "error": str(e)
-            }
-        finally:
-            # Clean up temporary JSON report
-            try:
-                Path(json_report_path).unlink(missing_ok=True)
-            except:
-                pass
+    test_types: Sequence[str] | None = None,
+    markers: Sequence[str] | None = None,
+    generate_report: bool = True,
+    selectors: Sequence[str] | None = None,
+    passthrough: Sequence[str] | None = None,
+    cwd: Path | None = None,
+    timeout: float | None = 300,
+) -> dict[str, Any]:
+    """Execute pytest compatibly through the receipted runtime boundary."""
+    working_directory = (cwd or Path.cwd()).resolve()
+    command = [sys.executable, "-m"]
+    if coverage:
+        command.extend(["coverage", "run", "--module", "pytest"])
+    else:
+        command.append("pytest")
+    command.append("-v" if verbose else "-q")
+    if parallel:
+        command.extend(["-n", "auto"])
+    if fail_fast:
+        command.append("-x")
+    marker_terms = [term for term in [*(test_types or ()), *(markers or ())] if term]
+    if marker_terms:
+        command.extend(["-m", " or ".join(f"({term})" for term in marker_terms)])
+    command.extend(str(selector) for selector in selectors or ())
+    command.extend(str(argument) for argument in passthrough or ())
+    receipt = execute_test_command(
+        command,
+        cwd=working_directory,
+        timeout=timeout,
+        capture_output=True,
+    )
+    test_results = _parse_junit_report(working_directory / "reports" / "pytest.xml")
+    coverage_result: dict[str, Any] = {}
+    coverage_receipt: TestExecutionReceipt | None = None
+    if coverage and receipt.exit_code == 0:
+        coverage_path = working_directory / "reports" / "coverage.json"
+        coverage_receipt = execute_test_command(
+            [
+                sys.executable,
+                "-m",
+                "coverage",
+                "json",
+                "-o",
+                str(coverage_path),
+            ],
+            cwd=working_directory,
+            timeout=timeout,
+            capture_output=True,
+        )
+        coverage_result = {
+            "percentage": _coverage_percentage(coverage_path),
+            "format": "json",
+            "receipt": receipt_as_dict(coverage_receipt),
+        }
+    return {
+        "success": receipt.exit_code == 0,
+        "exit_code": receipt.exit_code,
+        "stdout": receipt.stdout,
+        "stderr": receipt.stderr,
+        "total_tests": test_results["total"],
+        "passed": test_results["passed"],
+        "failed": test_results["failed"],
+        "skipped": test_results["skipped"],
+        "coverage": coverage_result,
+        "test_results": test_results,
+        "generate_report": generate_report,
+        "receipt": receipt_as_dict(receipt),
+    }
 
 
 def generate_coverage_report(
     format_type: str = "html",
-    min_coverage: Optional[float] = None
-) -> Dict[str, Any]:
-    """
-    Generate coverage reports using coverage.py.
-    
-    Parameters
-    ----------
-    format_type : str
-        Format type (html, xml, term)
-    min_coverage : Optional[float]
-        Minimum coverage threshold
-        
-    Returns
-    -------
-    Dict[str, Any]
-        Coverage report results
-    """
-    with span("runtime.coverage.report"):
-        cmd = ["python", "-m", "coverage"]
-        
-        if format_type == "html":
-            cmd.extend(["html", "--directory=reports/htmlcov"])
-        elif format_type == "xml":
-            cmd.extend(["xml", "-o", "reports/coverage.xml"])
-        elif format_type == "term":
-            cmd.append("report")
-        else:
-            cmd.append("report")
-            
-        if min_coverage:
-            cmd.extend(["--fail-under", str(min_coverage)])
-            
-        try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=True
-            )
-            
-            # Parse coverage percentage from output
-            coverage_percentage = _extract_coverage_percentage(result.stdout)
-            
-            return {
-                "success": True,
-                "format": format_type,
-                "percentage": coverage_percentage,
-                "output": result.stdout,
-                "meets_threshold": min_coverage is None or coverage_percentage >= min_coverage
-            }
-            
-        except subprocess.CalledProcessError as e:
-            return {
-                "success": False,
-                "error": str(e),
-                "output": e.stdout,
-                "stderr": e.stderr
-            }
+    min_coverage: float | None = None,
+    *,
+    cwd: Path | None = None,
+    timeout: float | None = 300,
+) -> dict[str, Any]:
+    """Generate one coverage projection through the receipted boundary."""
+    working_directory = (cwd or Path.cwd()).resolve()
+    command = [sys.executable, "-m", "coverage"]
+    if format_type == "html":
+        command.extend(["html", "--directory=reports/htmlcov"])
+    elif format_type == "xml":
+        command.extend(["xml", "-o", "reports/coverage.xml"])
+    elif format_type == "json":
+        command.extend(["json", "-o", "reports/coverage.json"])
+    else:
+        command.append("report")
+    if min_coverage is not None:
+        command.append(f"--fail-under={min_coverage}")
+    receipt = execute_test_command(
+        command,
+        cwd=working_directory,
+        timeout=timeout,
+        capture_output=True,
+    )
+    percentage = _coverage_percentage(working_directory / "reports" / "coverage.json")
+    return {
+        "success": receipt.exit_code == 0,
+        "format": format_type,
+        "percentage": percentage,
+        "output": receipt.stdout,
+        "stderr": receipt.stderr,
+        "meets_threshold": min_coverage is None or percentage >= min_coverage,
+        "receipt": receipt_as_dict(receipt),
+    }
 
 
-def run_ci_pipeline(
-    quick: bool = False,
-    comprehensive: bool = True
-) -> Dict[str, Any]:
-    """
-    Run CI verification pipeline.
-    
-    Parameters
-    ----------
-    quick : bool
-        Whether to run quick checks only
-    comprehensive : bool
-        Whether to run comprehensive verification
-        
-    Returns
-    -------
-    Dict[str, Any]
-        CI pipeline results
-    """
-    with span("runtime.ci.pipeline"):
-        results = {
-            "quick": quick,
-            "comprehensive": comprehensive,
-            "steps": [],
-            "overall_success": True
-        }
-        
-        # Step 1: Run linting (quick check)
-        lint_result = _run_ci_step("lint", ["python", "-m", "ruff", "check", "."])
-        results["steps"].append(lint_result)
-        if not lint_result["success"]:
-            results["overall_success"] = False
-            
-        # Step 2: Run type checking (quick check)
-        mypy_result = _run_ci_step("type_check", ["python", "-m", "mypy", "src"])
-        results["steps"].append(mypy_result)
-        if not mypy_result["success"]:
-            results["overall_success"] = False
-            
-        if not quick:
-            # Step 3: Run full test suite
-            test_result = execute_pytest(coverage=comprehensive)
-            test_step = {
-                "name": "test_suite",
-                "success": test_result["success"],
-                "details": test_result
-            }
-            results["steps"].append(test_step)
-            if not test_result["success"]:
-                results["overall_success"] = False
-                
-            results["test_results"] = test_result
-            
-            if comprehensive:
-                # Step 4: Security checks
-                security_result = _run_ci_step("security", ["python", "-m", "safety", "check"])
-                results["steps"].append(security_result)
-                # Don't fail CI for security warnings, just record them
-                
-        return results
-
-
-def discover_test_files(
-    path: Optional[Path] = None,
-    pattern: str = "test_*.py"
-) -> Dict[str, Any]:
-    """
-    Discover test files in the project.
-    
-    Parameters
-    ----------
-    path : Optional[Path]
-        Path to search for tests
-    pattern : str
-        Test file pattern
-        
-    Returns
-    -------
-    Dict[str, Any]
-        Test discovery results
-    """
-    with span("runtime.tests.discover"):
-        search_path = path or Path(".")
-        
-        # Find test files
-        test_files = list(search_path.rglob(pattern))
-        
-        # Categorize by type based on path
-        test_types = {
-            "unit": [],
-            "integration": [],
-            "e2e": []
-        }
-        
-        for test_file in test_files:
-            relative_path = test_file.relative_to(search_path)
-            path_str = str(relative_path)
-            
-            if "integration" in path_str or "e2e" in path_str:
-                if "e2e" in path_str:
-                    test_types["e2e"].append(str(test_file))
-                else:
-                    test_types["integration"].append(str(test_file))
-            else:
-                test_types["unit"].append(str(test_file))
-                
-        return {
-            "test_files": [str(f) for f in test_files],
-            "test_types": test_types,
-            "total_files": len(test_files)
-        }
-
-
-def validate_test_environment() -> Dict[str, Any]:
-    """
-    Validate that the test environment is properly configured.
-    
-    Returns
-    -------
-    Dict[str, Any]
-        Environment validation results
-    """
-    with span("runtime.tests.validate_environment"):
-        validation_results = {
-            "valid": True,
-            "dependencies_available": True,
-            "issues": []
-        }
-        
-        # Check pytest availability
-        try:
-            subprocess.run(
-                ["python", "-m", "pytest", "--version"],
-                capture_output=True,
-                check=True
-            )
-        except subprocess.CalledProcessError:
-            validation_results["valid"] = False
-            validation_results["dependencies_available"] = False
-            validation_results["issues"].append("pytest not available")
-            
-        # Check coverage availability
-        try:
-            subprocess.run(
-                ["python", "-m", "coverage", "--version"],
-                capture_output=True,
-                check=True
-            )
-        except subprocess.CalledProcessError:
-            validation_results["issues"].append("coverage not available")
-            
-        # Check test directory exists
-        if not Path("tests").exists():
-            validation_results["issues"].append("tests directory not found")
-            
-        return validation_results
-
-
-# Helper functions
-
-def _parse_pytest_json_report(json_path: str) -> Dict[str, Any]:
-    """Parse pytest JSON report."""
-    try:
-        with open(json_path) as f:
-            data = json.load(f)
-            
-        summary = data.get("summary", {})
-        return {
-            "total": summary.get("total", 0),
-            "passed": summary.get("passed", 0),
-            "failed": summary.get("failed", 0),
-            "skipped": summary.get("skipped", 0),
-            "errors": summary.get("error", 0)
-        }
-    except (FileNotFoundError, json.JSONDecodeError, KeyError):
-        return {"total": 0, "passed": 0, "failed": 0, "skipped": 0}
-
-
-def _parse_coverage_report() -> Dict[str, Any]:
-    """Parse coverage report from XML file."""
-    try:
-        import xml.etree.ElementTree as ET
-        
-        coverage_file = Path("reports/coverage.xml")
-        if not coverage_file.exists():
-            return {}
-            
-        tree = ET.parse(coverage_file)
-        root = tree.getroot()
-        
-        # Extract coverage percentage
-        coverage_attr = root.get("line-rate", "0")
-        percentage = float(coverage_attr) * 100
-        
-        return {
-            "percentage": round(percentage, 2),
-            "format": "xml"
-        }
-    except Exception:
-        return {}
-
-
-def _extract_coverage_percentage(output: str) -> float:
-    """Extract coverage percentage from coverage output."""
-    import re
-    
-    # Look for patterns like "TOTAL    100%"
-    pattern = r"TOTAL\s+(\d+)%"
-    match = re.search(pattern, output)
-    if match:
-        return float(match.group(1))
-        
-    # Look for patterns like "Total coverage: 95.5%"
-    pattern = r"Total coverage:\s+(\d+(?:\.\d+)?)%"
-    match = re.search(pattern, output)
-    if match:
-        return float(match.group(1))
-        
-    return 0.0
-
-
-def _run_ci_step(name: str, cmd: List[str]) -> Dict[str, Any]:
-    """Run a single CI step."""
-    try:
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=60
-        )
-        
-        return {
-            "name": name,
-            "success": result.returncode == 0,
-            "exit_code": result.returncode,
-            "output": result.stdout,
-            "stderr": result.stderr
-        }
-    except subprocess.TimeoutExpired:
-        return {
-            "name": name,
-            "success": False,
-            "error": "Step timed out"
-        }
-    except Exception as e:
-        return {
-            "name": name,
-            "success": False,
-            "error": str(e)
-        }
+def validate_test_environment(
+    *,
+    cwd: Path | None = None,
+    timeout: float | None = 30,
+) -> dict[str, Any]:
+    """Validate pytest, coverage, and test-tree availability with receipts."""
+    working_directory = (cwd or Path.cwd()).resolve()
+    checks = (
+        CommandCheck("pytest", (sys.executable, "-m", "pytest", "--version")),
+        CommandCheck("coverage", (sys.executable, "-m", "coverage", "--version")),
+    )
+    results = execute_command_checks(checks, cwd=working_directory, timeout=timeout)
+    issues = [result.description for result in results if result.receipt.exit_code != 0]
+    if not (working_directory / "tests").is_dir():
+        issues.append("tests directory not found")
+    return {
+        "valid": not issues,
+        "dependencies_available": all(
+            result.receipt.exit_code == 0 for result in results
+        ),
+        "issues": issues,
+        "checks": [command_check_result_as_dict(result) for result in results],
+    }

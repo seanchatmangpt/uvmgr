@@ -1,80 +1,47 @@
-"""
-uvmgr.cli
-=========
-
-Root Typer application for the uvmgr unified Python workflow engine.
-
-This module serves as the main entry point for the uvmgr CLI application. It provides:
-
-• **Logging Setup**: Configures logging once (plain `logging` + optional OpenTelemetry)
-• **Global Flags**: Adds a global `--json / -j` flag for machine-readable output
-• **Dynamic Command Loading**: Automatically mounts every sub-command package found in **uvmgr.commands**
-• **Error Handling**: Provides centralized exception handling for CLI operations
-• **Telemetry Integration**: Instruments the main CLI with OpenTelemetry for observability
-
-The application follows a modular design where each command group (deps, tests, build, etc.)
-is implemented as a separate Typer sub-application that gets dynamically mounted.
-
-Example
--------
-    $ uvmgr --help                    # Show main help
-    $ uvmgr deps add requests         # Add dependency
-    $ uvmgr tests run                 # Run test suite
-    $ uvmgr --json deps list          # JSON output
-
-See Also
---------
-- :mod:`uvmgr.commands` : Command implementations
-- :mod:`uvmgr.core.instrumentation` : Telemetry instrumentation
-- :mod:`uvmgr.logging_config` : Logging configuration
-"""
+"""Root Typer application for uvmgr."""
 
 from __future__ import annotations
 
 import importlib
 import importlib.metadata
 import os
-import sys
+from types import ModuleType
 
 import typer
+from typer.main import get_command
 
-from uvmgr.cli_utils import handle_cli_exception
+from uvmgr.core.command_registry import command_cli_name
 from uvmgr.core.instrumentation import instrument_command
 from uvmgr.logging_config import setup_logging
 
 os.environ.setdefault("LITELLM_LOCAL_MODEL_COST_MAP", "True")
-
-# ──────────────────────────────────────────────────────────────────────────────
-#  Logging bootstrap (idempotent)
-# ──────────────────────────────────────────────────────────────────────────────
 setup_logging()
 
-# ──────────────────────────────────────────────────────────────────────────────
-#  Root Typer application
-# ──────────────────────────────────────────────────────────────────────────────
 app = typer.Typer(
     add_completion=False,
     rich_markup_mode="rich",
-    help="**uvmgr** – unified Python workflow engine (powered by *uv*).",
+    help="**uvmgr** - unified Python workflow engine (powered by *uv*).",
     context_settings={"allow_extra_args": True},
 )
+COMMAND_LOAD_FAILURES: dict[str, str] = {}
 
 
-# Record JSON preference in ctx.meta so sub-commands can honour it -------------
-def _json_cb(ctx: typer.Context, value: bool):
+def _json_callback(ctx: typer.Context, value: bool) -> None:
+    """Record the global machine-readable output preference."""
     if value:
         ctx.meta["json"] = True
 
 
-def _version_callback(value: bool):
-    """Show version and exit."""
-    if value:
-        try:
-            version = importlib.metadata.version("uvmgr")
-        except importlib.metadata.PackageNotFoundError:
-            version = "dev"
-        typer.echo(f"uvmgr {version}")
-        raise typer.Exit()
+def _version_callback(value: bool) -> None:
+    """Show the installed version and exit."""
+    if not value:
+        return
+    try:
+        version = importlib.metadata.version("uvmgr")
+    except importlib.metadata.PackageNotFoundError:
+        version = "dev"
+    typer.echo(f"uvmgr {version}")
+    raise typer.Exit
 
 
 @app.callback()
@@ -85,51 +52,66 @@ def _root(
         False,
         "--json",
         "-j",
-        callback=_json_cb,
+        callback=_json_callback,
         is_eager=True,
-        help="Print machine-readable JSON and exit",
+        help="Print machine-readable JSON.",
     ),
     version: bool = typer.Option(
-        None,
+        False,
         "--version",
         callback=_version_callback,
         is_eager=True,
-        help="Show version and exit",
+        help="Show version and exit.",
     ),
-):
-    """Callback only sets the JSON flag – no other side-effects."""
+) -> None:
+    """Initialize command context without ambient actuation."""
+    _ = (ctx, json_, version)
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-#  Mount every sub-command defined in *uvmgr.commands*
-# ──────────────────────────────────────────────────────────────────────────────
-commands_pkg = importlib.import_module("uvmgr.commands")
-
-for verb in commands_pkg.__all__:
-    try:
-        mod = importlib.import_module(f"uvmgr.commands.{verb}")
-    except ImportError:
-        # Skip commands that have missing dependencies (e.g., AI modules in frozen executables)
-        continue
-
-    # Expect exactly one typer.Typer object in the module's globals ------------
-    sub_app = next(
-        (obj for obj in mod.__dict__.values() if isinstance(obj, typer.Typer)),
+def _find_typer_app(module: ModuleType) -> typer.Typer | None:
+    """Resolve the canonical Typer app from a command module."""
+    candidate = getattr(module, "app", None)
+    if isinstance(candidate, typer.Typer):
+        return candidate
+    return next(
+        (value for value in vars(module).values() if isinstance(value, typer.Typer)),
         None,
     )
-    if sub_app is None:  # Fail fast during development
-        raise ImportError(f"`{verb}` has no Typer sub-app")
 
-    # Mount under the same name (convert _ to - for nicer CLI UX) --------------
-    app.add_typer(sub_app, name=verb.replace("_", "-"))
+
+def _unavailable_app(verb: str, error: str) -> typer.Typer:
+    """Create a typed, visible refusal surface for a broken enabled command."""
+    unavailable = typer.Typer(
+        help=f"BUILD_BROKEN: enabled command failed to load ({error})",
+    )
+
+    @unavailable.callback(invoke_without_command=True)
+    def show_failure() -> None:
+        """Report the exact enabled-command construction failure."""
+        typer.echo(
+            f"BUILD_BROKEN command={verb} construction_error={error}",
+            err=True,
+        )
+        raise typer.Exit(70)
+
+    return unavailable
+
+
+commands_package = importlib.import_module("uvmgr.commands")
+for command_name in commands_package.__all__:
+    try:
+        command_module = importlib.import_module(f"uvmgr.commands.{command_name}")
+        command_app = _find_typer_app(command_module)
+        if command_app is None:
+            raise ImportError(f"{command_name!r} has no Typer application")
+        get_command(command_app)
+    except Exception as exc:
+        failure = f"{type(exc).__name__}: {exc}"
+        COMMAND_LOAD_FAILURES[command_name] = failure
+        command_app = _unavailable_app(command_name, failure)
+
+    app.add_typer(command_app, name=command_cli_name(command_name))
 
 
 if __name__ == "__main__":
-    import sys
-
-    debug = "--debug" in sys.argv
-    try:
-        # ... main CLI logic ...
-        pass
-    except Exception as e:
-        handle_cli_exception(e, debug=debug)
+    app()
